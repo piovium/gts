@@ -63,7 +63,8 @@ PrimaryExpression:
 ShortcutArgumentExpression:
     "^" Identifier
 
-
+UnaryExpression:
++   query UnaryExpression
 */
 
 export interface GtsPluginOption {
@@ -281,6 +282,27 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           return this.finishNode(node, "GTSShortcutArgumentExpression");
         }
         return super.parseExprAtom(refDestructuringErrors, forInit, forNew);
+      }
+
+      override parseMaybeUnary(refDestructuringErrors?: Parse.DestructuringErrors | null, sawUnary?: boolean, incDec?: boolean, forInit?: boolean | "await"): AST.Expression {
+        if (this.isContextual("query")) {
+          const expr = this.gts_parseQueryExpression();
+          if (!incDec && this.eat(tokTypes.starstar)) {
+            this.unexpected(this.lastTokStart);
+          }
+          return expr;
+        }
+        return super.parseMaybeUnary(refDestructuringErrors, sawUnary, incDec, forInit);
+      }
+
+      gts_parseQueryExpression(forInit?: boolean | "await"): AST.GTSQueryExpression {
+        const node = this.startNode() as AST.GTSQueryExpression;
+        this.next(); // consume 'query'
+        if (this.eat(tokTypes.star)) {
+          node.star = true;
+        }
+        node.argument = this.parseMaybeUnary(null, true, false, forInit);
+        return this.finishNode(node, "GTSQueryExpression");
       }
     };
   };

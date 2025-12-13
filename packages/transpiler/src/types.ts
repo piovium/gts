@@ -17,6 +17,7 @@ declare module "estree" {
   interface ExpressionMap {
     GTSShortcutArgumentExpression: GTSShortcutArgumentExpression;
     GTSShortcutFunctionExpression: GTSShortcutFunctionExpression;
+    GTSQueryExpression: GTSQueryExpression;
   }
 
   interface GTSDefineStatement extends BaseStatement {
@@ -56,6 +57,11 @@ declare module "estree" {
   interface GTSShortcutFunctionExpression extends BaseExpression {
     body: AST.BlockStatement | AST.Expression;
     expression: boolean;
+  }
+
+  interface GTSQueryExpression extends BaseExpression {
+    star?: boolean;
+    argument: Expression;
   }
 }
 

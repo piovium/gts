@@ -46,7 +46,7 @@ define summon {
   on endPhase {
     usage 2;
     hint heal, 1;
-    ^heal(1, query my.characters);
+    ^heal(1, query* my.character);
     ^apply(hydro, query my.active);
   }
 }
