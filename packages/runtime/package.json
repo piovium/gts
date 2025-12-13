@@ -1,0 +1,7 @@
+{
+  "name": "@gi-tcg/gts-runtime",
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {},
+  "devDependencies": {}
+}
