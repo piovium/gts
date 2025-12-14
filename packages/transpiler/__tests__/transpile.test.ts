@@ -20,4 +20,6 @@ export const add2 = add;
 
   expect(output.sourceMap?.mappings).toBeDefined();
   expect(output.sourceMap?.sources).toEqual(["test.ts"]);
+
+  console.log(output.code);
 });
