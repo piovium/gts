@@ -17,5 +17,7 @@ export const add2 = add;
 `;
   const parsed = parse(source);
   const output = transpile(parsed, { content: source, filename: "test.ts" });
-  console.log(output.sourceMap.toString());
-})
+
+  expect(output.sourceMap?.mappings).toBeDefined();
+  expect(output.sourceMap?.sources).toEqual(["test.ts"]);
+});

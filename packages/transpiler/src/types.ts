@@ -31,6 +31,7 @@ declare module "estree" {
   }
 
   interface GTSNamedAttributeDefinition extends BaseNode {
+    type: "GTSNamedAttributeDefinition";
     name: AST.Identifier | AST.Literal;
     body: GTSAttributeBody;
     bindingAccessModifier?: "public" | "protected" | "private";
@@ -38,33 +39,40 @@ declare module "estree" {
   }
 
   interface GTSAttributeBody extends BaseNode {
+    type: "GTSAttributeBody";
     positionalAttributes: GTSPositionalAttributeList;
     namedAttributes?: GTSNamedAttributeBlock;
   }
 
   interface GTSPositionalAttributeList extends BaseNode {
+    type: "GTSPositionalAttributeList";
     attributes: AST.Expression[];
   }
 
   interface GTSNamedAttributeBlock extends BaseNode {
+    type: "GTSNamedAttributeBlock";
     attributes: GTSNamedAttributeDefinition[];
     directAction?: GTSDirectFunction;
   }
 
   interface GTSDirectFunction extends BaseNode {
+    type: "GTSDirectFunction";
     body: Statement[];
   }
 
   interface GTSShortcutArgumentExpression extends BaseExpression {
+    type: "GTSShortcutArgumentExpression";
     property: Identifier;
   }
 
   interface GTSShortcutFunctionExpression extends BaseExpression {
+    type: "GTSShortcutFunctionExpression";
     body: AST.BlockStatement | AST.Expression;
     expression: boolean;
   }
 
   interface GTSQueryExpression extends BaseExpression {
+    type: "GTSQueryExpression";
     star?: boolean;
     argument: Expression;
   }
