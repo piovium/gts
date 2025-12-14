@@ -6,6 +6,11 @@ import type * as AST from "estree";
 type ForInit = boolean | "await";
 
 declare module "estree" {
+  
+  interface Identifier {
+    isDummy?: boolean;
+  }
+
   interface NodeMap {
     GTSDefineStatement: GTSDefineStatement;
     GTSNamedAttributeDefinition: GTSNamedAttributeDefinition;

@@ -1,6 +1,6 @@
 import { tokTypes, type Parser as ParserClass } from "acorn";
-import type { Parse, AST } from "./types";
-import { specialIdentifiers } from "./keywords";
+import type { Parse, AST } from "../types";
+import { specialIdentifiers } from "../keywords";
 
 /*
 
@@ -274,7 +274,10 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
             this.type !== tokTypes.name
           ) {
             // Allow omitting the identifier after '^' for language tooling
-            node.property = null!;
+            const dummy = this.startNode() as AST.Identifier;
+            dummy.name = "✖";
+            dummy.isDummy = true;
+            node.property = this.finishNode(dummy, "Identifier");
           } else {
             node.property = this.parseIdent();
           }
@@ -284,7 +287,12 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         return super.parseExprAtom(refDestructuringErrors, forInit, forNew);
       }
 
-      override parseMaybeUnary(refDestructuringErrors?: Parse.DestructuringErrors | null, sawUnary?: boolean, incDec?: boolean, forInit?: boolean | "await"): AST.Expression {
+      override parseMaybeUnary(
+        refDestructuringErrors?: Parse.DestructuringErrors | null,
+        sawUnary?: boolean,
+        incDec?: boolean,
+        forInit?: boolean | "await",
+      ): AST.Expression {
         if (this.isContextual("query")) {
           const expr = this.gts_parseQueryExpression();
           if (!incDec && this.eat(tokTypes.starstar)) {
@@ -292,10 +300,17 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           }
           return expr;
         }
-        return super.parseMaybeUnary(refDestructuringErrors, sawUnary, incDec, forInit);
+        return super.parseMaybeUnary(
+          refDestructuringErrors,
+          sawUnary,
+          incDec,
+          forInit,
+        );
       }
 
-      gts_parseQueryExpression(forInit?: boolean | "await"): AST.GTSQueryExpression {
+      gts_parseQueryExpression(
+        forInit?: boolean | "await",
+      ): AST.GTSQueryExpression {
         const node = this.startNode() as AST.GTSQueryExpression;
         this.next(); // consume 'query'
         if (this.eat(tokTypes.star)) {

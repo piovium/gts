@@ -1,5 +1,5 @@
 import { tokTypes, type Parser } from "acorn";
-import type { AST, Parse } from "./types.js";
+import type { AST, Parse } from "../types.js";
 
 export function loosePlugin() {
   return function loosePluginTransformer(parser: typeof Parser): typeof Parser {
@@ -29,6 +29,7 @@ export function loosePlugin() {
       createDummyIdentifier() {
         const dummy = this.startNode() as AST.Identifier;
         dummy.name = "✖";
+        dummy.isDummy = true;
         return this.finishNode(dummy, "Identifier");
       }
 

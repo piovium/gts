@@ -88,7 +88,7 @@ class AttributeDefHelper<ModelT> {
     action: AttributeAction<
       ModelT,
       T,
-      undefined extends T["as"] ? void : T["as"]
+      T["as"] extends () => infer R ? R : void
     >,
   ): T {
     const returnValue = {} as T;
@@ -117,7 +117,7 @@ function defineViewModel<
 
 interface AttributeDefinition {
   (...args: any[]): AttributePositionalReturnBase;
-  as?: any;
+  as?(innerMeta?: any): any;
 }
 
 interface AttributePositionalReturnBase {
@@ -185,7 +185,7 @@ const CharacterVM = defineViewModel(
     }>((model, [name]) => {}),
     id: helper.attribute<{
       (id: number): AttributePositionalReturnBase;
-      as: CharacterHandle;
+      as(): CharacterHandle;
     }>((model, [id]) => {
       // model.setId(id);
       return id as CharacterHandle;
@@ -258,22 +258,23 @@ function test() {
   type Meta0 = VMDef[MetaSymbol];
 
   let obj0!: { [MetaSymbol]: Meta0 } & Omit<VMDef, MetaSymbol>;
+
   let return0 = obj0.id(123);
   type Return0 = typeof return0;
-  type Binding0 = VMDef["id"] extends { as: infer As } ? As : unknown;
-
-  type Meta1 = Return0  extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : Meta0;
+  type Meta1 = Return0 extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : Meta0;
   let obj1!: { [MetaSymbol]: Meta1 } & Omit<VMDef, MetaSymbol>;
+  type Binding0 = VMDef["id"] extends { as: () => infer As } ? As : unknown;
+
   let return1 = obj1.variable("health", 10);
   type Return1 = typeof return1;
-
   type Meta2 = Return1["rewriteMeta"] extends undefined ? Meta1 : Return1["rewriteMeta"];
   let obj2!: { [MetaSymbol]: Meta2 } & Omit<VMDef, MetaSymbol>;
+
   let return2 = obj2.variable("stamina", 5);
   type Return2 = typeof return2;
-
   type Meta3 = Return2["rewriteMeta"] extends undefined ? Meta2 : Return2["rewriteMeta"];
   let obj3!: { [MetaSymbol]: Meta3 } & Omit<VMDef, MetaSymbol>;
+
   let return3 = obj3.skill();
   type Return3 = typeof return3;
 

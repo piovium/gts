@@ -1,5 +1,5 @@
 import { Parser } from "acorn";
-import { loosePlugin } from "../src/loose_plugin.js";
+import { loosePlugin } from "../src/parse/loose_plugin.js";
 import { describe, test, expect } from "bun:test";
 
 const LooseParser = Parser.extend(loosePlugin());

@@ -1,4 +1,4 @@
-import { parse } from "../src/index";
+import { parse, parseLoose } from "../src/parse";
 import { test, expect } from "bun:test";
 
 test("basic test", () => {
