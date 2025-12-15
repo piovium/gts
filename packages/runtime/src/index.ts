@@ -169,7 +169,7 @@ class CharacterBuilder {
   addSkill(skill: CharacterSkillBuilder) {}
 }
 
-type CharacterHandle = number & { readonly _character: unique symbol };
+type CharacterHandle<VarNames extends string> = number & { readonly _character: unique symbol, readonly varNames: VarNames };
 
 type BuilderMeta = {
   vars: string;
@@ -185,10 +185,10 @@ const CharacterVM = defineViewModel(
     }>((model, [name]) => {}),
     id: helper.attribute<{
       (id: number): AttributePositionalReturnBase;
-      as(): CharacterHandle;
+      as<TMeta extends BuilderMeta>(this: AR.This<TMeta>): CharacterHandle<TMeta["vars"]>;
     }>((model, [id]) => {
       // model.setId(id);
-      return id as CharacterHandle;
+      return id as CharacterHandle<any>;
     }),
 
     variable: helper.attribute<{
@@ -251,7 +251,7 @@ const VariableVM = defineViewModel(VariableBuilder, (helper) => ({}));
 
 // prettier-ignore
 function test() {
-  const Abc: Binding0 = (void 0)!;
+  const Abc: Binding1 = (void 0)!;
 
   type VMDef = (typeof CharacterVM)[NamedDefinition];
 
@@ -263,12 +263,16 @@ function test() {
   type Return0 = typeof return0;
   type Meta1 = Return0 extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : Meta0;
   let obj1!: { [MetaSymbol]: Meta1 } & Omit<VMDef, MetaSymbol>;
-  type Binding0 = VMDef["id"] extends { as: () => infer As } ? As : unknown;
+  type AsType1 = typeof obj0.id extends { as: infer As } ? As : unknown;
+  let inferBindingObj1 = { [MetaSymbol]: obj1[MetaSymbol], as: void 0 as any as AsType1 };
+  let binding1 = inferBindingObj1.as();
+  type Binding1 = typeof binding1;
 
   let return1 = obj1.variable("health", 10);
   type Return1 = typeof return1;
   type Meta2 = Return1["rewriteMeta"] extends undefined ? Meta1 : Return1["rewriteMeta"];
   let obj2!: { [MetaSymbol]: Meta2 } & Omit<VMDef, MetaSymbol>;
+  let inferBindingObj2 = "as" in obj1.variable ? { ...obj2, as: obj1.variable.as }: obj2;
 
   let return2 = obj2.variable("stamina", 5);
   type Return2 = typeof return2;

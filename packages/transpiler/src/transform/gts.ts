@@ -10,34 +10,44 @@ import type {
 import { walk, type Visitors } from "zimmerframe";
 
 interface TranspileState {
-  runtimeImportSource: string;
-  providerImportSource: string;
+  readonly runtimeImportSource: string;
+  readonly providerImportSource: string;
   readonly createDefineFnName: "__gts_createDefine";
+  readonly binderFnName: "__gts_Binder";
+
+  hasBinding: boolean;
 }
 
 const gtsVisitor: Visitors<Node, TranspileState> = {
   Program(node, { state, next }) {
     node = (next() as Program) ?? node;
     const body = [...node.body];
+    if (state.hasBinding) {
+      body.unshift({
+        type: "ImportDeclaration",
+        specifiers: [
+          {
+            type: "ImportDefaultSpecifier",
+            local: { type: "Identifier", name: state.binderFnName },
+          },
+        ],
+        source: {
+          type: "Literal",
+          value: `${state.providerImportSource}/binder`,
+        },
+        attributes: [],
+      });
+    }
     body.unshift({
       type: "ImportDeclaration",
       specifiers: [
         {
           type: "ImportSpecifier",
-          imported: {
-            type: "Identifier",
-            name: "createDefine",
-          },
-          local: {
-            type: "Identifier",
-            name: state.createDefineFnName,
-          },
+          imported: { type: "Identifier", name: "createDefine" },
+          local: { type: "Identifier", name: state.createDefineFnName },
         },
       ],
-      source: {
-        type: "Literal",
-        value: "@gi-tcg/gts-runtime",
-      },
+      source: { type: "Literal", value: state.runtimeImportSource },
       attributes: [],
     });
     console.log(body);
@@ -113,8 +123,12 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
 export const gtsToTs = (ast: Program): Program => {
   const state: TranspileState = {
     createDefineFnName: "__gts_createDefine",
+    binderFnName: "__gts_Binder",
+    
     runtimeImportSource: "@gi-tcg/gts-runtime",
     providerImportSource: "@gi-tcg/gts-provider",
+
+    hasBinding: false,
   };
   return walk(ast, state, gtsVisitor) as Program;
 };
