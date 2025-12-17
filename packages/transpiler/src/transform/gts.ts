@@ -1,7 +1,10 @@
 import type {
   ArrowFunctionExpression,
+  Declaration,
+  ExportNamedDeclaration,
   Expression,
   ExpressionStatement,
+  Identifier,
   Literal,
   Node,
   ObjectExpression,
@@ -9,34 +12,85 @@ import type {
 } from "estree";
 import { walk, type Visitors } from "zimmerframe";
 
+interface ExternalizedBinding {
+  bindingName: Identifier;
+  export: boolean;
+  internalId: Identifier;
+  value: Expression;
+}
+
 interface TranspileState {
   readonly runtimeImportSource: string;
   readonly providerImportSource: string;
-  readonly createDefineFnName: "__gts_createDefine";
-  readonly binderFnName: "__gts_Binder";
+  readonly createDefineFnId: Identifier;
+  readonly binderFnId: Identifier;
 
-  hasBinding: boolean;
+  readonly externalizedBindings: ExternalizedBinding[];
 }
 
 const gtsVisitor: Visitors<Node, TranspileState> = {
   Program(node, { state, next }) {
     node = (next() as Program) ?? node;
     const body = [...node.body];
-    if (state.hasBinding) {
-      body.unshift({
-        type: "ImportDeclaration",
-        specifiers: [
-          {
-            type: "ImportDefaultSpecifier",
-            local: { type: "Identifier", name: state.binderFnName },
+    if (state.externalizedBindings.length > 0) {
+      body.unshift(
+        {
+          type: "ImportDeclaration",
+          specifiers: [
+            {
+              type: "ImportDefaultSpecifier",
+              local: state.binderFnId,
+            },
+          ],
+          source: {
+            type: "Literal",
+            value: `${state.providerImportSource}/binder`,
           },
-        ],
-        source: {
-          type: "Literal",
-          value: `${state.providerImportSource}/binder`,
+          attributes: [],
         },
-        attributes: [],
-      });
+        ...state.externalizedBindings.flatMap(
+          (binding): (Declaration | ExportNamedDeclaration)[] => {
+            const internalDecl: Declaration = {
+              type: "VariableDeclaration",
+              kind: "const",
+              declarations: [
+                {
+                  type: "VariableDeclarator",
+                  id: binding.internalId,
+                  init: binding.value,
+                },
+              ],
+            };
+            const externalDecl: Declaration = {
+              type: "VariableDeclaration",
+              kind: "const",
+              declarations: [
+                {
+                  type: "VariableDeclarator",
+                  id: binding.bindingName,
+                  init: {
+                    type: "CallExpression",
+                    optional: false,
+                    callee: state.binderFnId,
+                    arguments: [binding.internalId],
+                  },
+                },
+              ],
+            };
+            return binding.export
+              ? [
+                  internalDecl,
+                  {
+                    type: "ExportNamedDeclaration",
+                    declaration: externalDecl,
+                    specifiers: [],
+                    attributes: [],
+                  },
+                ]
+              : [internalDecl, externalDecl];
+          },
+        ),
+      );
     }
     body.unshift({
       type: "ImportDeclaration",
@@ -44,13 +98,12 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         {
           type: "ImportSpecifier",
           imported: { type: "Identifier", name: "createDefine" },
-          local: { type: "Identifier", name: state.createDefineFnName },
+          local: state.createDefineFnId,
         },
       ],
       source: { type: "Literal", value: state.runtimeImportSource },
       attributes: [],
     });
-    console.log(body);
     return {
       ...node,
       body,
@@ -63,10 +116,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       expression: {
         type: "CallExpression",
         optional: false,
-        callee: {
-          type: "Identifier",
-          name: state.createDefineFnName,
-        },
+        callee: state.createDefineFnId,
         arguments: [body],
       },
     };
@@ -122,13 +172,13 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
 
 export const gtsToTs = (ast: Program): Program => {
   const state: TranspileState = {
-    createDefineFnName: "__gts_createDefine",
-    binderFnName: "__gts_Binder",
-    
+    createDefineFnId: { type: "Identifier", name: "__gts_createDefine" },
+    binderFnId: { type: "Identifier", name: "__gts_Binder" },
+
     runtimeImportSource: "@gi-tcg/gts-runtime",
     providerImportSource: "@gi-tcg/gts-provider",
 
-    hasBinding: false,
+    externalizedBindings: [],
   };
   return walk(ast, state, gtsVisitor) as Program;
 };
