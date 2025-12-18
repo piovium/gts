@@ -51,7 +51,10 @@ const __id_attribute = () => ({
   name: "id",
   positionals: [1101],
 })
-export const Ganyu = binder(__id_attribute);
+export const Ganyu = binder(__id_attribute, {
+  // a dot-joined string of binding attribute's parent name
+  path: "foo",
+});
 
 // -----
 
