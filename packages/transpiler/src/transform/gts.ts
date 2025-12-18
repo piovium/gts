@@ -24,6 +24,7 @@ interface ExternalizedBinding {
   export: boolean;
   internalId: Identifier;
   value: Expression;
+  path: string[];
 }
 
 interface TranspileState {
@@ -37,6 +38,7 @@ interface TranspileState {
   readonly providerImportSource: string;
   readonly queryArg: ObjectPattern;
 
+  readonly attributeNames: (Identifier | Literal)[];
   readonly externalizedBindings: ExternalizedBinding[];
   hasQueryExpressions: boolean;
 }
@@ -92,7 +94,29 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
                     type: "CallExpression",
                     optional: false,
                     callee: state.binderFnId,
-                    arguments: [binding.internalId],
+                    arguments: [
+                      binding.internalId,
+                      {
+                        type: "ObjectExpression",
+                        properties: [
+                          {
+                            type: "Property",
+                            key: { type: "Identifier", name: "path" },
+                            computed: false,
+                            kind: "init",
+                            method: false,
+                            shorthand: false,
+                            value: {
+                              type: "ArrayExpression",
+                              elements: binding.path.map((segment) => ({
+                                type: "Literal",
+                                value: segment,
+                              })),
+                            },
+                          },
+                        ],
+                      },
+                    ],
                   },
                 },
               ],
@@ -184,7 +208,9 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
     };
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
+    state.attributeNames.push(node.name);
     const namedBody = visit(node.body) as ObjectExpression;
+    state.attributeNames.pop();
     const properties = [...namedBody.properties];
     const nameValue: Literal =
       node.name.type === "Literal"
@@ -232,6 +258,13 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         export: export_,
         internalId,
         value: arrow,
+        path: [...state.attributeNames, node.name].map((n) => {
+          if (n.type === "Literal") {
+            return String(n.value);
+          } else {
+            return n.name;
+          }
+        }),
       });
       return internalId;
     } else {
@@ -457,6 +490,7 @@ export const gtsToTs = (ast: Program): Program => {
       })),
     },
 
+    attributeNames: [],
     externalizedBindings: [],
     hasQueryExpressions: false,
   };
