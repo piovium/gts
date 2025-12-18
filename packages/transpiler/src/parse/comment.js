@@ -1,3 +1,7 @@
+// https://github.com/Ripple-TS/ripple/blob/e92e8f9876a080818c75cf698fc5d84a8c76a1a7/packages/ripple/src/compiler/phases/1-parse/index.js#L2170
+// We do not ts-check this file because Ripple has different AST definitions
+// but it works anyway
+
 import { walk } from "zimmerframe";
 
 /**
