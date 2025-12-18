@@ -3,6 +3,7 @@ import type { Program } from "estree";
 import { tsPlugin } from "@sveltejs/acorn-typescript";
 import { gtsPlugin, type GtsPluginOption } from "./gts_plugin.js";
 import { loosePlugin } from "./loose_plugin.js";
+import { getCommentHandlers } from "./comment.js";
 
 const TsParser = Parser.extend(tsPlugin());
 
@@ -23,9 +24,13 @@ export function parseLoose(input: string, options?: GtsPluginOption): Program {
       allowEmptyShortcutMember: true,
     }),
   );
-  return GtsParser.parse(input, {
+  const { onComment, addComments } = getCommentHandlers(input, []);
+  const ast = GtsParser.parse(input, {
     ecmaVersion: "latest",
     sourceType: "module",
     locations: true,
+    onComment,
   }) as Program;
+  addComments(ast);
+  return ast;
 }

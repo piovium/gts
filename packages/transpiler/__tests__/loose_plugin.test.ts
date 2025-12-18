@@ -1,6 +1,9 @@
 import { Parser } from "acorn";
 import { loosePlugin } from "../src/parse/loose_plugin.js";
 import { describe, test, expect } from "bun:test";
+import { parseLoose } from "../src/parse/index.js";
+import type { Statement } from "estree";
+import type { AST } from "../src/types.js";
 
 const LooseParser = Parser.extend(loosePlugin());
 
@@ -9,7 +12,7 @@ describe("loosePlugin", () => {
     const code = "{ foo. }";
     const ast: any = LooseParser.parse(code, { ecmaVersion: "latest" });
     expect(ast).toBeDefined();
-    
+
     const block = ast.body[0];
     expect(block.type).toBe("BlockStatement");
     const exprStmt = block.body[0];
@@ -24,7 +27,7 @@ describe("loosePlugin", () => {
     const code = "if (a.) {}";
     const ast: any = LooseParser.parse(code, { ecmaVersion: "latest" });
     expect(ast).toBeDefined();
-    
+
     const ifStmt = ast.body[0];
     expect(ifStmt.type).toBe("IfStatement");
     const testExpr = ifStmt.test;
@@ -45,4 +48,22 @@ describe("loosePlugin", () => {
       LooseParser.parse(code, { ecmaVersion: "latest" });
     }).toThrow();
   });
+});
+
+test("comment kept in loose parse", () => {
+  const code = `
+/**
+ * @description This is a test function
+ */
+define character {
+  id 1101 as TestCharacter;
+}    
+`;
+  const ast = parseLoose(code);
+  console.log(ast);
+  const defNode = ast.body.find(
+    (node: any) => node.type === "GTSDefineStatement",
+  );
+  expect(defNode).toBeDefined();
+  expect(defNode!.leadingComments).toBeDefined();
 });

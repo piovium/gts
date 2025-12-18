@@ -12,6 +12,7 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "strict": true,
+    "allowJs": true,
     "skipLibCheck": true,
   },
 }
