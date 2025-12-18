@@ -19,19 +19,20 @@ define character {
   tags hydro, catalyst, mondstadt;
   health 10;
   energy 3;
-  
-  /**
-   * @id 12012
-   * @name 演唱，开始♪
-   * @description
-   * 造成1点水元素伤害，召唤歌声之环。
-   */
-  skill {
-    id 12011 as WhisperOfWater;
-    cost hydro, 3;
-    ^damage(hydro, 1);
-    ^summon(MelodyLoop);
-  }
+  skills WhisperOfWater;
+}
+
+/**
+ * @id 12012
+ * @name 演唱，开始♪
+ * @description
+ * 造成1点水元素伤害，召唤歌声之环。
+ */
+define skill {
+  id 12011 as WhisperOfWater;
+  cost hydro, 3;
+  ^damage(hydro, 1);
+  ^summon(MelodyLoop);
 }
 
 /**

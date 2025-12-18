@@ -21,6 +21,7 @@ export function transpile(ast: Program, sourceInfo: SourceInfo = {}): TranspileR
   const ts = gtsToTs(ast);
   const js = eraseTs(ts);
   const { code, map } = print(js, jsPrinter(), {
+    indent: "  ",
     sourceMapContent: sourceInfo.content,
     sourceMapSource: sourceInfo.filename,
   });

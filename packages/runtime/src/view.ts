@@ -4,7 +4,6 @@ export interface SingleAttributeNode {
   name: string;
   positionals: any[];
   named: NamedAttributesNode | null;
-  binding: Binding | null;
 }
 
 type SingleAttributeViewFactory = () => SingleAttributeNode;
