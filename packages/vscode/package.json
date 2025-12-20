@@ -8,6 +8,7 @@
     "url": "https://github.com/volarjs/starter.git",
     "directory": "packages/vscode"
   },
+  "icon": "./assets/icon.webp",
   "categories": [
     "Programming Languages"
   ],
@@ -26,10 +27,18 @@
     "languages": [
       {
         "id": "gts",
+        "aliases": [
+          "GamingTS",
+          "gts"
+        ],
         "extensions": [
           ".gts"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "dark": "./assets/113161.webp",
+          "light": "./assets/113161.webp"
+        }
       }
     ],
     "grammars": [

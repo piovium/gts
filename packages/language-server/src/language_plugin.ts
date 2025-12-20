@@ -4,9 +4,10 @@ import {
   type LanguagePlugin,
   type VirtualCode,
 } from "@volar/language-core";
-import type { TypeScriptExtraServiceScript } from "@volar/typescript";
 import type * as ts from "typescript";
 import { URI } from "vscode-uri";
+
+import { transpileForVolar } from "@gi-tcg/gts-transpiler";
 
 export const gtsLanguagePlugin: LanguagePlugin<URI> = {
   getLanguageId(uri) {
@@ -23,26 +24,18 @@ export const gtsLanguagePlugin: LanguagePlugin<URI> = {
     extraFileExtensions: [
       {
         extension: "gts",
-        isMixedContent: true,
+        isMixedContent: false,
         scriptKind: 7 satisfies ts.ScriptKind.Deferred,
       },
     ],
-    getServiceScript() {
-      return undefined;
-    },
-    getExtraServiceScripts(fileName, root) {
-      const scripts: TypeScriptExtraServiceScript[] = [];
-      for (const code of forEachEmbeddedCode(root)) {
-        if (code.languageId === "typescript") {
-          scripts.push({
-            fileName: fileName + "." + code.id + ".ts",
-            code,
-            extension: ".ts",
-            scriptKind: 3 satisfies ts.ScriptKind.TS,
-          });
-        }
+    getServiceScript(root) {
+      if (root instanceof GtsVirtualCode) {
+        return {
+          code: root,
+          extension: ".ts",
+          scriptKind: 3 satisfies ts.ScriptKind.TS,
+        };
       }
-      return scripts;
     },
   },
 };
@@ -51,48 +44,35 @@ export class GtsVirtualCode implements VirtualCode {
   id = "root";
   languageId = "gts";
   mappings: CodeMapping[];
-  embeddedCodes: VirtualCode[] = [];
+  snapshot: ts.IScriptSnapshot;
 
-  constructor(public snapshot: ts.IScriptSnapshot) {
-    this.mappings = [
-      {
-        sourceOffsets: [0],
-        generatedOffsets: [0],
-        lengths: [snapshot.getLength()],
-        data: {
-          completion: true,
-          format: true,
-          navigation: true,
-          semantic: true,
-          structure: true,
-          verification: true,
+  constructor(snapshot: ts.IScriptSnapshot) {
+    const source = snapshot.getText(0, snapshot.getLength());
+    try {
+      const { code, mappings } = transpileForVolar(source, "");
+      this.mappings = mappings;
+      this.snapshot = {
+        getLength: () => code.length,
+        getText: (start, end) => code.slice(start, end),
+        getChangeRange: () => void 0,
+      };
+    } catch (e) {
+      console?.log(e);
+      // Create 1:1 mappings for the entire content
+      this.mappings = [
+        {
+          sourceOffsets: [0],
+          generatedOffsets: [0],
+          lengths: [source.length],
+          data: {},
         },
-      },
-    ];
-    this.embeddedCodes = [getGtsEmbeddedCode(snapshot)];
+      ];
+
+      this.snapshot = {
+        getText: (start, end) => source.substring(start, end),
+        getLength: () => source.length,
+        getChangeRange: () => void 0,
+      };
+    }
   }
-}
-
-function getGtsEmbeddedCode(snapshot: ts.IScriptSnapshot): VirtualCode {
-  return {
-    id: "script",
-    languageId: "typescript",
-    snapshot,
-    mappings: [
-      {
-        sourceOffsets: [0],
-        generatedOffsets: [0],
-        lengths: [snapshot.getLength()],
-        data: {
-          completion: true,
-          format: true,
-          navigation: true,
-          semantic: true,
-          structure: true,
-          verification: true,
-        },
-      },
-    ],
-    embeddedCodes: [],
-  };
 }

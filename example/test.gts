@@ -1,4 +1,7 @@
 
+const add = (a: number, b: number) => {
+  return a + b;
+}
 
 /**
  * @id 1201
@@ -44,3 +47,5 @@ define summon {
     ^apply(hydro, query my.active);
   }
 }
+
+
