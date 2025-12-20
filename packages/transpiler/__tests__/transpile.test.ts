@@ -50,7 +50,11 @@ define summon {
 }
 `;
   const parsed = parse(source);
-  const output = transpile(parsed, { content: source, filename: "test.ts" });
+  const output = transpile(
+    parsed,
+    {},
+    { content: source, filename: "test.ts" },
+  );
 
   expect(output.sourceMap?.mappings).toBeDefined();
   expect(output.sourceMap?.sources).toEqual(["test.ts"]);
@@ -61,4 +65,3 @@ define summon {
     `${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`,
   );
 });
-  

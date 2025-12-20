@@ -465,7 +465,12 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
   },
 };
 
-export const gtsToTs = (ast: Program): Program => {
+export interface TranspileOption {
+  runtimeImportSource?: string;
+  providerImportSource?: string;
+}
+
+export const gtsToTs = (ast: Program, option: TranspileOption = {}): Program => {
   const queryExposeId: string[] = ["my", "opp"];
 
   const state: TranspileState = {
@@ -475,8 +480,8 @@ export const gtsToTs = (ast: Program): Program => {
     binderFnId: { type: "Identifier", name: "__gts_Binder" },
     queryFnId: { type: "Identifier", name: "__gts_query" },
 
-    runtimeImportSource: "@gi-tcg/gts-runtime",
-    providerImportSource: "@gi-tcg/gts-provider",
+    runtimeImportSource: option.runtimeImportSource ?? "@gi-tcg/gts-runtime",
+    providerImportSource: option.providerImportSource ?? "@gi-tcg/core/gts",
     queryArg: {
       type: "ObjectPattern",
       properties: queryExposeId.map((name) => ({

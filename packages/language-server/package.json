@@ -1,0 +1,27 @@
+{
+  "name": "@gi-tcg/gts-language-server",
+  "type": "module",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "gts-language-server": "./bin/gts-language-server.js"
+  },
+  "scripts": {
+    "build": "bun build --outdir=dist --target=node --packages=external src/index.js"
+  },
+  "dependencies": {
+    "@gi-tcg/gts-transpiler": "workspace:*",
+    "@volar/language-core": "~2.4.0",
+    "@volar/language-server": "~2.4.0",
+    "@volar/typescript": "~2.4.0",
+    "volar-service-typescript": "volar-2.4",
+    "vscode-html-languageservice": "^5.3.1",
+    "vscode-uri": "^3.0.8"
+  }
+}

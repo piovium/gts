@@ -4,7 +4,7 @@ import { eraseTs } from "./erase_ts";
 import { print } from "esrap";
 import jsPrinter from "esrap/languages/ts";
 import type { SourceMap } from "magic-string";
-import { gtsToTs } from "./gts";
+import { gtsToTs, type TranspileOption } from "./gts";
 
 export interface TranspileResult {
   code: string;
@@ -16,9 +16,12 @@ export interface SourceInfo {
   filename?: string;
 }
 
-export function transpile(ast: Program, sourceInfo: SourceInfo = {}): TranspileResult {
-
-  const ts = gtsToTs(ast);
+export function transpile(
+  ast: Program,
+  option: TranspileOption = {},
+  sourceInfo: SourceInfo = {},
+): TranspileResult {
+  const ts = gtsToTs(ast, option);
   const js = eraseTs(ts);
   const { code, map } = print(js, jsPrinter(), {
     indent: "  ",

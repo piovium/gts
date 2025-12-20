@@ -95,7 +95,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         topLevel?: boolean,
         exports?: AST.ExportSpecifier,
       ) {
-        if (this.gts_isDefineStatement()) {
+        if (topLevel && this.gts_isDefineStatement()) {
           const node = this.startNode() as AST.GTSDefineStatement;
           this.next(); // consume 'define'
           node.body = this.gts_parseNamedAttributeDefinition();
