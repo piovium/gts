@@ -49,3 +49,11 @@ define summon {
 }
 
 
+const sub = (a: number, b: number) => {
+  return a - b;
+}
+
+export const obj = {
+  foo: "bar"
+};
+obj.foo;

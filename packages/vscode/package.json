@@ -20,15 +20,16 @@
     "vscode": "^1.82.0"
   },
   "activationEvents": [
-    "onLanguage:gts"
+    "onLanguage:gaming-ts"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [
       {
-        "id": "gts",
+        "id": "gaming-ts",
         "aliases": [
           "GamingTS",
+          "gaming-ts",
           "gts"
         ],
         "extensions": [
@@ -43,7 +44,7 @@
     ],
     "grammars": [
       {
-        "language": "gts",
+        "language": "gaming-ts",
         "scopeName": "source.gts",
         "path": "./syntaxes/GamingTS.tmLanguage.json"
       }

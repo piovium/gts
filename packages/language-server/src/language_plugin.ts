@@ -12,11 +12,11 @@ import { transpileForVolar } from "@gi-tcg/gts-transpiler";
 export const gtsLanguagePlugin: LanguagePlugin<URI> = {
   getLanguageId(uri) {
     if (uri.path.endsWith(".gts")) {
-      return "gts";
+      return "gaming-ts";
     }
   },
   createVirtualCode(_uri, languageId, snapshot) {
-    if (languageId === "gts") {
+    if (languageId === "gaming-ts") {
       return new GtsVirtualCode(snapshot);
     }
   },
@@ -42,7 +42,7 @@ export const gtsLanguagePlugin: LanguagePlugin<URI> = {
 
 export class GtsVirtualCode implements VirtualCode {
   id = "root";
-  languageId = "gts";
+  languageId = "gaming-ts";
   mappings: CodeMapping[];
   snapshot: ts.IScriptSnapshot;
 
