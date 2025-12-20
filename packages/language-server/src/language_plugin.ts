@@ -29,7 +29,7 @@ export const gtsLanguagePlugin: LanguagePlugin<URI> = {
       },
     ],
     getServiceScript(root) {
-      if (root instanceof GtsVirtualCode) {
+      if (root.languageId === "gaming-ts") {
         return {
           code: root,
           extension: ".ts",

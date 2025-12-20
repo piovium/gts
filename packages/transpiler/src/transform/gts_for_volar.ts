@@ -49,7 +49,10 @@ export function __temp_eraseGts(ast: AST.Program): TranspileResult {
       return { type: "EmptyStatement" };
     },
   });
-  const { code, map } = print(newAst, jsPrinter(), {
+  const { code, map } = print(newAst, jsPrinter({
+    getLeadingComments: (node) => (node as AST.Node).leadingComments,
+    getTrailingComments: (node) => (node as AST.Node).trailingComments,
+  }), {
     indent: "  ",
   });
   return {

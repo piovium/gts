@@ -1,5 +1,6 @@
+import { A } from "./test2.gts"; 
 
-const add = (a: number, b: number) => {
+export const add = (a: number, b: number) => {
   return a + b;
 }
 
