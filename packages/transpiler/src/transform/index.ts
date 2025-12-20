@@ -1,10 +1,10 @@
-import type { Node, Program, EmptyStatement } from "estree";
-import { walk } from "zimmerframe";
+import type { Program } from "estree";
 import { eraseTs } from "./erase_ts";
 import { print } from "esrap";
 import jsPrinter from "esrap/languages/ts";
 import type { SourceMap } from "magic-string";
 import { gtsToTs, type TranspileOption } from "./gts";
+// import type { VolarMappingResult } from "./gts_for_volar";
 
 export interface TranspileResult {
   code: string;
@@ -16,10 +16,10 @@ export interface SourceInfo {
   filename?: string;
 }
 
-export function transpile(
+export function transform(
   ast: Program,
   option: TranspileOption = {},
-  sourceInfo: SourceInfo = {},
+  sourceInfo: SourceInfo = {}
 ): TranspileResult {
   const ts = gtsToTs(ast, option);
   const js = eraseTs(ts);
@@ -33,3 +33,11 @@ export function transpile(
     sourceMap: map,
   };
 }
+
+// export function transformForVolar(
+//   ast: Program,
+//   option: TranspileOption,
+//   sourceInfo: Required<SourceInfo>
+// ): VolarMappingResult {
+
+// }

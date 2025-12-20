@@ -2,7 +2,7 @@ import type { TextDocument } from "vscode-languageserver-textdocument";
 import type { LanguageServiceContext } from "@volar/language-server";
 
 import { URI } from "vscode-uri";
-import { gtsLanguagePlugin, type GtsVirtualCode } from "./languagePlugin";
+import { gtsLanguagePlugin, type GtsVirtualCode } from "./language_plugin";
 
 /**
  * Get virtual code from the encoded document URI

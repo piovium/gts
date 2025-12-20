@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
 import { parse } from "../src/parse";
-import { transpile } from "../src/transform";
+import { transform } from "../src/transform";
 
 test("basic transpile pipeline", () => {
   const source = `
@@ -50,7 +50,7 @@ define summon {
 }
 `;
   const parsed = parse(source);
-  const output = transpile(
+  const output = transform(
     parsed,
     {},
     { content: source, filename: "test.ts" },
