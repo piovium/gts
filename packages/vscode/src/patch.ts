@@ -16,16 +16,16 @@ export async function patchTypeScriptExtension() {
     return { success: false, reason: "alreadyActive" } as const;
   }
 
-  const fs = require("node:fs");
+  const fs: typeof import("node:fs") = require("node:fs");
   const originalReadFileSync = fs.readFileSync;
   const extensionJsPath = require.resolve("./dist/extension.js", {
     paths: [tsExtension.extensionPath],
   });
 
-  function patchedReadFileSync(
-    path: PathOrFileDescriptor,
-    options: (ObjectEncodingOptions & { flag?: string }) | BufferEncoding | null
-  ) {
+  const patchedReadFileSync: typeof originalReadFileSync = (
+    path,
+    options
+  ): any => {
     const hasOptions = typeof options !== "undefined" && options !== null;
     const result: string | Buffer = hasOptions
       ? originalReadFileSync.call(fs, path, options)
@@ -64,13 +64,13 @@ export async function patchTypeScriptExtension() {
       }
     }
     return result;
-  }
+  };
 
   try {
     console.log(
       "[GamingTS] Installing fs.readFileSync hook and activating TypeScript extension..."
     );
-    fs.readFileSync = /** @type {any} */ patchedReadFileSync;
+    fs.readFileSync = patchedReadFileSync;
     await tsExtension.activate();
     console.log("[GamingTS] TypeScript extension activated");
   } catch (error) {

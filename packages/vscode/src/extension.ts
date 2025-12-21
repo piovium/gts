@@ -17,9 +17,7 @@ export async function activate(context: vscode.ExtensionContext) {
   if (!patchResult.success) {
     switch (patchResult.reason) {
       case "missing":
-        console.warn(
-          "[GamingTS] TypeScript extension not found; GamingTS commands will be limited."
-        );
+        console.warn("[GamingTS] TypeScript extension not found");
         break;
       case "alreadyActive":
         console.warn(
@@ -49,14 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
             });
         }
         break;
-      // case "patternMismatch":
-      //   console.warn(
-      //     "[GamingTS] Patch patterns did not match - TypeScript extension internals may have changed."
-      //   );
-      //   break;
     }
-    // } else if (patchResult.reason === 'alreadyPatched') {
-    // 	console.log('[GamingTS] TypeScript extension already supports GamingTS files.');
   } else {
     console.log(
       "[GamingTS] Successfully patched TypeScript extension to recognize GamingTS files."
