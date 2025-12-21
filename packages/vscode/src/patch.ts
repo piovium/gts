@@ -1,84 +1,64 @@
 import * as vscode from "vscode";
-import type { ObjectEncodingOptions, PathOrFileDescriptor } from "node:fs";
 
-export async function patchTypeScriptExtension() {
-  console.log("[GamingTS] Starting TypeScript extension patch...");
-
+export function patchTypeScriptExtension() {
   const tsExtension = vscode.extensions.getExtension(
     "vscode.typescript-language-features"
   );
   if (!tsExtension) {
-    console.warn("[GamingTS] TypeScript extension not found");
-    return { success: false, reason: "missing" } as const;
+    // TS extension not found, nothing to do
+    return true;
   }
-
   if (tsExtension.isActive) {
-    return { success: false, reason: "alreadyActive" } as const;
+    return false;
   }
 
-  const fs: typeof import("node:fs") = require("node:fs");
-  const originalReadFileSync = fs.readFileSync;
+  const fs = require("node:fs");
+  const readFileSync = fs.readFileSync;
   const extensionJsPath = require.resolve("./dist/extension.js", {
     paths: [tsExtension.extensionPath],
   });
 
-  const patchedReadFileSync: typeof originalReadFileSync = (
-    path,
-    options
-  ): any => {
-    const hasOptions = typeof options !== "undefined" && options !== null;
-    const result: string | Buffer = hasOptions
-      ? originalReadFileSync.call(fs, path, options)
-      : originalReadFileSync.call(fs, path);
-    if (path === extensionJsPath) {
-      console.log(
-        "[GamingTS] Intercepted read of TypeScript extension.js, applying patch..."
+  const tsPluginName = "@gi-tcg/gts-typescript-language-service-plugin";
+
+  fs.readFileSync = (...args: any[]) => {
+    if (args[0] === extensionJsPath) {
+      let text = readFileSync(...args) as string;
+
+      // patch jsTsLanguageModes
+      text = text.replace(
+        "t.jsTsLanguageModes=[t.javascript,t.javascriptreact,t.typescript,t.typescriptreact]",
+        (s) => s + '.concat("gaming-ts")'
       );
-      const text =
-        typeof result === "string" ? result : result.toString("utf8");
+      // patch isSupportedLanguageMode
+      text = text.replace(
+        ".languages.match([t.typescript,t.typescriptreact,t.javascript,t.javascriptreact]",
+        (s) => s + '.concat("gaming-ts")'
+      );
+      // patch isTypeScriptDocument
+      text = text.replace(
+        ".languages.match([t.typescript,t.typescriptreact]",
+        (s) => s + '.concat("gaming-ts")'
+      );
 
-      // Patch the TypeScript extension to recognize GamingTS files
-      let patched = text
-        .replace(
-          "t.jsTsLanguageModes=[t.javascript,t.javascriptreact,t.typescript,t.typescriptreact]",
-          (s) => s + '.concat("gaming-ts")'
-        )
-        .replace(
-          ".languages.match([t.typescript,t.typescriptreact,t.javascript,t.javascriptreact]",
-          (s) => s + '.concat("gaming-ts")'
-        )
-        .replace(
-          ".languages.match([t.typescript,t.typescriptreact]",
-          (s) => s + '.concat("gaming-ts")'
-        );
+      // sort plugins
+      text = text.replace(
+        '"--globalPlugins",i.plugins',
+        (s) =>
+          s +
+          `.sort((a,b)=>(b.name==="${tsPluginName}"?-1:0)-(a.name==="${tsPluginName}"?-1:0))`
+      );
 
-      if (patched !== text) {
-        console.log("[GamingTS] Successfully patched TypeScript extension");
-        return typeof result === "string"
-          ? patched
-          : Buffer.from(patched, "utf8");
-      } else {
-        console.warn(
-          "[GamingTS] TypeScript extension patterns did not match - may already be patched or structure changed"
-        );
-      }
+      return text;
     }
-    return result;
+    return readFileSync(...args);
   };
 
-  try {
-    console.log(
-      "[GamingTS] Installing fs.readFileSync hook and activating TypeScript extension..."
-    );
-    fs.readFileSync = patchedReadFileSync;
-    await tsExtension.activate();
-    console.log("[GamingTS] TypeScript extension activated");
-  } catch (error) {
-    console.error("[GamingTS] Failed to activate TypeScript extension:", error);
-  } finally {
-    fs.readFileSync = originalReadFileSync;
-    console.log("[GamingTS] fs.readFileSync hook removed");
+  const loadedModule = require.cache[extensionJsPath];
+  if (loadedModule) {
+    delete require.cache[extensionJsPath];
+    const patchedModule = require(extensionJsPath);
+    Object.assign(loadedModule.exports, patchedModule);
   }
-
-  return { success: true, reason: "patched" } as const;
+  console?.log("[GamingTS] Patched TypeScript extension");
+  return true;
 }

@@ -12,46 +12,33 @@ import { patchTypeScriptExtension } from "./patch";
 
 let client: BaseLanguageClient;
 
+const shouldRestart = !patchTypeScriptExtension();
+
 export async function activate(context: vscode.ExtensionContext) {
-  const patchResult = await patchTypeScriptExtension();
-  if (!patchResult.success) {
-    switch (patchResult.reason) {
-      case "missing":
-        console.warn("[GamingTS] TypeScript extension not found");
-        break;
-      case "alreadyActive":
-        console.warn(
-          "[GamingTS] TypeScript extension already active - patch skipped"
-        );
-        // Check if we've already prompted for reload in this session
-        const hasPromptedReload = context.globalState.get(
-          "GamingTS.hasPromptedReload",
-          false
-        );
-        if (!hasPromptedReload) {
-          // Mark that we've prompted to avoid repeated prompts
-          await context.globalState.update("GamingTS.hasPromptedReload", true);
-          // Prompt user to restart extension host for full TypeScript integration
-          vscode.window
-            .showInformationMessage(
-              "GamingTS extension needs to restart extensions to enable full TypeScript integration.",
-              "Restart Extensions",
-              "Later"
-            )
-            .then((selection) => {
-              if (selection === "Restart Extensions") {
-                vscode.commands.executeCommand(
-                  "workbench.action.restartExtensionHost"
-                );
-              }
-            });
-        }
-        break;
-    }
-  } else {
-    console.log(
-      "[GamingTS] Successfully patched TypeScript extension to recognize GamingTS files."
+  if (shouldRestart) {
+    // Check if we've already prompted for reload in this session
+    const hasPromptedReload = context.globalState.get(
+      "GamingTS.hasPromptedReload",
+      false
     );
+    if (!hasPromptedReload) {
+      // Mark that we've prompted to avoid repeated prompts
+      await context.globalState.update("GamingTS.hasPromptedReload", true);
+      // Prompt user to restart extension host for full TypeScript integration
+      vscode.window
+        .showInformationMessage(
+          "GamingTS extension needs to restart extensions to enable full TypeScript integration.",
+          "Restart Extensions",
+          "Later"
+        )
+        .then((selection) => {
+          if (selection === "Restart Extensions") {
+            vscode.commands.executeCommand(
+              "workbench.action.restartExtensionHost"
+            );
+          }
+        });
+    }
   }
 
   const serverModule = vscode.Uri.joinPath(

@@ -1,2 +1,2 @@
-import * as MyLang from "./test.gts";
+import { obj } from "./test.gts";
 
