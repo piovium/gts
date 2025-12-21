@@ -17,11 +17,9 @@
   },
   "dependencies": {
     "@gi-tcg/gts-transpiler": "workspace:*",
-    "@volar/language-core": "~2.4.0",
+    "@gi-tcg/gts-language-plugin": "workspace:*",
     "@volar/language-server": "~2.4.0",
-    "@volar/typescript": "~2.4.0",
     "volar-service-typescript": "volar-2.4",
-    "vscode-html-languageservice": "^5.3.1",
     "vscode-uri": "^3.0.8"
   }
 }

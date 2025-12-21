@@ -1,0 +1,18 @@
+{
+  "name": "@gi-tcg/gts-language-plugin",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "bun": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@gi-tcg/gts-transpiler": "workspace:*",
+    "@volar/language-core": "~2.4.0",
+    "@volar/typescript": "~2.4.0",
+    "vscode-uri": "^3.0.8"
+  }
+}

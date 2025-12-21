@@ -48,6 +48,13 @@
         "scopeName": "source.gts",
         "path": "./syntaxes/GamingTS.tmLanguage.json"
       }
+    ],
+    "typescriptServerPlugins": [
+      {
+        "name": "@gi-tcg/gts-typescript-language-service-plugin",
+        "enableForWorkspaceTypeScriptVersions": true,
+        "languages": []
+      }
     ]
   },
   "scripts": {
@@ -55,6 +62,9 @@
     "watch": "npm run build -- --watch",
     "pack": "npm run build && vsce package --pre-release",
     "release": "npm run build && vsce publish --pre-release"
+  },
+  "dependencies": {
+    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*"
   },
   "devDependencies": {
     "@gi-tcg/gts-language-server": "workspace:*",

@@ -7,6 +7,16 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/language-plugin": {
+      "name": "@gi-tcg/gts-language-plugin",
+      "version": "0.1.0",
+      "dependencies": {
+        "@gi-tcg/gts-transpiler": "workspace:*",
+        "@volar/language-core": "~2.4.0",
+        "@volar/typescript": "~2.4.0",
+        "vscode-uri": "^3.0.8",
+      },
+    },
     "packages/language-server": {
       "name": "@gi-tcg/gts-language-server",
       "version": "0.0.1",
@@ -14,12 +24,10 @@
         "gts-language-server": "./bin/gts-language-server.js",
       },
       "dependencies": {
+        "@gi-tcg/gts-language-plugin": "workspace:*",
         "@gi-tcg/gts-transpiler": "workspace:*",
-        "@volar/language-core": "~2.4.0",
         "@volar/language-server": "~2.4.0",
-        "@volar/typescript": "~2.4.0",
         "volar-service-typescript": "volar-2.4",
-        "vscode-html-languageservice": "^5.3.1",
         "vscode-uri": "^3.0.8",
       },
     },
@@ -44,9 +52,20 @@
         "@volar/language-core": "^2.4.27",
       },
     },
+    "packages/typescript-language-service-plugin": {
+      "name": "@gi-tcg/gts-typescript-language-service-plugin",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@gi-tcg/gts-language-plugin": "workspace:*",
+        "@volar/typescript": "~2.4.0",
+      },
+    },
     "packages/vscode": {
       "name": "gts-vscode",
       "version": "0.0.1",
+      "dependencies": {
+        "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*",
+      },
       "devDependencies": {
         "@gi-tcg/gts-language-server": "workspace:*",
         "@types/vscode": "^1.82.0",
@@ -58,11 +77,15 @@
     },
   },
   "packages": {
+    "@gi-tcg/gts-language-plugin": ["@gi-tcg/gts-language-plugin@workspace:packages/language-plugin"],
+
     "@gi-tcg/gts-language-server": ["@gi-tcg/gts-language-server@workspace:packages/language-server"],
 
     "@gi-tcg/gts-runtime": ["@gi-tcg/gts-runtime@workspace:packages/runtime"],
 
     "@gi-tcg/gts-transpiler": ["@gi-tcg/gts-transpiler@workspace:packages/transpiler"],
+
+    "@gi-tcg/gts-typescript-language-service-plugin": ["@gi-tcg/gts-typescript-language-service-plugin@workspace:packages/typescript-language-service-plugin"],
 
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
@@ -87,8 +110,6 @@
     "@volar/typescript": ["@volar/typescript@2.4.27", "", { "dependencies": { "@volar/language-core": "2.4.27", "path-browserify": "^1.0.1", "vscode-uri": "^3.0.8" } }, "sha512-eWaYCcl/uAPInSK2Lze6IqVWaBu/itVqR5InXcHXFyles4zO++Mglt3oxdgj75BDcv1Knr9Y93nowS8U3wqhxg=="],
 
     "@volar/vscode": ["@volar/vscode@2.4.27", "", { "dependencies": { "path-browserify": "^1.0.1", "vscode-languageclient": "^9.0.1", "vscode-nls": "^5.2.0" } }, "sha512-E0ImlGes0QhvbBLf8GzoDWjfTO+ZsBfXHpPDeDjfVzjxNVQ0f8IGWd4+6kuQtObaS538/9fWyJLjUFh+hAwN1A=="],
-
-    "@vscode/l10n": ["@vscode/l10n@0.0.18", "", {}, "sha512-KYSIHVmslkaCDyw013pphY+d7x1qV8IZupYfeIfzNA+nsaWHbn5uPuQRvdRFsa9zFzGeudPuoGoZ1Op4jrJXIQ=="],
 
     "acorn": ["acorn@8.15.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
 
@@ -339,8 +360,6 @@
     "volar-service-typescript": ["volar-service-typescript@0.0.68", "", { "dependencies": { "path-browserify": "^1.0.1", "semver": "^7.6.2", "typescript-auto-import-cache": "^0.3.5", "vscode-languageserver-textdocument": "^1.0.11", "vscode-nls": "^5.2.0", "vscode-uri": "^3.0.8" }, "peerDependencies": { "@volar/language-service": "~2.4.0" }, "optionalPeers": ["@volar/language-service"] }, "sha512-z7B/7CnJ0+TWWFp/gh2r5/QwMObHNDiQiv4C9pTBNI2Wxuwymd4bjEORzrJ/hJ5Yd5+OzeYK+nFCKevoGEEeKw=="],
 
     "vsce": ["vsce@2.15.0", "", { "dependencies": { "azure-devops-node-api": "^11.0.1", "chalk": "^2.4.2", "cheerio": "^1.0.0-rc.9", "commander": "^6.1.0", "glob": "^7.0.6", "hosted-git-info": "^4.0.2", "keytar": "^7.7.0", "leven": "^3.1.0", "markdown-it": "^12.3.2", "mime": "^1.3.4", "minimatch": "^3.0.3", "parse-semver": "^1.1.1", "read": "^1.0.7", "semver": "^5.1.0", "tmp": "^0.2.1", "typed-rest-client": "^1.8.4", "url-join": "^4.0.1", "xml2js": "^0.4.23", "yauzl": "^2.3.1", "yazl": "^2.2.2" }, "bin": { "vsce": "vsce" } }, "sha512-P8E9LAZvBCQnoGoizw65JfGvyMqNGlHdlUXD1VAuxtvYAaHBKLBdKPnpy60XKVDAkQCfmMu53g+gq9FM+ydepw=="],
-
-    "vscode-html-languageservice": ["vscode-html-languageservice@5.6.1", "", { "dependencies": { "@vscode/l10n": "^0.0.18", "vscode-languageserver-textdocument": "^1.0.12", "vscode-languageserver-types": "^3.17.5", "vscode-uri": "^3.1.0" } }, "sha512-5Mrqy5CLfFZUgkyhNZLA1Ye5g12Cb/v6VM7SxUzZUaRKWMDz4md+y26PrfRTSU0/eQAl3XpO9m2og+GGtDMuaA=="],
 
     "vscode-jsonrpc": ["vscode-jsonrpc@8.2.0", "", {}, "sha512-C+r0eKJUIfiDIfwJhria30+TYWPtuHJXHtI7J0YlOmKAo7ogxP20T0zxB7HZQIFhIyvoBPwWskjxrvAtfjyZfA=="],
 

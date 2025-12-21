@@ -1,0 +1,13 @@
+{
+  "name": "@gi-tcg/gts-typescript-language-service-plugin",
+  "version": "0.1.1",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "bun build --outdir=dist --target=node --format=cjs --conditions='bun' src/index.cts"
+  },
+  "devDependencies": {
+    "@volar/typescript": "~2.4.0",
+    "@gi-tcg/gts-language-plugin": "workspace:*"
+  }
+}

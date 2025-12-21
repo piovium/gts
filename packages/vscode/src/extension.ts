@@ -8,10 +8,61 @@ import {
   TransportKind,
 } from "@volar/vscode/node";
 import * as vscode from "vscode";
+import { patchTypeScriptExtension } from "./patch";
 
 let client: BaseLanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
+  const patchResult = await patchTypeScriptExtension();
+  if (!patchResult.success) {
+    switch (patchResult.reason) {
+      case "missing":
+        console.warn(
+          "[GamingTS] TypeScript extension not found; GamingTS commands will be limited."
+        );
+        break;
+      case "alreadyActive":
+        console.warn(
+          "[GamingTS] TypeScript extension already active - patch skipped"
+        );
+        // Check if we've already prompted for reload in this session
+        const hasPromptedReload = context.globalState.get(
+          "GamingTS.hasPromptedReload",
+          false
+        );
+        if (!hasPromptedReload) {
+          // Mark that we've prompted to avoid repeated prompts
+          await context.globalState.update("GamingTS.hasPromptedReload", true);
+          // Prompt user to restart extension host for full TypeScript integration
+          vscode.window
+            .showInformationMessage(
+              "GamingTS extension needs to restart extensions to enable full TypeScript integration.",
+              "Restart Extensions",
+              "Later"
+            )
+            .then((selection) => {
+              if (selection === "Restart Extensions") {
+                vscode.commands.executeCommand(
+                  "workbench.action.restartExtensionHost"
+                );
+              }
+            });
+        }
+        break;
+      // case "patternMismatch":
+      //   console.warn(
+      //     "[GamingTS] Patch patterns did not match - TypeScript extension internals may have changed."
+      //   );
+      //   break;
+    }
+    // } else if (patchResult.reason === 'alreadyPatched') {
+    // 	console.log('[GamingTS] TypeScript extension already supports GamingTS files.');
+  } else {
+    console.log(
+      "[GamingTS] Successfully patched TypeScript extension to recognize GamingTS files."
+    );
+  }
+
   const serverModule = vscode.Uri.joinPath(
     context.extensionUri,
     "dist",

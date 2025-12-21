@@ -1,44 +1,9 @@
+import { transpileForVolar } from "@gi-tcg/gts-transpiler";
 import {
   type CodeMapping,
-  forEachEmbeddedCode,
-  type LanguagePlugin,
   type VirtualCode,
 } from "@volar/language-core";
 import type * as ts from "typescript";
-import { URI } from "vscode-uri";
-
-import { transpileForVolar } from "@gi-tcg/gts-transpiler";
-
-export const gtsLanguagePlugin: LanguagePlugin<URI> = {
-  getLanguageId(uri) {
-    if (uri.path.endsWith(".gts")) {
-      return "gaming-ts";
-    }
-  },
-  createVirtualCode(_uri, languageId, snapshot) {
-    if (languageId === "gaming-ts") {
-      return new GtsVirtualCode(snapshot);
-    }
-  },
-  typescript: {
-    extraFileExtensions: [
-      {
-        extension: "gts",
-        isMixedContent: false,
-        scriptKind: 7 satisfies ts.ScriptKind.Deferred,
-      },
-    ],
-    getServiceScript(root) {
-      if (root.languageId === "gaming-ts") {
-        return {
-          code: root,
-          extension: ".ts",
-          scriptKind: 3 satisfies ts.ScriptKind.TS,
-        };
-      }
-    },
-  },
-};
 
 export class GtsVirtualCode implements VirtualCode {
   id = "root";

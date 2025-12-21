@@ -6,9 +6,7 @@ import {
   loadTsdkByPath,
 } from "@volar/language-server/node";
 import { create as createTypeScriptServices } from "volar-service-typescript";
-import { URI } from "vscode-uri";
-import { gtsLanguagePlugin, GtsVirtualCode } from "./language_plugin";
-import { createDocumentHighlightPlugin } from "./document_highlight";
+import { gtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 
 const connection = createConnection();
 const server = createServer(connection);
