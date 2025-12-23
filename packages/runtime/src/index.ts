@@ -117,7 +117,8 @@ function defineViewModel<
 
 interface AttributeDefinition {
   (...args: any[]): AttributePositionalReturnBase;
-  as?(innerMeta?: any): any;
+  as?(): any;
+  required?(): boolean;
 }
 
 interface AttributePositionalReturnBase {
@@ -185,6 +186,7 @@ const CharacterVM = defineViewModel(
     }>((model, [name]) => {}),
     id: helper.attribute<{
       (id: number): AttributePositionalReturnBase;
+      required(): true;
       as<TMeta extends BuilderMeta>(this: AR.This<TMeta>): CharacterHandle<TMeta["vars"]>;
     }>((model, [id]) => {
       // model.setId(id);
@@ -202,6 +204,7 @@ const CharacterVM = defineViewModel(
           vars: TMeta["vars"] | TVarName;
         }
       >;
+      required<TMeta extends BuilderMeta>(this: AR.This<TMeta>): TMeta["vars"] extends never ? true : false;
     }>(() => {}),
 
     skill: helper.attribute<{
@@ -295,4 +298,9 @@ function test() {
   /****/});
   /****/type Return3_2 = typeof return3_2;
 
+  type Obj3 = typeof obj0;
+
+  type RequiredProperties = {
+    [K in keyof Obj3]: Obj3[K] extends { required(this: Obj3): true } ? K : never
+  }[keyof VMDef];
 }
