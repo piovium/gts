@@ -31,6 +31,7 @@ interface TranspileState {
   readonly createDefineFnId: Identifier;
   readonly actionSymbolId: Identifier;
   readonly fnArgId: Identifier;
+  readonly rootVmId: Identifier;
   readonly binderFnId: Identifier;
   readonly queryFnId: Identifier;
 
@@ -132,8 +133,8 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
                   },
                 ]
               : [internalDecl, externalDecl];
-          },
-        ),
+          }
+        )
       );
     }
     if (state.hasQueryExpressions) {
@@ -202,7 +203,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
           ...state.createDefineFnId,
           loc: node.loc,
         },
-        arguments: [wrapper],
+        arguments: [state.rootVmId, wrapper],
       },
       loc: node.loc,
     };
@@ -245,7 +246,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       if (node.bindingAccessModifier === "protected") {
         throw new GtsTranspilerError(
           "Protected bindings are not supported in this context.",
-          node.loc ?? null,
+          node.loc ?? null
         );
       }
       const export_ = node.bindingAccessModifier !== "private";
@@ -404,7 +405,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
   },
   GTSShortcutFunctionExpression(
     node,
-    { visit, state },
+    { visit, state }
   ): ArrowFunctionExpression {
     return {
       type: "ArrowFunctionExpression",
@@ -470,13 +471,17 @@ export interface TranspileOption {
   providerImportSource?: string;
 }
 
-export const gtsToTs = (ast: Program, option: TranspileOption = {}): Program => {
+export const gtsToTs = (
+  ast: Program,
+  option: TranspileOption = {}
+): Program => {
   const queryExposeId: string[] = ["my", "opp"];
 
   const state: TranspileState = {
     createDefineFnId: { type: "Identifier", name: "__gts_createDefine" },
     actionSymbolId: { type: "Identifier", name: "__gts_ActionSymbol" },
     fnArgId: { type: "Identifier", name: "__gts_fnArg" },
+    rootVmId: { type: "Identifier", name: "__gts_rootVm" },
     binderFnId: { type: "Identifier", name: "__gts_Binder" },
     queryFnId: { type: "Identifier", name: "__gts_query" },
 

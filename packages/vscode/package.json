@@ -55,6 +55,18 @@
         "enableForWorkspaceTypeScriptVersions": true,
         "languages": []
       }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "tsconfig.json",
+          "tsconfig.*.json",
+          "tsconfig-*.json",
+          "jsconfig.json",
+          "jsconfig.*.json"
+        ],
+        "url": "./tsconfig-extra.schema.json"
+      }
     ]
   },
   "scripts": {

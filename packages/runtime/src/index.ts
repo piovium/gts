@@ -26,7 +26,7 @@ export interface IViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT;
 }
 
-export class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
+class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
   implements IViewModel<ModelT, BlockDef>
 {
   declare [NamedDefinition]: BlockDef;
@@ -99,7 +99,7 @@ class AttributeDefHelper<ModelT> {
   }
 }
 
-function defineViewModel<
+export function defineViewModel<
   T,
   const BlockDef extends Record<string, AttributeDefinition>,
   InitMeta = void,
@@ -132,7 +132,7 @@ type MetaSymbol = typeof MetaSymbol;
 export const ActionSymbol: unique symbol = Symbol("Action");
 export type ActionSymbol = typeof ActionSymbol;
 
-namespace AttributeReturn {
+export namespace AttributeReturn {
   export type This<Meta = any> = {
     [MetaSymbol]: Meta;
   };
@@ -154,7 +154,7 @@ namespace AttributeReturn {
   };
 }
 
-type AttributeAction<Model, T extends AttributeDefinition, BindingT> = (
+export type AttributeAction<Model, T extends AttributeDefinition, BindingT> = (
   model: Model,
   positional: Parameters<T>,
   named: View<
@@ -163,144 +163,3 @@ type AttributeAction<Model, T extends AttributeDefinition, BindingT> = (
       : { [MetaSymbol]: void }
   >,
 ) => BindingT;
-
-// Example usage:
-
-class CharacterBuilder {
-  addSkill(skill: CharacterSkillBuilder) {}
-}
-
-type CharacterHandle<VarNames extends string> = number & { readonly _character: unique symbol, readonly varNames: VarNames };
-
-type BuilderMeta = {
-  vars: string;
-};
-
-import AR = AttributeReturn;
-
-const CharacterVM = defineViewModel(
-  CharacterBuilder,
-  (helper) => ({
-    name: helper.attribute<{
-      (name: string): AR.Done;
-    }>((model, [name]) => {}),
-    id: helper.attribute<{
-      (id: number): AttributePositionalReturnBase;
-      required(): true;
-      as<TMeta extends BuilderMeta>(this: AR.This<TMeta>): CharacterHandle<TMeta["vars"]>;
-    }>((model, [id]) => {
-      // model.setId(id);
-      return id as CharacterHandle<any>;
-    }),
-
-    variable: helper.attribute<{
-      <TMeta extends BuilderMeta, const TVarName extends string>(
-        this: AR.This<TMeta>,
-        variable: TVarName,
-        initialValue: number,
-      ): AR.WithRewriteMeta<
-        typeof VariableVM,
-        {
-          vars: TMeta["vars"] | TVarName;
-        }
-      >;
-      required<TMeta extends BuilderMeta>(this: AR.This<TMeta>): TMeta["vars"] extends never ? true : false;
-    }>(() => {}),
-
-    skill: helper.attribute<{
-      <TMeta extends BuilderMeta>(this: AR.This<TMeta>): AR.With<
-        typeof CharacterSkillVM,
-        TMeta
-      >;
-    }>((model, _, named) => {
-      const skill = CharacterSkillVM.parse(named);
-      model.addSkill(skill);
-    }),
-  }),
-  <{ vars: never }>{},
-);
-
-class CharacterSkillBuilder {}
-
-interface SkillContext<TMeta extends BuilderMeta> {
-  getVariable<TVarName extends TMeta["vars"]>(name: TVarName): number;
-}
-
-type SkillAction<TMeta extends BuilderMeta> = (
-  ctx: SkillContext<TMeta>,
-) => void;
-
-const CharacterSkillVM = defineViewModel(
-  CharacterSkillBuilder,
-  (helper) => ({
-    cost: helper.attribute<{
-      (element: string, amount: number): AttributePositionalReturnBase;
-    }>((model, [element, amount]) => {}),
-    [ActionSymbol]: helper.attribute<{
-      <TMeta extends BuilderMeta>(
-        this: AR.This<TMeta>,
-        action: SkillAction<TMeta>,
-      ): AR.Done;
-    }>((model, [action]) => {}),
-  }),
-  <{ vars: never }>{},
-);
-
-class VariableBuilder {}
-
-const VariableVM = defineViewModel(VariableBuilder, (helper) => ({}));
-
-// Testing TS virtual scode
-
-// prettier-ignore
-function test() {
-  const Abc: Binding1 = (void 0)!;
-
-  type VMDef = (typeof CharacterVM)[NamedDefinition];
-
-  type Meta0 = VMDef[MetaSymbol];
-
-  let obj0!: { [MetaSymbol]: Meta0 } & Omit<VMDef, MetaSymbol>;
-
-  let return0 = obj0.id(123);
-  type Return0 = typeof return0;
-  type Meta1 = Return0 extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : Meta0;
-  let obj1!: { [MetaSymbol]: Meta1 } & Omit<VMDef, MetaSymbol>;
-  type AsType1 = typeof obj0.id extends { as: infer As } ? As : unknown;
-  let inferBindingObj1 = { [MetaSymbol]: obj1[MetaSymbol], as: void 0 as any as AsType1 };
-  let binding1 = inferBindingObj1.as();
-  type Binding1 = typeof binding1;
-
-  let return1 = obj1.variable("health", 10);
-  type Return1 = typeof return1;
-  type Meta2 = Return1["rewriteMeta"] extends undefined ? Meta1 : Return1["rewriteMeta"];
-  let obj2!: { [MetaSymbol]: Meta2 } & Omit<VMDef, MetaSymbol>;
-  let inferBindingObj2 = "as" in obj1.variable ? { ...obj2, as: obj1.variable.as }: obj2;
-
-  let return2 = obj2.variable("stamina", 5);
-  type Return2 = typeof return2;
-  type Meta3 = Return2["rewriteMeta"] extends undefined ? Meta2 : Return2["rewriteMeta"];
-  let obj3!: { [MetaSymbol]: Meta3 } & Omit<VMDef, MetaSymbol>;
-
-  let return3 = obj3.skill();
-  type Return3 = typeof return3;
-
-  /****/type VMDef3 = Return3 extends { namedDefinition: infer Def } ? Def : {};
-  /****/type Meta3_1 = VMDef3[MetaSymbol];
-  /****/let obj3_1!: { [MetaSymbol]: Meta3_1 } & Omit<VMDef3, MetaSymbol>;
-  /****/let return3_1 = obj3_1.cost("mana", 20);
-  /****/type Return3_1 = typeof return3_1;
-
-  /****/type Meta3_2 = Return3_1 extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : Meta3_1;
-  /****/let obj3_2!: { [MetaSymbol]: Meta3_2 } & Omit<VMDef3, MetaSymbol>;
-  /****/let return3_2 = obj3_2[ActionSymbol]((arg) => {
-  /****/  let v0 = arg.getVariable("health");
-  /****/});
-  /****/type Return3_2 = typeof return3_2;
-
-  type Obj3 = typeof obj0;
-
-  type RequiredProperties = {
-    [K in keyof Obj3]: Obj3[K] extends { required(this: Obj3): true } ? K : never
-  }[keyof VMDef];
-}

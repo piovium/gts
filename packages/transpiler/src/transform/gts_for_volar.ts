@@ -45,7 +45,7 @@ interface SourceMap {
 
 export function __temp_eraseGts(ast: AST.Program): TranspileResult {
   const newAst = walk(ast as AST.Node, null, {
-    GTSDefineStatement(node: AST.GTSDefineStatement) {
+    GTSDefineStatement(node) {
       return { type: "EmptyStatement" };
     },
   });

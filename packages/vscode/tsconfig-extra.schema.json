@@ -1,0 +1,19 @@
+{
+  "properties": {
+    "gamingTs": {
+      "title": "GamingTS language server options",
+      "type": "object",
+      "properties": {
+        "runtimeImportSource": {
+          "type": "string",
+          "default": "@gi-tcg/gts-runtime"
+        },
+        "providerImportSource": {
+          "type": "string",
+          "default": "@gi-tcg/core/gts",
+          "description": "Where to import semantic providers, including `rootVM`, `binder` and `query`."
+        }
+      }
+    }
+  }
+}
