@@ -1,4 +1,4 @@
-import type { AttributeBlockDefinition, ViewModel } from "./index";
+import type { AttributeBlockDefinition, ViewModel } from "./view_model";
 
 export interface SingleAttributeNode {
   name: string;
@@ -28,12 +28,13 @@ export class View<BlockDef extends AttributeBlockDefinition> {
 
   constructor(
     public _node: NamedAttributesNode,
-    public _addBinding: (binding: BindingValue) => void,
+    public _addBinding: (binding: BindingValue) => void
   ) {}
 }
+
 export function defineAttribute(
   rootVM: ViewModel<any, any>,
-  factory: SingleAttributeViewFactory,
+  factory: SingleAttributeViewFactory
 ): Bindings {
   const bindings: BindingValue[] = [];
   const view = new View<any>({ attributes: [factory] }, (binding) => {
