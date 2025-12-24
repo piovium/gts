@@ -37,8 +37,8 @@
         ],
         "configuration": "./language-configuration.json",
         "icon": {
-          "dark": "./assets/113161.webp",
-          "light": "./assets/113161.webp"
+          "dark": "./assets/file_type_gts.svg",
+          "light": "./assets/file_type_gts.svg"
         }
       }
     ],
