@@ -4,7 +4,7 @@ import { print } from "esrap";
 import jsPrinter from "esrap/languages/ts";
 import type { SourceMap } from "magic-string";
 import { gtsToTs, type TranspileOption } from "./gts";
-import { __temp_eraseGts, convertToVolarMappings } from "./gts_for_volar";
+import { gtsToTypings, convertToVolarMappings } from "./gts_for_volar";
 import type { VolarMappingResult } from "./gts_for_volar";
 
 export interface TranspileResult {
@@ -40,7 +40,7 @@ export function transformForVolar(
   option: TranspileOption,
   sourceInfo: Required<SourceInfo>
 ): VolarMappingResult {
-  const { code, sourceMap } = __temp_eraseGts(ast);
+  const { code, sourceMap } = gtsToTypings(ast);
   const volarMappings = convertToVolarMappings(
     code,
     sourceInfo.content,
@@ -50,5 +50,4 @@ export function transformForVolar(
     code,
     mappings: volarMappings,
   };
-
 }

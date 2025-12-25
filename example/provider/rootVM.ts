@@ -93,6 +93,18 @@ class VariableBuilder {}
 
 const VariableVM = defineViewModel(VariableBuilder, (helper) => ({}));
 
+class RootBuilder {}
+
+export default defineViewModel(RootBuilder, (helper) => ({
+  character: helper.attribute<{
+    (): AR.With<typeof CharacterVM, { vars: never }>;
+  }>((model, _, named) => {
+    const character = CharacterVM.parse(named);
+    // model.addCharacter(character);
+    return character;
+  }),
+}));
+
 // Binding region
 
 const Abc: Binding1 = (void 0)!;
@@ -169,15 +181,19 @@ type Obj3 = typeof obj0;
 let finalObj = obj3;
 type FinalObj = typeof finalObj;
 type RequiredProperties = {
-  [K in keyof FinalObj]: FinalObj[K] extends { required(this: FinalObj): true } ? K : never;
+  [K in keyof FinalObj]: FinalObj[K] extends { required(this: FinalObj): true }
+    ? K
+    : never;
 }[keyof VMDef];
 
 declare namespace __A {
-type CollectedPropertyOfCharacterVM = {
-  id: 0,
-};
-type RequiredPropertyOfCharacterVM = {
-  [K in RequiredProperties]: 0;
-};
+  type CollectedPropertyOfCharacterVM = {
+    id: 0;
+  };
+  type RequiredPropertyOfCharacterVM = {
+    [K in RequiredProperties]: 0;
+  };
 }
-const check = ((_: __A.RequiredPropertyOfCharacterVM) => 0)({} as __A.CollectedPropertyOfCharacterVM);
+const check = ((_: __A.RequiredPropertyOfCharacterVM) => 0)(
+  {} as __A.CollectedPropertyOfCharacterVM
+);
