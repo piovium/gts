@@ -33,6 +33,7 @@ import { GtsTranspilerError } from "../error";
 import {
   commonGtsVisitor,
   initialTranspileState,
+  type TranspileOption,
   type TranspileState,
 } from "./gts";
 
@@ -71,7 +72,7 @@ interface SourceMap {
 
 export interface TypingTranspileState extends TranspileState {
   idCounter: number;
-  currentVmName: string | null;
+  vmNameStack: string[];
   /** Pending statements to be inserted to the top-level */
   pendingStatements: Statement[];
 }
@@ -80,6 +81,52 @@ const EMPTY: EmptyStatement = { type: "EmptyStatement" };
 
 const ANY = {
   type: "TSAnyKeyword",
+};
+
+const enterVM = (state: TypingTranspileState, vmId: string): string => {
+  const vmName = `__gts_vm_${state.idCounter++}`;
+  state.vmNameStack.push(vmName);
+  let lhsObjTypeId: Identifier = {
+    type: "Identifier",
+    name: `${vmName}__objType`,
+  };
+  let lhsObjId = {
+    type: "Identifier",
+    name: `${vmName}__obj`,
+    typeAnnotation: {
+      type: "TSTypeAnnotation",
+      typeAnnotation: {
+        type: "TSTypeReference",
+        typeName: lhsObjTypeId,
+      },
+    },
+  } as Identifier;
+  state.pendingStatements.push({
+    type: "TSTypeAliasDeclaration",
+    id: lhsObjTypeId,
+    typeAnnotation: ANY, // TODO
+  } as any);
+  state.pendingStatements.push({
+    type: "VariableDeclaration",
+    kind: "let",
+    declarations: [
+      {
+        type: "VariableDeclarator",
+        id: lhsObjId,
+        // definite not supported by esrap yet
+        // https://github.com/sveltejs/esrap/issues/95
+        init: {
+          type: "TSAsExpression",
+          expression: { type: "Literal", value: 0 },
+          typeAnnotation: ANY,
+        } as {} as Expression,
+      },
+    ],
+  });
+  return vmName;
+};
+const exitVM = (state: TypingTranspileState) => {
+  state.vmNameStack.pop();
 };
 
 const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
@@ -200,43 +247,64 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     };
   },
   GTSDefineStatement(node, { state, visit }) {
-    state.currentVmName = `__gts_vm_${state.idCounter++}`;
-    let lhsObjTypeId: Identifier = {
-      type: "Identifier",
-      name: `${state.currentVmName}__objType`,
-    };
-    let lhsObjId: Identifier = {
-      type: "Identifier",
-      name: `${state.currentVmName}__obj`,
-    };
-    state.pendingStatements.push({
-      type: "TSTypeAliasDeclaration",
-      id: lhsObjTypeId,
-      typeAnnotation: ANY,
-    } as any);
-    state.pendingStatements.push({
-      type: "VariableDeclaration",
-      kind: "let",
-      declarations: [
-        {
-          type: "VariableDeclarator",
-          id: lhsObjId,
-          typeAnnotation: {
-            type: "TSTypeReference",
-            typeName: lhsObjTypeId,
-          },
-          definite: true,
-        } as VariableDeclarator,
-      ],
-    });
+    enterVM(state, `__root_vm`);
     visit(node.body) as ExpressionStatement;
-    state.currentVmName = null;
+    exitVM(state);
     return EMPTY;
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
-    visit(node.body);
+    const { name, body, bindingName } = node;
+    const currentVmName = state.vmNameStack.at(-1);
+    if (!currentVmName) {
+      return EMPTY;
+    }
+    const positionals = body.positionalAttributes.attributes.map(
+      (attr): Expression => {
+        if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
+          return {
+            ...attr,
+            type: "Literal",
+            value: attr.name,
+          };
+        } else {
+          return visit(attr) as Expression;
+        }
+      }
+    );
+    const returnValueName: Identifier = {
+      type: "Identifier",
+      name: `__gts_attrRet_${state.idCounter++}`,
+    };
+    state.pendingStatements.push({
+      type: "VariableDeclaration",
+      kind: "const",
+      declarations: [
+        {
+          type: "VariableDeclarator",
+          id: returnValueName,
+          init: {
+            type: "CallExpression",
+            optional: false,
+            callee: {
+              type: "MemberExpression",
+              object: {
+                type: "Identifier",
+                name: `${currentVmName}__obj`,
+              },
+              property: name,
+              computed: name.type === "Literal",
+              optional: false,
+            },
+            arguments: positionals,
+          },
+        },
+      ],
+    });
+    if (body.namedAttributes) {
+      visit(body.namedAttributes);
+    }
 
-    if (node.bindingName) {
+    if (bindingName) {
       if (node.bindingAccessModifier === "protected") {
         throw new GtsTranspilerError(
           "Protected bindings are not supported in this context.",
@@ -249,7 +317,7 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         name: `__gts_internal_binding_${state.externalizedBindings.length}`,
       };
       state.externalizedBindings.push({
-        bindingName: node.bindingName,
+        bindingName,
         export: export_,
         internalId,
         value: { type: "Literal", value: null }, // TODO
@@ -265,64 +333,31 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     return EMPTY;
   },
   GTSAttributeBody(node, { state, visit }) {
-    if (!state.currentVmName) {
-      return EMPTY;
-    }
-    const positionals = visit(node.positionalAttributes) as ArrayExpression;
-    if (node.namedAttributes) {
-      visit(node.namedAttributes);
-    }
     return EMPTY;
   },
-  GTSPositionalAttributeList(node, { visit }): ArrayExpression {
-    return {
-      type: "ArrayExpression",
-      elements: node.attributes.map((attr): Expression => {
-        if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
-          return {
-            ...attr,
-            type: "Literal",
-            value: attr.name,
-          };
-        } else {
-          return visit(attr) as Expression;
-        }
-      }),
-      loc: node.loc,
-    };
-  },
-  GTSNamedAttributeBlock(node, { visit }): ObjectExpression {
-    const attributes = node.attributes.map((node) => visit(node) as Expression);
-    if (node.directAction) {
-      attributes.push(visit(node.directAction) as Expression);
+  GTSNamedAttributeBlock(node, { state, visit }) {
+    enterVM(state, `__attr_vm`);
+    for (const attr of node.attributes) {
+      visit(attr);
     }
-    return {
-      type: "ObjectExpression",
-      properties: [
-        {
-          type: "Property",
-          key: { type: "Identifier", name: "attributes" },
-          computed: false,
-          kind: "init",
-          method: false,
-          shorthand: false,
-          value: {
-            type: "ArrayExpression",
-            elements: attributes,
-          },
-        },
-      ],
-      loc: node.loc,
-    };
+    if (node.directAction) {
+      visit(node.directAction);
+    }
+    exitVM(state);
+
+    return EMPTY;
   },
   ...(commonGtsVisitor as Visitors<Node, TypingTranspileState>),
 };
 
-export function gtsToTypings(ast: AST.Program): TranspileResult {
+export function gtsToTypings(
+  ast: AST.Program,
+  option: TranspileOption
+): TranspileResult {
   const state: TypingTranspileState = {
-    ...initialTranspileState(),
+    ...initialTranspileState(option),
     idCounter: 0,
-    currentVmName: null,
+    vmNameStack: [],
     pendingStatements: [],
   };
   const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
@@ -377,6 +412,7 @@ export function convertToVolarMappings(
         if (nextSegment) {
           length = nextSegment[0] - genCol;
         } else {
+          return;
           // If it's the last segment in the line, length goes to end of line
           // (You might need logic here to exclude newline chars depending on exact needs)
           const lineLength =

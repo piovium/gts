@@ -1,9 +1,7 @@
 import { transpileForVolar } from "@gi-tcg/gts-transpiler";
-import {
-  type CodeMapping,
-  type VirtualCode,
-} from "@volar/language-core";
+import { type CodeMapping, type VirtualCode } from "@volar/language-core";
 import type * as ts from "typescript";
+import type { GtsConfig } from "./language_plugin";
 
 export class GtsVirtualCode implements VirtualCode {
   id = "root";
@@ -11,10 +9,10 @@ export class GtsVirtualCode implements VirtualCode {
   mappings: CodeMapping[];
   snapshot: ts.IScriptSnapshot;
 
-  constructor(snapshot: ts.IScriptSnapshot) {
+  constructor(filename: string, snapshot: ts.IScriptSnapshot, config: Required<GtsConfig>) {
     const source = snapshot.getText(0, snapshot.getLength());
     try {
-      const { code, mappings } = transpileForVolar(source, "");
+      const { code, mappings } = transpileForVolar(source, filename, config);
       this.mappings = mappings;
       this.snapshot = {
         getLength: () => code.length,

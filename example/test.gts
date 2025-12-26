@@ -1,4 +1,4 @@
-import { A } from "./test2.gts"; 
+import { A } from "./test2.gts";
 
 export const add = (a: number, b: number) => {
   return a + b;
@@ -42,6 +42,7 @@ define skill {
 define summon {
   id 112011 as MelodyLoop;
   on endPhase {
+    when ^( true )
     usage 2;
     hint heal, 1;
     ^heal(1, query* my.character);

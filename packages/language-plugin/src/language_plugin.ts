@@ -5,7 +5,16 @@ import { GtsVirtualCode } from "./virtual_code";
 
 import type {} from "@volar/typescript";
 
-export function createGtsLanguagePlugin(ts: typeof import("typescript"), configFile?: ts.TsConfigSourceFile): LanguagePlugin<URI | string> {
+export interface GtsConfig {
+  // runtimeImportSource?: string;
+  providerImportSource?: string;
+}
+
+export function createGtsLanguagePlugin(commandLine?: ts.ParsedCommandLine): LanguagePlugin<URI | string> {
+  const gtsConfig: Required<GtsConfig> = {
+    providerImportSource: `@gi-tcg/core/gts`,
+    ...commandLine?.raw?.gamingTs as GtsConfig | undefined,
+  }
   return {
     getLanguageId(uri) {
       const path = typeof uri === "string" ? uri : uri.path;
@@ -14,8 +23,9 @@ export function createGtsLanguagePlugin(ts: typeof import("typescript"), configF
       }
     },
     createVirtualCode(uri, languageId, snapshot) {
+      const filename = typeof uri === "string" ? uri : uri.path;
       if (languageId === "gaming-ts") {
-        return new GtsVirtualCode(snapshot);
+        return new GtsVirtualCode(filename, snapshot, gtsConfig);
       }
     },
     typescript: {

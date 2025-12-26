@@ -40,7 +40,7 @@ export function transformForVolar(
   option: TranspileOption,
   sourceInfo: Required<SourceInfo>
 ): VolarMappingResult {
-  const { code, sourceMap } = gtsToTypings(ast);
+  const { code, sourceMap } = gtsToTypings(ast, option);
   const volarMappings = convertToVolarMappings(
     code,
     sourceInfo.content,

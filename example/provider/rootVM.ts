@@ -107,6 +107,7 @@ export default defineViewModel(RootBuilder, (helper) => ({
 
 // Binding region
 
+
 const Abc: Binding1 = (void 0)!;
 
 // Preface region

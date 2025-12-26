@@ -7,7 +7,16 @@ export = createLanguageServicePlugin((ts, info) => {
   const configFile = info.project.getCompilerOptions().configFile as
     | ts.TsConfigSourceFile
     | undefined;
+  let commandLine: ts.ParsedCommandLine | undefined;
+  if (configFile) {
+    const cwd = info.project.getCurrentDirectory();
+    commandLine = ts.parseJsonSourceFileConfigFileContent(
+      configFile,
+      ts.sys,
+      cwd
+    );
+  }
   return {
-    languagePlugins: [createGtsLanguagePlugin(ts, configFile)],
+    languagePlugins: [createGtsLanguagePlugin(commandLine)],
   };
 });
