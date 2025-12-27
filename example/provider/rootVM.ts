@@ -17,12 +17,15 @@ type BuilderMeta = {
   vars: string;
 };
 
+type Tag = "hydro" | "catalyst" | "mondstadt" | "liyue" | "pole" | "pyro";
+
+type CharacterSkillHandle = number & {
+  readonly _characterSkill: unique symbol;
+}
+
 const CharacterVM = defineViewModel(
   CharacterBuilder,
   (helper) => ({
-    name: helper.attribute<{
-      (name: string): AR.Done;
-    }>((model, [name]) => {}),
     id: helper.attribute<{
       (id: number): AR.Done;
       required(): true;
@@ -33,6 +36,25 @@ const CharacterVM = defineViewModel(
       // model.setId(id);
       return id as CharacterHandle<any>;
     }),
+    since: helper.attribute<{
+      (sinceVersion: "v3.3.0" | "v3.4.0"): AR.Done;
+    }>((model, [sinceVersion]) => {}),
+
+    tags: helper.attribute<{
+      (...tags: Tag[]): AR.Done;
+    }>(() => {}),
+
+    health: helper.attribute<{
+      (value: number): AR.Done;
+    }>(() => {}),
+
+    energy: helper.attribute<{
+      (value: number): AR.Done;
+    }>(() => {}),
+
+    skills: helper.attribute<{
+      (...skillHandles: CharacterSkillHandle[]): AR.Done;
+    }>(() => {}),
 
     variable: helper.attribute<{
       <TMeta extends BuilderMeta, const TVarName extends string>(
@@ -50,15 +72,15 @@ const CharacterVM = defineViewModel(
       ): TMeta["vars"] extends never ? true : false;
     }>(() => {}),
 
-    skill: helper.attribute<{
-      <TMeta extends BuilderMeta>(this: AR.This<TMeta>): AR.With<
-        typeof CharacterSkillVM,
-        TMeta
-      >;
-    }>((model, _, named) => {
-      const skill = CharacterSkillVM.parse(named);
-      model.addSkill(skill);
-    }),
+    // skill: helper.attribute<{
+    //   <TMeta extends BuilderMeta>(this: AR.This<TMeta>): AR.With<
+    //     typeof CharacterSkillVM,
+    //     TMeta
+    //   >;
+    // }>((model, _, named) => {
+    //   const skill = CharacterSkillVM.parse(named);
+    //   model.addSkill(skill);
+    // }),
   }),
   {} as { vars: never }
 );
@@ -76,6 +98,16 @@ type SkillAction<TMeta extends BuilderMeta> = (
 const CharacterSkillVM = defineViewModel(
   CharacterSkillBuilder,
   (helper) => ({
+    id: helper.attribute<{
+      (id: number): AR.Done;
+      required(): true;
+      as<TMeta extends BuilderMeta>(
+        this: AR.This<TMeta>
+      ): CharacterSkillHandle;
+    }>((model, [id]) => {
+      // model.setId(id);
+      return id as CharacterSkillHandle;
+    }),
     cost: helper.attribute<{
       (element: string, amount: number): AR.Done;
     }>((model, [element, amount]) => {}),
@@ -103,6 +135,9 @@ export default defineViewModel(RootBuilder, (helper) => ({
     // model.addCharacter(character);
     return character;
   }),
+  skill: helper.attribute<{
+    (): AR.With<typeof CharacterSkillVM>;
+  }>(() => {}),
 }));
 
 // Binding region
@@ -112,10 +147,9 @@ const Abc: Binding1 = (void 0)!;
 
 // Preface region
 
-let S!: (typeof CharacterVM)["_symbols"];
-type MetaSymbol = typeof S.MetaSymbol;
+type MetaSymbol = typeof CharacterVM._symbols.MetaSymbol;
 let MetaSymbol!: MetaSymbol;
-type NamedDefinition = typeof S.NamedDefinition;
+type NamedDefinition = typeof CharacterVM._symbols.NamedDefinition;
 
 // Block Start
 

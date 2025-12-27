@@ -28,6 +28,7 @@ import type {
   Program,
   Statement,
   VariableDeclarator,
+  VariableDeclaration,
 } from "estree";
 import { GtsTranspilerError } from "../error";
 import {
@@ -72,9 +73,21 @@ interface SourceMap {
 
 export interface TypingTranspileState extends TranspileState {
   idCounter: number;
-  vmNameStack: string[];
+  rootVmId: Identifier;
+  symbolsId: {
+    MetaSymbol: Identifier;
+    NamedDefinition: Identifier;
+  };
+  // type of current VM's definition
+  vmDefTypeIdStack: Identifier[];
+  // type of current Meta
+  metaTypeIdStack: Identifier[];
+  // `obj` of `obj.attr(...)`
+  // attrLhsIdStack: Identifier[];
+  prefaceInserted: boolean;
   /** Pending statements to be inserted to the top-level */
   pendingStatements: Statement[];
+  replacementTag: Identifier;
 }
 
 const EMPTY: EmptyStatement = { type: "EmptyStatement" };
@@ -83,50 +96,209 @@ const ANY = {
   type: "TSAnyKeyword",
 };
 
-const enterVM = (state: TypingTranspileState, vmId: string): string => {
-  const vmName = `__gts_vm_${state.idCounter++}`;
-  state.vmNameStack.push(vmName);
-  let lhsObjTypeId: Identifier = {
-    type: "Identifier",
-    name: `${vmName}__objType`,
-  };
-  let lhsObjId = {
-    type: "Identifier",
-    name: `${vmName}__obj`,
-    typeAnnotation: {
-      type: "TSTypeAnnotation",
-      typeAnnotation: {
-        type: "TSTypeReference",
-        typeName: lhsObjTypeId,
+// definite not supported by esrap yet, so we init the binding with an `as any` cast
+// https://github.com/sveltejs/esrap/issues/95
+const ANY_INIT = {
+  type: "TSAsExpression",
+  expression: { type: "Literal", value: 0 },
+  typeAnnotation: ANY,
+} as {} as Expression;
+
+type ReplacementPayload =
+  | {
+      type: "enterVMFromRoot";
+      vm: string;
+      defType: string;
+      metaType: string;
+    }
+  | {
+      type: "enterVMFromAttr";
+      returnType: string;
+      defType: string;
+      metaType: string;
+    }
+  | {
+      type: "exitVM";
+    }
+  | {
+      type: "enterAttr";
+      defType: string;
+      metaType: string;
+      lhs: string;
+    }
+  | {
+      type: "exitAttr";
+      returnType: string;
+      defType: string;
+      oldMetaType: string;
+      newMetaType: string;
+    };
+
+const createReplacementHolder = (
+  state: TypingTranspileState,
+  value: ReplacementPayload
+): ExpressionStatement => {
+  const rawValue = JSON.stringify(value);
+  return {
+    type: "ExpressionStatement",
+    expression: {
+      type: "TaggedTemplateExpression",
+      tag: state.replacementTag,
+      quasi: {
+        type: "TemplateLiteral",
+        expressions: [],
+        quasis: [
+          {
+            type: "TemplateElement",
+            value: { raw: rawValue },
+            tail: true,
+          },
+        ],
       },
     },
-  } as Identifier;
-  state.pendingStatements.push({
-    type: "TSTypeAliasDeclaration",
-    id: lhsObjTypeId,
-    typeAnnotation: ANY, // TODO
-  } as any);
-  state.pendingStatements.push({
-    type: "VariableDeclaration",
-    kind: "let",
-    declarations: [
-      {
-        type: "VariableDeclarator",
-        id: lhsObjId,
-        // definite not supported by esrap yet
-        // https://github.com/sveltejs/esrap/issues/95
-        init: {
-          type: "TSAsExpression",
-          expression: { type: "Literal", value: 0 },
-          typeAnnotation: ANY,
-        } as {} as Expression,
+  };
+};
+
+const emitPreface = (state: TypingTranspileState) => {
+  if (state.prefaceInserted) {
+    return;
+  }
+  const symbolsLhs = {
+    type: "TSQualifiedName",
+    left: { type: "Identifier", name: state.rootVmId.name },
+    right: { type: "Identifier", name: "_symbols" },
+  };
+  for (const symbolName of ["MetaSymbol", "NamedDefinition"] as const) {
+    const init = {
+      type: "TSTypeQuery",
+      exprName: {
+        type: "TSQualifiedName",
+        left: symbolsLhs,
+        right: { type: "Identifier", name: symbolName },
       },
-    ],
-  });
-  return vmName;
+    };
+    const symbolId = state.symbolsId[symbolName];
+    state.pendingStatements.push(
+      {
+        type: "TSTypeAliasDeclaration",
+        id: symbolId,
+        typeAnnotation: init,
+      } as {} as VariableDeclaration,
+      {
+        type: "VariableDeclaration",
+        kind: "const",
+        declarations: [
+          {
+            type: "VariableDeclarator",
+            id: {
+              ...symbolId,
+              typeAnnotation: {
+                type: "TSTypeAnnotation",
+                typeAnnotation: {
+                  type: "TSTypeReference",
+                  typeName: symbolId,
+                },
+              },
+            } as Identifier,
+            init: ANY_INIT,
+          },
+        ],
+      } as VariableDeclaration
+    );
+  }
+  state.prefaceInserted = true;
+};
+
+const enterVMFromRoot = (state: TypingTranspileState) => {
+  emitPreface(state);
+  let defTypeId: Identifier = {
+    type: "Identifier",
+    name: `__gts_rootVmDefType_${state.idCounter++}`,
+  };
+  let metaTypeId: Identifier = {
+    type: "Identifier",
+    name: `__gts_rootVmInitMetaType_${state.idCounter++}`,
+  };
+  state.pendingStatements.push(
+    createReplacementHolder(state, {
+      type: "enterVMFromRoot",
+      vm: state.rootVmId.name,
+      defType: defTypeId.name,
+      metaType: metaTypeId.name,
+    })
+  );
+  state.vmDefTypeIdStack.push(defTypeId);
+  state.metaTypeIdStack.push(metaTypeId);
+};
+const enterVMFromAttr = (
+  state: TypingTranspileState,
+  returningId: Identifier
+) => {
+  const defTypeId: Identifier = {
+    type: "Identifier",
+    name: `__gts_nestedVm_${state.idCounter++}`,
+  };
+  const metaTypeId: Identifier = {
+    type: "Identifier",
+    name: `__gts_nestedVmInitMetaType_${state.idCounter++}`
+  };
+  state.pendingStatements.push(
+    createReplacementHolder(state, {
+      type: "enterVMFromAttr",
+      returnType: returningId.name,
+      defType: defTypeId.name,
+      metaType: metaTypeId.name,
+    })
+  );
+  state.vmDefTypeIdStack.push(defTypeId);
+  state.metaTypeIdStack.push(metaTypeId);
 };
 const exitVM = (state: TypingTranspileState) => {
-  state.vmNameStack.pop();
+  state.vmDefTypeIdStack.pop();
+  state.metaTypeIdStack.pop();
+};
+
+const enterAttr = (state: TypingTranspileState): { lhsId: Identifier } => {
+  const defTypeId = state.vmDefTypeIdStack.at(-1);
+  const metaTypeId = state.metaTypeIdStack.at(-1);
+  if (!defTypeId || !metaTypeId) {
+    // TODO error handling?
+    return { lhsId: { type: "Identifier", name: "__invalid_attr_obj" } };
+  }
+  const lhsId: Identifier = {
+    type: "Identifier",
+    name: `__gts_attr_obj_${state.idCounter++}`,
+  };
+  state.pendingStatements.push(
+    createReplacementHolder(state, {
+      type: "enterAttr",
+      defType: defTypeId.name,
+      metaType: metaTypeId.name,
+      lhs: lhsId.name,
+    })
+  );
+  return { lhsId: lhsId };
+};
+
+const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
+  const currentDefId = state.vmDefTypeIdStack.at(-1);
+  if (!currentDefId) {
+    return;
+  }
+  const newMetaTypeId: Identifier = {
+    type: "Identifier",
+    name: `__gts_newMeta__${state.idCounter++}`,
+  };
+  const [oldMetaTypeId] = state.metaTypeIdStack.splice(-1, 1, newMetaTypeId);
+  state.pendingStatements.push(
+    createReplacementHolder(state, {
+      type: "exitAttr",
+      defType: currentDefId.name,
+      oldMetaType: oldMetaTypeId.name,
+      newMetaType: newMetaTypeId.name,
+      returnType: returningId.name,
+    })
+  );
 };
 
 const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
@@ -225,6 +397,24 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         )
       );
     }
+    if (state.prefaceInserted) {
+      body.unshift(
+        {
+          type: "ImportDeclaration",
+          specifiers: [
+            {
+              type: "ImportDefaultSpecifier",
+              local: state.rootVmId,
+            },
+          ],
+          source: {
+            type: "Literal",
+            value: `${state.providerImportSource}/rootVM`,
+          },
+          attributes: [],
+        },
+      );
+    }
     if (state.hasQueryExpressions) {
       body.unshift({
         type: "ImportDeclaration",
@@ -247,17 +437,14 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     };
   },
   GTSDefineStatement(node, { state, visit }) {
-    enterVM(state, `__root_vm`);
+    enterVMFromRoot(state);
     visit(node.body) as ExpressionStatement;
     exitVM(state);
     return EMPTY;
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
     const { name, body, bindingName } = node;
-    const currentVmName = state.vmNameStack.at(-1);
-    if (!currentVmName) {
-      return EMPTY;
-    }
+    const { lhsId } = enterAttr(state);
     const positionals = body.positionalAttributes.attributes.map(
       (attr): Expression => {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
@@ -271,7 +458,7 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         }
       }
     );
-    const returnValueName: Identifier = {
+    const returnValue: Identifier = {
       type: "Identifier",
       name: `__gts_attrRet_${state.idCounter++}`,
     };
@@ -281,16 +468,13 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       declarations: [
         {
           type: "VariableDeclarator",
-          id: returnValueName,
+          id: returnValue,
           init: {
             type: "CallExpression",
             optional: false,
             callee: {
               type: "MemberExpression",
-              object: {
-                type: "Identifier",
-                name: `${currentVmName}__obj`,
-              },
+              object: lhsId,
               property: name,
               computed: name.type === "Literal",
               optional: false,
@@ -301,7 +485,9 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       ],
     });
     if (body.namedAttributes) {
+      enterVMFromAttr(state, returnValue);
       visit(body.namedAttributes);
+      exitVM(state);
     }
 
     if (bindingName) {
@@ -330,21 +516,19 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         }),
       });
     }
+    exitAttr(state, returnValue);
     return EMPTY;
   },
   GTSAttributeBody(node, { state, visit }) {
     return EMPTY;
   },
   GTSNamedAttributeBlock(node, { state, visit }) {
-    enterVM(state, `__attr_vm`);
     for (const attr of node.attributes) {
       visit(attr);
     }
     if (node.directAction) {
       visit(node.directAction);
     }
-    exitVM(state);
-
     return EMPTY;
   },
   ...(commonGtsVisitor as Visitors<Node, TypingTranspileState>),
@@ -357,8 +541,16 @@ export function gtsToTypings(
   const state: TypingTranspileState = {
     ...initialTranspileState(option),
     idCounter: 0,
-    vmNameStack: [],
     pendingStatements: [],
+    prefaceInserted: false,
+    rootVmId: { type: "Identifier", name: "__root_vm" },
+    replacementTag: { type: "Identifier", name: "__gts_replacement_tag" },
+    symbolsId: {
+      MetaSymbol: { type: "Identifier", name: "__gts_symbols_meta" },
+      NamedDefinition: { type: "Identifier", name: "__gts_symbols_namedDef" },
+    },
+    vmDefTypeIdStack: [],
+    metaTypeIdStack: [],
   };
   const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
   const { code, map } = print(
@@ -372,9 +564,33 @@ export function gtsToTypings(
     }
   );
   return {
-    code,
+    code: applyReplacements(state, code),
     sourceMap: map,
   };
+}
+
+function applyReplacements(state: TypingTranspileState, code: string) {
+  const replacementRegex = new RegExp(
+    "\\b" + state.replacementTag.name + "`(.*?)`",
+    "gm"
+  );
+  const {
+    symbolsId: { NamedDefinition, MetaSymbol },
+  } = state;
+  return code.replace(replacementRegex, (_, rawPayload) => {
+    const payload: ReplacementPayload = JSON.parse(rawPayload);
+    if (payload.type === "enterVMFromRoot") {
+      return `type ${payload.defType} = (typeof ${payload.vm})[${NamedDefinition.name}]; type ${payload.metaType} = ${payload.defType}[${MetaSymbol.name}];`;
+    } else if (payload.type === "enterVMFromAttr") {
+      return `type ${payload.defType} = ${payload.returnType} extends { namedDefinition: infer Def } ? Def : { [${MetaSymbol.name}]: unknown }; type ${payload.metaType} = ${payload.defType}[${MetaSymbol.name}];`;
+    } else if (payload.type === "enterAttr") {
+      return `const ${payload.lhs}: { [${MetaSymbol.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${MetaSymbol.name}> = 0 as any;`;
+    } else if (payload.type === "exitAttr") {
+      return `type ${payload.returnType} = typeof ${payload.returnType}; type ${payload.newMetaType} = ${payload.returnType} extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : ${payload.oldMetaType}`;
+    } else {
+      return "";
+    }
+  });
 }
 
 export function convertToVolarMappings(

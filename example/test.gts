@@ -1,4 +1,4 @@
-import { A } from "./test2.gts";
+// import { A } from "./test2.gts";
 
 export const add = (a: number, b: number) => {
   return a + b;
