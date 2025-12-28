@@ -119,7 +119,13 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
       type: "MemberExpression",
       object: {
         ...state.fnArgId,
-        loc: node.loc,
+        // loc:
+        //   node.loc && node.property.loc
+        //     ? {
+        //         start: node.loc.start,
+        //         end: node.property.loc.start,
+        //       }
+        //     : void 0,
       },
       computed: false,
       optional: false,
@@ -160,7 +166,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
           ],
         },
       ],
-      loc: node.loc,
+      // loc: node.loc,
     };
   },
 };

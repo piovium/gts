@@ -17,6 +17,7 @@ define character {
   health 10;
   energy 3;
   skills WhisperOfWater;
+  // variable "foo", 3;
 }
 
 /**
@@ -28,6 +29,7 @@ define character {
 define skill {
   id 12011 as WhisperOfWater;
   cost hydro, 3;
+  // ^getVariable();
   ^damage(hydro, 1);
   ^summon(MelodyLoop);
 }
@@ -58,4 +60,4 @@ const sub = (a: number, b: number) => {
 export const obj = {
   foo: "bar"
 };
-obj.foo;
+obj.foo = "baz";

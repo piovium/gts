@@ -20,20 +20,15 @@ import type {
   ExpressionStatement,
   GTSDefineStatement,
   Identifier,
-  Literal,
-  MemberExpression,
   Node,
-  ObjectExpression,
-  ObjectPattern,
   Program,
   Statement,
-  VariableDeclarator,
   VariableDeclaration,
 } from "estree";
-import { GtsTranspilerError } from "../error";
 import {
   commonGtsVisitor,
   initialTranspileState,
+  type ExternalizedBinding,
   type TranspileOption,
   type TranspileState,
 } from "./gts";
@@ -71,17 +66,25 @@ interface SourceMap {
   mappings: string;
 }
 
+interface ExternalizedTypedBinding extends ExternalizedBinding {
+  typingId: Identifier;
+}
+
 export interface TypingTranspileState extends TranspileState {
+  externalizedBindings: ExternalizedTypedBinding[];
   idCounter: number;
   rootVmId: Identifier;
   symbolsId: {
     MetaSymbol: Identifier;
+    ActionSymbol: Identifier;
     NamedDefinition: Identifier;
   };
   // type of current VM's definition
   vmDefTypeIdStack: Identifier[];
   // type of current Meta
   metaTypeIdStack: Identifier[];
+  // type of final Meta
+  finalMetaTypeIdStack: Identifier[];
   // `obj` of `obj.attr(...)`
   // attrLhsIdStack: Identifier[];
   prefaceInserted: boolean;
@@ -119,12 +122,21 @@ type ReplacementPayload =
     }
   | {
       type: "exitVM";
+      metaType: string;
+      finalMetaType: string;
     }
   | {
       type: "enterAttr";
       defType: string;
       metaType: string;
       lhs: string;
+    }
+  | {
+      type: "createBindingTyping";
+      finalMetaType: string;
+      defType: string;
+      attrName: string;
+      typingId: string;
     }
   | {
       type: "exitAttr";
@@ -168,7 +180,11 @@ const emitPreface = (state: TypingTranspileState) => {
     left: { type: "Identifier", name: state.rootVmId.name },
     right: { type: "Identifier", name: "_symbols" },
   };
-  for (const symbolName of ["MetaSymbol", "NamedDefinition"] as const) {
+  for (const symbolName of [
+    "MetaSymbol",
+    "ActionSymbol",
+    "NamedDefinition",
+  ] as const) {
     const init = {
       type: "TSTypeQuery",
       exprName: {
@@ -219,6 +235,10 @@ const enterVMFromRoot = (state: TypingTranspileState) => {
     type: "Identifier",
     name: `__gts_rootVmInitMetaType_${state.idCounter++}`,
   };
+  let finalMetaTypeId: Identifier = {
+    type: "Identifier",
+    name: `__gts_rootVmFinalMetaType_${state.idCounter++}`,
+  };
   state.pendingStatements.push(
     createReplacementHolder(state, {
       type: "enterVMFromRoot",
@@ -229,6 +249,7 @@ const enterVMFromRoot = (state: TypingTranspileState) => {
   );
   state.vmDefTypeIdStack.push(defTypeId);
   state.metaTypeIdStack.push(metaTypeId);
+  state.finalMetaTypeIdStack.push(finalMetaTypeId);
 };
 const enterVMFromAttr = (
   state: TypingTranspileState,
@@ -240,7 +261,11 @@ const enterVMFromAttr = (
   };
   const metaTypeId: Identifier = {
     type: "Identifier",
-    name: `__gts_nestedVmInitMetaType_${state.idCounter++}`
+    name: `__gts_nestedVmInitMetaType_${state.idCounter++}`,
+  };
+  const finalMetaTypeId: Identifier = {
+    type: "Identifier",
+    name: `__gts_nestedVmFinalMetaType_${state.idCounter++}`,
   };
   state.pendingStatements.push(
     createReplacementHolder(state, {
@@ -252,10 +277,19 @@ const enterVMFromAttr = (
   );
   state.vmDefTypeIdStack.push(defTypeId);
   state.metaTypeIdStack.push(metaTypeId);
+  state.finalMetaTypeIdStack.push(finalMetaTypeId);
 };
 const exitVM = (state: TypingTranspileState) => {
   state.vmDefTypeIdStack.pop();
-  state.metaTypeIdStack.pop();
+  const currentMetaId = state.metaTypeIdStack.pop()!;
+  const finalMetaId = state.finalMetaTypeIdStack.pop()!;
+  state.pendingStatements.push(
+    createReplacementHolder(state, {
+      type: "exitVM",
+      metaType: currentMetaId.name,
+      finalMetaType: finalMetaId.name,
+    })
+  );
 };
 
 const enterAttr = (state: TypingTranspileState): { lhsId: Identifier } => {
@@ -278,6 +312,29 @@ const enterAttr = (state: TypingTranspileState): { lhsId: Identifier } => {
     })
   );
   return { lhsId: lhsId };
+};
+
+const genBindingTyping = (
+  state: TypingTranspileState,
+  info: {
+    attrName: string;
+    typingId: Identifier;
+  }
+) => {
+  const finalMetaId = state.finalMetaTypeIdStack.at(-1);
+  const defTypeId = state.vmDefTypeIdStack.at(-1);
+  if (!finalMetaId || !defTypeId) {
+    return;
+  }
+  state.pendingStatements.push(
+    createReplacementHolder(state, {
+      type: "createBindingTyping",
+      finalMetaType: finalMetaId.name,
+      defType: defTypeId.name,
+      attrName: info.attrName,
+      typingId: info.typingId.name,
+    })
+  );
 };
 
 const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
@@ -398,22 +455,20 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       );
     }
     if (state.prefaceInserted) {
-      body.unshift(
-        {
-          type: "ImportDeclaration",
-          specifiers: [
-            {
-              type: "ImportDefaultSpecifier",
-              local: state.rootVmId,
-            },
-          ],
-          source: {
-            type: "Literal",
-            value: `${state.providerImportSource}/rootVM`,
+      body.unshift({
+        type: "ImportDeclaration",
+        specifiers: [
+          {
+            type: "ImportDefaultSpecifier",
+            local: state.rootVmId,
           },
-          attributes: [],
+        ],
+        source: {
+          type: "Literal",
+          value: `${state.providerImportSource}/rootVM`,
         },
-      );
+        attributes: [],
+      });
     }
     if (state.hasQueryExpressions) {
       body.unshift({
@@ -449,9 +504,20 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       (attr): Expression => {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
           return {
-            ...attr,
             type: "Literal",
             value: attr.name,
+            loc: attr.loc
+              ? {
+                  start: {
+                    column: attr.loc.start.column - 1,
+                    line: attr.loc.start.line,
+                  },
+                  end: {
+                    column: attr.loc.end.column + 1,
+                    line: attr.loc.end.line,
+                  },
+                }
+              : void 0,
           };
         } else {
           return visit(attr) as Expression;
@@ -489,21 +555,33 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       visit(body.namedAttributes);
       exitVM(state);
     }
-
     if (bindingName) {
-      if (node.bindingAccessModifier === "protected") {
-        throw new GtsTranspilerError(
-          "Protected bindings are not supported in this context.",
-          node.loc ?? null
-        );
-      }
       const export_ = node.bindingAccessModifier !== "private";
       const internalId: Identifier = {
         type: "Identifier",
         name: `__gts_internal_binding_${state.externalizedBindings.length}`,
       };
+      const typingId: Identifier = {
+        type: "Identifier",
+        name: `gts_binding_type_${state.externalizedBindings.length}`,
+      };
+      genBindingTyping(state, {
+        attrName: JSON.stringify(
+          name.type === "Literal" ? String(name.value) : name.name
+        ),
+        typingId,
+      });
       state.externalizedBindings.push({
-        bindingName,
+        bindingName: {
+          ...bindingName,
+          typeAnnotation: {
+            type: "TSTypeAnnotation",
+            typeAnnotation: {
+              type: "TSTypeReference",
+              typeName: typingId,
+            },
+          },
+        } as Identifier,
         export: export_,
         internalId,
         value: { type: "Literal", value: null }, // TODO
@@ -514,12 +592,10 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
             return n.name;
           }
         }),
+        typingId,
       });
     }
     exitAttr(state, returnValue);
-    return EMPTY;
-  },
-  GTSAttributeBody(node, { state, visit }) {
     return EMPTY;
   },
   GTSNamedAttributeBlock(node, { state, visit }) {
@@ -527,7 +603,42 @@ const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       visit(attr);
     }
     if (node.directAction) {
-      visit(node.directAction);
+      const { lhsId } = enterAttr(state);
+      const fn: ArrowFunctionExpression = {
+        type: "ArrowFunctionExpression",
+        params: [state.fnArgId],
+        body: {
+          type: "BlockStatement",
+          body: node.directAction.body.map((stmt) => visit(stmt) as Statement),
+        },
+        expression: false,
+      };
+      const returnValue: Identifier = {
+        type: "Identifier",
+        name: `__gts_attrRet_${state.idCounter++}`,
+      };
+      state.pendingStatements.push({
+        type: "VariableDeclaration",
+        kind: "const",
+        declarations: [
+          {
+            type: "VariableDeclarator",
+            id: returnValue,
+            init: {
+              type: "CallExpression",
+              optional: false,
+              callee: {
+                type: "MemberExpression",
+                object: lhsId,
+                property: state.symbolsId.ActionSymbol,
+                computed: true,
+                optional: false,
+              },
+              arguments: [fn],
+            },
+          },
+        ],
+      });
     }
     return EMPTY;
   },
@@ -539,7 +650,10 @@ export function gtsToTypings(
   option: TranspileOption
 ): TranspileResult {
   const state: TypingTranspileState = {
-    ...initialTranspileState(option),
+    ...(initialTranspileState(option) as Pick<
+      TypingTranspileState,
+      keyof TranspileState
+    >),
     idCounter: 0,
     pendingStatements: [],
     prefaceInserted: false,
@@ -547,10 +661,12 @@ export function gtsToTypings(
     replacementTag: { type: "Identifier", name: "__gts_replacement_tag" },
     symbolsId: {
       MetaSymbol: { type: "Identifier", name: "__gts_symbols_meta" },
+      ActionSymbol: { type: "Identifier", name: "__gts_symbols_action" },
       NamedDefinition: { type: "Identifier", name: "__gts_symbols_namedDef" },
     },
     vmDefTypeIdStack: [],
     metaTypeIdStack: [],
+    finalMetaTypeIdStack: [],
   };
   const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
   const { code, map } = print(
@@ -583,8 +699,13 @@ function applyReplacements(state: TypingTranspileState, code: string) {
       return `type ${payload.defType} = (typeof ${payload.vm})[${NamedDefinition.name}]; type ${payload.metaType} = ${payload.defType}[${MetaSymbol.name}];`;
     } else if (payload.type === "enterVMFromAttr") {
       return `type ${payload.defType} = ${payload.returnType} extends { namedDefinition: infer Def } ? Def : { [${MetaSymbol.name}]: unknown }; type ${payload.metaType} = ${payload.defType}[${MetaSymbol.name}];`;
+    } else if (payload.type === "exitVM") {
+      return `type ${payload.finalMetaType} = ${payload.metaType};`;
     } else if (payload.type === "enterAttr") {
       return `const ${payload.lhs}: { [${MetaSymbol.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${MetaSymbol.name}> = 0 as any;`;
+    } else if (payload.type === "createBindingTyping") {
+      const typingIdLhs = `${payload.typingId}_lhs`;
+      return `type ${typingIdLhs} = { [${MetaSymbol.name}]: ${payload.finalMetaType}; as: ${payload.defType}[${payload.attrName}] extends { as: infer As } ? As : unknown }; let ${typingIdLhs}!: ${typingIdLhs}; let ${payload.typingId} = ${typingIdLhs}.as(); type ${payload.typingId} = typeof ${payload.typingId};`;
     } else if (payload.type === "exitAttr") {
       return `type ${payload.returnType} = typeof ${payload.returnType}; type ${payload.newMetaType} = ${payload.returnType} extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : ${payload.oldMetaType}`;
     } else {

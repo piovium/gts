@@ -21,7 +21,7 @@ type Tag = "hydro" | "catalyst" | "mondstadt" | "liyue" | "pole" | "pyro";
 
 type CharacterSkillHandle = number & {
   readonly _characterSkill: unique symbol;
-}
+};
 
 const CharacterVM = defineViewModel(
   CharacterBuilder,
@@ -101,9 +101,7 @@ const CharacterSkillVM = defineViewModel(
     id: helper.attribute<{
       (id: number): AR.Done;
       required(): true;
-      as<TMeta extends BuilderMeta>(
-        this: AR.This<TMeta>
-      ): CharacterSkillHandle;
+      as<TMeta extends BuilderMeta>(this: AR.This<TMeta>): CharacterSkillHandle;
     }>((model, [id]) => {
       // model.setId(id);
       return id as CharacterSkillHandle;
@@ -142,8 +140,7 @@ export default defineViewModel(RootBuilder, (helper) => ({
 
 // Binding region
 
-
-const Abc: Binding1 = (void 0)!;
+const Abc: Binding2 = (void 0)!;
 
 // Preface region
 
@@ -166,10 +163,14 @@ type Meta1 = Return0 extends { rewriteMeta: infer NewMeta extends {} }
   : Meta0;
 
 let obj1!: { [MetaSymbol]: Meta1 } & Omit<VMDef, MetaSymbol>;
-type AsType1 = FinalObj["id"] extends { as: infer As } ? As : unknown;
-let inferBindingObj1 = { [MetaSymbol]: obj1[MetaSymbol], as: null! as AsType1 };
-let binding1 = inferBindingObj1.as();
-type Binding1 = typeof binding1;
+
+type InferBindingObj = {
+  [MetaSymbol]: FinalMeta;
+  as: VMDef["id"] extends { as: infer As } ? As : unknown;
+};
+let inferBindingObj1!: InferBindingObj;
+let Binding2 = inferBindingObj1.as();
+type Binding2 = typeof Binding2;
 
 let return1 = obj1.variable("health", 10);
 type Return1 = typeof return1;
@@ -177,8 +178,7 @@ type Meta2 = Return1["rewriteMeta"] extends undefined
   ? Meta1
   : Return1["rewriteMeta"];
 let obj2!: { [MetaSymbol]: Meta2 } & Omit<VMDef, MetaSymbol>;
-type AsType2 = FinalObj["variable"] extends { as: infer As } ? As : unknown;
-let inferBindingObj2 = { [MetaSymbol]: obj2[MetaSymbol], as: null! as AsType2 };
+
 
 let return2 = obj2.variable("stamina", 5);
 type Return2 = typeof return2;
@@ -210,7 +210,7 @@ type Return3 = typeof return3;
 });
 /****/ type Return3_2 = typeof return3_2;
 
-type Obj3 = typeof obj0;
+type FinalMeta = Meta3;
 
 // Block end
 let finalObj = obj3;
