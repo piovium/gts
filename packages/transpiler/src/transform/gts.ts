@@ -117,16 +117,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
   GTSShortcutArgumentExpression(node, { state, visit }): MemberExpression {
     return {
       type: "MemberExpression",
-      object: {
-        ...state.fnArgId,
-        // loc:
-        //   node.loc && node.property.loc
-        //     ? {
-        //         start: node.loc.start,
-        //         end: node.property.loc.start,
-        //       }
-        //     : void 0,
-      },
+      object: state.fnArgId,
       computed: false,
       optional: false,
       property: visit(node.property) as Identifier,

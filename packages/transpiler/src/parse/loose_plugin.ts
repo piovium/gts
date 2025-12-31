@@ -1,6 +1,8 @@
 import { tokTypes, type Parser } from "acorn";
 import type { AST, Parse } from "../types.js";
 
+export const DUMMY_PLACEHOLDER = '✖';
+
 export function loosePlugin() {
   return function loosePluginTransformer(parser: typeof Parser): typeof Parser {
     return class LooseParser extends (parser as typeof Parse.Parser) {
@@ -28,7 +30,7 @@ export function loosePlugin() {
 
       createDummyIdentifier() {
         const dummy = this.startNode() as AST.Identifier;
-        dummy.name = "✖";
+        dummy.name = DUMMY_PLACEHOLDER;
         dummy.isDummy = true;
         return this.finishNode(dummy, "Identifier");
       }

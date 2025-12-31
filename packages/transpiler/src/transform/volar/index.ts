@@ -8,7 +8,11 @@ import {
   type TranspileOption,
   type TranspileState,
 } from "../gts";
-import { gtsToTypingsWalker, type TypingTranspileState } from "./walker";
+import {
+  DUMMY_IDENTIFIER_TYPE,
+  gtsToTypingsWalker,
+  type TypingTranspileState,
+} from "./walker";
 import { applyReplacements } from "./replacements";
 import type { Program } from "estree";
 import { convertToVolarMappings, type VolarMappingResult } from "./mappings";
@@ -43,16 +47,14 @@ function gtsToTypings(
     finalMetaTypeIdStack: [],
   };
   const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
-  const { code, map } = print(
-    newAst,
-    tsPrinter({
-      getLeadingComments: (node) => (node as AST.Node).leadingComments,
-      getTrailingComments: (node) => (node as AST.Node).trailingComments,
-    }),
-    {
-      indent: "  ",
-    }
-  );
+  const printer = tsPrinter({
+    getLeadingComments: (node) => (node as AST.Node).leadingComments,
+    getTrailingComments: (node) => (node as AST.Node).trailingComments,
+  });
+  printer[DUMMY_IDENTIFIER_TYPE] = () => {};
+  const { code, map } = print(newAst, printer, {
+    indent: "  ",
+  });
   return {
     code: applyReplacements(state, code),
     sourceMap: map,

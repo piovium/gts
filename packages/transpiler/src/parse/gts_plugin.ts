@@ -1,6 +1,7 @@
 import { tokTypes, type Parser as ParserClass } from "acorn";
 import type { Parse, AST } from "../types";
 import { specialIdentifiers } from "../keywords";
+import { DUMMY_PLACEHOLDER } from "./loose_plugin";
 
 /*
 
@@ -244,7 +245,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         ) {
           // Allow omitting the attribute expression for language tooling
           const dummy = this.startNode() as AST.Identifier;
-          dummy.name = "✖";
+          dummy.name = DUMMY_PLACEHOLDER;
           dummy.isDummy = true;
           return this.finishNode(dummy, "Identifier");
         }
@@ -290,7 +291,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           ) {
             // Allow omitting the identifier after '^' for language tooling
             const dummy = this.startNode() as AST.Identifier;
-            dummy.name = "✖";
+            dummy.name = DUMMY_PLACEHOLDER;
             dummy.isDummy = true;
             node.property = this.finishNode(dummy, "Identifier");
           } else {

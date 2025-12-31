@@ -20,8 +20,10 @@ import type {
   ExpressionStatement,
   GTSDefineStatement,
   Identifier,
+  MemberExpression,
   Node,
   Program,
+  SourceLocation,
   Statement,
   VariableDeclaration,
 } from "estree";
@@ -264,7 +266,15 @@ const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
   );
 };
 
+export const DUMMY_IDENTIFIER_TYPE = "GTSDummyIdentifier";
+
 export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
+  Identifier(node) {
+    if (node.isDummy) {
+      return { type: DUMMY_IDENTIFIER_TYPE } as any;
+    }
+    return node;
+  },
   Program(node, { state, visit }) {
     const body: Program["body"] = [];
     for (const stmt of node.body) {

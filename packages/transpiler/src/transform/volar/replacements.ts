@@ -1,5 +1,6 @@
 import type { ExpressionStatement } from "estree";
 import type { TypingTranspileState } from "./walker";
+import { DUMMY_PLACEHOLDER } from "../../parse/loose_plugin";
 
 type ReplacementPayload =
   | {

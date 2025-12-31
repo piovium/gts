@@ -1,5 +1,5 @@
 import { Parser } from "acorn";
-import { loosePlugin } from "../src/parse/loose_plugin.js";
+import { DUMMY_PLACEHOLDER, loosePlugin } from "../src/parse/loose_plugin.js";
 import { describe, test, expect } from "bun:test";
 import { parseLoose } from "../src/parse/index.js";
 import type { Statement } from "estree";
@@ -20,7 +20,7 @@ describe("loosePlugin", () => {
     const memberExpr = exprStmt.expression;
     expect(memberExpr.type).toBe("MemberExpression");
     expect(memberExpr.property.type).toBe("Identifier");
-    expect(memberExpr.property.name).toBe("✖");
+    expect(memberExpr.property.name).toBe(DUMMY_PLACEHOLDER);
   });
 
   test("should parse incomplete dot property access in if condition", () => {
@@ -32,7 +32,7 @@ describe("loosePlugin", () => {
     expect(ifStmt.type).toBe("IfStatement");
     const testExpr = ifStmt.test;
     expect(testExpr.type).toBe("MemberExpression");
-    expect(testExpr.property.name).toBe("✖");
+    expect(testExpr.property.name).toBe(DUMMY_PLACEHOLDER);
   });
 
   test("should fail on invalid bracket access", () => {
