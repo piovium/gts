@@ -266,15 +266,7 @@ const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
   );
 };
 
-export const DUMMY_IDENTIFIER_TYPE = "GTSDummyIdentifier";
-
 export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
-  Identifier(node) {
-    if (node.isDummy) {
-      return { type: DUMMY_IDENTIFIER_TYPE } as any;
-    }
-    return node;
-  },
   Program(node, { state, visit }) {
     const body: Program["body"] = [];
     for (const stmt of node.body) {
@@ -555,4 +547,27 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     return EMPTY;
   },
   ...(commonGtsVisitor as Visitors<Node, TypingTranspileState>),
+  GTSShortcutArgumentExpression(node, { state, visit }): MemberExpression {
+    const lhs = { ...state.fnArgId };
+    if (node.loc) {
+      lhs.loc = {
+        start: { ...node.loc.start },
+        end: { ...node.loc.start },
+      };
+      state.leafTokens.push({
+        type: lhs.type,
+        loc: lhs.loc,
+        locationAdjustment: {
+          startOffset: lhs.name.length,
+        },
+      });
+    }
+    return {
+      type: "MemberExpression",
+      object: lhs,
+      computed: false,
+      optional: false,
+      property: visit(node.property) as Identifier,
+    };
+  },
 };

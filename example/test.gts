@@ -29,9 +29,9 @@ define character {
 define skill {
   id 12011 as WhisperOfWater;
   cost hydro, 3;
-  // ^getVariable();
-  ^damage(hydro, 1);
-  ^summon(MelodyLoop);
+  // :getVariable();
+  :damage(hydro, 1);
+  :summon(MelodyLoop);
 }
 
 /**
@@ -44,11 +44,11 @@ define skill {
 define summon {
   id 112011 as MelodyLoop;
   on endPhase {
-    when ^( true )
+    when :( true )
     usage 2;
     hint heal, 1;
-    ^heal(1, query* my.character);
-    ^apply(hydro, query my.active);
+    :heal(1, query* my.character);
+    :apply(hydro, query my.active);
   }
 }
 

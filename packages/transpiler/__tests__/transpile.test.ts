@@ -28,8 +28,8 @@ define character {
 define skill {
   id 12011 as WhisperOfWater;
   cost hydro, 3;
-  ^damage(hydro, 1);
-  ^summon(MelodyLoop);
+  :damage(hydro, 1);
+  :summon(MelodyLoop);
 }
 
 /**
@@ -44,8 +44,8 @@ define summon {
   on endPhase {
     usage 2;
     hint heal, 1;
-    ^heal(1, query* my.character);
-    ^apply(hydro, query my.active);
+    :heal(1, query* my.character);
+    :apply(hydro, query my.active);
   }
 }
 `;

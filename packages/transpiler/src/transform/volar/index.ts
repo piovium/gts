@@ -9,7 +9,6 @@ import {
   type TranspileState,
 } from "../gts";
 import {
-  DUMMY_IDENTIFIER_TYPE,
   gtsToTypingsWalker,
   type TypingTranspileState,
 } from "./walker";
@@ -51,7 +50,6 @@ function gtsToTypings(
     getLeadingComments: (node) => (node as AST.Node).leadingComments,
     getTrailingComments: (node) => (node as AST.Node).trailingComments,
   });
-  printer[DUMMY_IDENTIFIER_TYPE] = () => {};
   const { code, map } = print(newAst, printer, {
     indent: "  ",
   });

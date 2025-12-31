@@ -41,7 +41,7 @@ NamedAttributeList:
     NamedAttributeDefinition NamedAttributeList
 
 AttributeExpression:
-    "^" ShortcutFunction
+    ":" ShortcutFunction
     # Intentionally disable object literal, for distinction to named attribute block
     # foo bar { baz = 1 };
     # foo bar, { baz: 1 };   // If allowed, hard to distinguish
@@ -49,11 +49,11 @@ AttributeExpression:
     [lookahead != "{"] PrimaryExpression
 
 DirectShortcutFunction:
-    [lookahead = one of "^", ReservedWord]
+    [lookahead = one of ":", ReservedWord]
     FunctionBody[~Yield, ~Await]
 
 ShortcutFunction:
-    # For simplicity, we consider ^ and subsequent left brace as two tokens
+    # For simplicity, we consider : and subsequent left brace as two tokens
     "(" Expression[+In, ~Yield, ~Await] ")"
     "{" FunctionBody[~Yield, ~Await] "}"
 
@@ -62,7 +62,7 @@ PrimaryExpression:
 +   ShortcutArgumentExpression
 
 ShortcutArgumentExpression:
-    "^" Identifier
+    ":" Identifier
 
 UnaryExpression:
 +   query UnaryExpression
@@ -191,7 +191,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           // Check for DirectShortcutFunction
           if (
             (specialIdentifiers as unknown[]).includes(this.value) ||
-            this.type === tokTypes.bitwiseXOR
+            this.type === tokTypes.colon
           ) {
             node.directAction = this.gts_parseDirectFunction();
             break;
@@ -231,8 +231,8 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         if (this.type === tokTypes.braceL) {
           this.raise(this.start, "Expected attribute expression, got '{'.");
         }
-        if (this.type === tokTypes.bitwiseXOR) {
-          this.next(); // consume '^'
+        if (this.type === tokTypes.colon) {
+          this.next(); // consume ':'
           return this.gts_parseShortcutFunction();
         }
         if (
@@ -276,20 +276,20 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         forInit?: boolean | "await",
         forNew?: boolean
       ): AST.Expression {
-        if (this.type === tokTypes.bitwiseXOR) {
+        if (this.type === tokTypes.colon) {
           if (!this.isShortcutContext) {
             this.raise(
               this.start,
-              "ShortcutArgumentExpression '^' must be inside ShortcutFunction or DirectShortcutFunction."
+              "ShortcutArgumentExpression ':' must be inside ShortcutFunction or DirectShortcutFunction."
             );
           }
           const node = this.startNode() as AST.GTSShortcutArgumentExpression;
-          this.next(); // consume '^'
+          this.next(); // consume ':'
           if (
             this.gtsOptions.allowEmptyShortcutMember &&
             this.type !== tokTypes.name
           ) {
-            // Allow omitting the identifier after '^' for language tooling
+            // Allow omitting the identifier after ':' for language tooling
             const dummy = this.startNode() as AST.Identifier;
             dummy.name = DUMMY_PLACEHOLDER;
             dummy.isDummy = true;

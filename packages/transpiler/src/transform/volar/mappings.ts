@@ -1,8 +1,5 @@
 import { decode } from "@jridgewell/sourcemap-codec";
-import type {
-  CodeInformation,
-  CodeMapping,
-} from "@volar/language-core";
+import type { CodeInformation, CodeMapping } from "@volar/language-core";
 import type { LeafToken } from "./collect_tokens";
 
 export interface VolarMappingResult {
@@ -37,7 +34,6 @@ function createOffsetLookup(content: string): number[] {
 interface SourceMap {
   mappings: string;
 }
-
 
 export function convertToVolarMappings(
   code: string,
@@ -84,13 +80,16 @@ export function convertToVolarMappings(
         } else if (nextSegment) {
           length = nextSegment[0] - genCol;
         } else {
-          return;
           // If it's the last segment in the line, length goes to end of line
           // (You might need logic here to exclude newline chars depending on exact needs)
-          const lineLength =
+          const lineLength = Math.min(
+            (sourceLineOffsets[sourceLine + 1] || source.length + 1) -
+              1 -
+              sourceLineOffsets[sourceLine],
             (generatedLineOffsets[genLineIndex + 1] || code.length + 1) -
-            1 -
-            genLineStartOffset;
+              1 -
+              genLineStartOffset
+          );
           length = lineLength - genCol;
         }
 
