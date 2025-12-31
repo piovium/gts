@@ -4,8 +4,6 @@ import { print } from "esrap";
 import jsPrinter from "esrap/languages/ts";
 import type { SourceMap } from "magic-string";
 import { gtsToTs, type TranspileOption } from "./gts";
-import { gtsToTypings, convertToVolarMappings } from "./gts_for_volar";
-import type { VolarMappingResult } from "./gts_for_volar";
 
 export interface TranspileResult {
   code: string;
@@ -35,19 +33,4 @@ export function transform(
   };
 }
 
-export function transformForVolar(
-  ast: Program,
-  option: TranspileOption,
-  sourceInfo: Required<SourceInfo>
-): VolarMappingResult {
-  const { code, sourceMap } = gtsToTypings(ast, option);
-  const volarMappings = convertToVolarMappings(
-    code,
-    sourceInfo.content,
-    sourceMap
-  );
-  return {
-    code,
-    mappings: volarMappings,
-  };
-}
+export { transformForVolar } from "./volar";

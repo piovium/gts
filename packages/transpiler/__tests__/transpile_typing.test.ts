@@ -1,5 +1,5 @@
 import { parseLoose } from "../src/parse";
-import { gtsToTypings } from "../src/transform/gts_for_volar";
+import { gtsToTypings } from "../src/transform/volar";
 
 // const ast = parseLoose(`
 // define character {}
