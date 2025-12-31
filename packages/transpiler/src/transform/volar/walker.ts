@@ -409,21 +409,17 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     const positionals = body.positionalAttributes.attributes.map(
       (attr): Expression => {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
+          const token = state.leafTokens.find((t) => t.loc === attr.loc);
+          if (token) {
+            console.log("FOUND");
+            token.locationAdjustment = {
+              startOffset: 1,
+            };
+          }
           return {
             type: "Literal",
             value: attr.name,
-            loc: attr.loc
-              ? {
-                  start: {
-                    column: attr.loc.start.column - 1,
-                    line: attr.loc.start.line,
-                  },
-                  end: {
-                    column: attr.loc.end.column + 1,
-                    line: attr.loc.end.line,
-                  },
-                }
-              : void 0,
+            loc: attr.loc,
           };
         } else {
           return visit(attr) as Expression;

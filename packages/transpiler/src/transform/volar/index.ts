@@ -80,3 +80,5 @@ export function transformForVolar(
     mappings: volarMappings,
   };
 }
+
+export type { VolarMappingResult } from "./mappings";

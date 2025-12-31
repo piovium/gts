@@ -65,7 +65,7 @@ export function convertToVolarMappings(
       if (segment.length === 4 || segment.length === 5) {
         const [genCol, sourceIndex, sourceLine, sourceCol] = segment;
 
-        const generatedOffset = genLineStartOffset + genCol;
+        let generatedOffset = genLineStartOffset + genCol;
         const sourceOffset = sourceLineOffsets[sourceLine] + sourceCol;
 
         // Calculate Length
@@ -80,6 +80,7 @@ export function convertToVolarMappings(
         if (token) {
           const tokenEndCol = token.loc.end.column;
           length = tokenEndCol - sourceCol;
+          generatedOffset += token.locationAdjustment?.startOffset ?? 0;
         } else if (nextSegment) {
           length = nextSegment[0] - genCol;
         } else {

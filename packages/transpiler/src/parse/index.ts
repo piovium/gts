@@ -22,7 +22,8 @@ export function parseLoose(input: string, options?: GtsPluginOption): Program {
     gtsPlugin({
       ...options,
       allowEmptyShortcutMember: true,
-    }),
+      allowEmptyPositionalAttribute: true,
+    })
   );
   const { onComment, addComments } = getCommentHandlers(input, []);
   const ast = GtsParser.parse(input, {

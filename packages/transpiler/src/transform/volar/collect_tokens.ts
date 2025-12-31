@@ -28,9 +28,14 @@ function isLeafNode(node: any): boolean {
   return true;
 }
 
+export interface LocationAdjustment {
+  startOffset: number;
+}
+
 export interface LeafToken {
   type: string;
   loc: SourceLocation;
+  locationAdjustment?: LocationAdjustment;
 }
 
 export function collectLeafTokens(ast: any): LeafToken[] {

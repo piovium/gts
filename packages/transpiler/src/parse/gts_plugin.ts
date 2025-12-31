@@ -69,11 +69,12 @@ UnaryExpression:
 
 export interface GtsPluginOption {
   allowEmptyShortcutMember?: boolean;
+  allowEmptyPositionalAttribute?: boolean;
 }
 
 export function gtsPlugin(options: GtsPluginOption = {}) {
   return function gtsPluginTransformer(
-    Parser: typeof ParserClass,
+    Parser: typeof ParserClass
   ): typeof ParserClass {
     const skipWhiteSpace = /(?:\s|\/\/.*|\/\*[^]*?\*\/)*/g;
     const lineBreak = /\r\n?|\n|\u2028|\u2029/;
@@ -93,7 +94,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
       override parseStatement(
         context?: string | null,
         topLevel?: boolean,
-        exports?: AST.ExportSpecifier,
+        exports?: AST.ExportSpecifier
       ) {
         if (topLevel && this.gts_isDefineStatement()) {
           const node = this.startNode() as AST.GTSDefineStatement;
@@ -213,7 +214,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           if (stmt.type === "GTSDefineStatement") {
             this.raise(
               startPos,
-              "DefineStatement is not allowed in direct function.",
+              "DefineStatement is not allowed in direct function."
             );
           }
           node.body.push(stmt);
@@ -232,6 +233,20 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         if (this.type === tokTypes.bitwiseXOR) {
           this.next(); // consume '^'
           return this.gts_parseShortcutFunction();
+        }
+        if (
+          this.gtsOptions.allowEmptyPositionalAttribute &&
+          (this.type === tokTypes.comma ||
+            this.type === tokTypes.braceR ||
+            this.type === tokTypes.semi ||
+            this.canInsertSemicolon() ||
+            this.isContextual("as"))
+        ) {
+          // Allow omitting the attribute expression for language tooling
+          const dummy = this.startNode() as AST.Identifier;
+          dummy.name = "✖";
+          dummy.isDummy = true;
+          return this.finishNode(dummy, "Identifier");
         }
         return this.parseExprAtom();
       }
@@ -258,13 +273,13 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
       override parseExprAtom(
         refDestructuringErrors?: Parse.DestructuringErrors,
         forInit?: boolean | "await",
-        forNew?: boolean,
+        forNew?: boolean
       ): AST.Expression {
         if (this.type === tokTypes.bitwiseXOR) {
           if (!this.isShortcutContext) {
             this.raise(
               this.start,
-              "ShortcutArgumentExpression '^' must be inside ShortcutFunction or DirectShortcutFunction.",
+              "ShortcutArgumentExpression '^' must be inside ShortcutFunction or DirectShortcutFunction."
             );
           }
           const node = this.startNode() as AST.GTSShortcutArgumentExpression;
@@ -291,7 +306,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         refDestructuringErrors?: Parse.DestructuringErrors | null,
         sawUnary?: boolean,
         incDec?: boolean,
-        forInit?: boolean | "await",
+        forInit?: boolean | "await"
       ): AST.Expression {
         if (this.isContextual("query")) {
           const expr = this.gts_parseQueryExpression();
@@ -304,12 +319,12 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           refDestructuringErrors,
           sawUnary,
           incDec,
-          forInit,
+          forInit
         );
       }
 
       gts_parseQueryExpression(
-        forInit?: boolean | "await",
+        forInit?: boolean | "await"
       ): AST.GTSQueryExpression {
         const node = this.startNode() as AST.GTSQueryExpression;
         this.next(); // consume 'query'
