@@ -33,7 +33,6 @@ export interface LocationAdjustment {
 }
 
 export interface LeafToken {
-  type: string;
   loc: SourceLocation;
   locationAdjustment?: LocationAdjustment;
 }
@@ -44,7 +43,6 @@ export function collectLeafTokens(ast: any): LeafToken[] {
     _(node, { state, next }) {
       if (isLeafNode(node) && node.loc) {
         state.push({
-          type: node.type,
           loc: node.loc,
         });
       }
