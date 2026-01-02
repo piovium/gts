@@ -233,9 +233,9 @@ function locToOffset(
   line_offsets: number[]
 ): number {
   if (line < 1 || line > line_offsets.length) {
-    throw new Error(
-      `Location line or line offsets length is out of bounds, line: ${line}, line offsets length: ${line_offsets.length}`
-    );
+    // throw new Error(
+    //   `Location line or line offsets length is out of bounds, line: ${line}, line offsets length: ${line_offsets.length}`
+    // );
   }
   return line_offsets[line - 1] + column;
 }

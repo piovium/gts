@@ -2,7 +2,7 @@ import type { TextDocument } from "vscode-languageserver-textdocument";
 import type { LanguageServiceContext } from "@volar/language-server";
 
 import { URI } from "vscode-uri";
-import type { GtsVirtualCode } from "@gi-tcg/gts-language-plugin";
+import { GtsVirtualCode } from "@gi-tcg/gts-language-plugin";
 
 /**
  * Get virtual code from the encoded document URI
@@ -10,7 +10,7 @@ import type { GtsVirtualCode } from "@gi-tcg/gts-language-plugin";
 export function getVirtualCode(
   document: TextDocument,
   context: LanguageServiceContext
-): [GtsVirtualCode, URI] {
+): [GtsVirtualCode | null, URI] {
   const uri = URI.parse(document.uri);
   const decoded = context.decodeEmbeddedDocumentUri(uri) as [
     documentUri: URI,
@@ -20,8 +20,14 @@ export function getVirtualCode(
   const sourceScript = context.language.scripts.get(sourceUri);
   const virtualCode = sourceScript?.generated?.embeddedCodes.get(
     virtualCodeId
-  ) as GtsVirtualCode;
+  );
 
+  if (!virtualCode) {
+    return [null, sourceUri];
+  }
+  if (!(virtualCode instanceof GtsVirtualCode)) {
+    return [null, sourceUri];
+  }
   return [virtualCode, sourceUri];
 }
 

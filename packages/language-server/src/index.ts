@@ -9,6 +9,7 @@ import { create as createTypeScriptServices } from "volar-service-typescript";
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import type ts from "typescript";
 import path from "node:path";
+import { createDiagnosticsPlugin } from "./diagnostics";
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -40,14 +41,40 @@ connection.onInitialize((params) => {
           );
         }
         return {
-          languagePlugins: [
-            createGtsLanguagePlugin(commandLine),
-          ],
+          languagePlugins: [createGtsLanguagePlugin(commandLine)],
         };
       }
     ),
     [
       ...createTypeScriptServices(tsdk.typescript),
+      {
+        capabilities: {
+          diagnosticProvider: {
+            interFileDependencies: false,
+            workspaceDiagnostics: false,
+          },
+        },
+        create: (context) => {
+          return {
+            provideDiagnostics: (document) => {
+              const diagnostics: Diagnostic[] = [
+                {
+                  severity: 1,
+                  range: {
+                    start: { line: 0, character: 0 },
+                    end: { line: 0, character: 1 },
+                  },
+                  message: "Sample diagnostic from custom plugin",
+                  source: "custom-plugin",
+                },
+              ];
+              // Custom diagnostics logic can be added here
+              return diagnostics;
+            },
+          };
+        },
+      },
+      // createDiagnosticsPlugin(),
       // createDocumentHighlightPlugin(),
     ]
   );

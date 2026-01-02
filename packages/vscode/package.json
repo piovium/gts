@@ -70,7 +70,7 @@
     ]
   },
   "scripts": {
-    "build": "bun build --production --outdir=dist --target=node --format=cjs --external='vscode' --conditions='bun' src/server.ts src/extension.ts",
+    "build": "bun build --outdir=dist --target=node --format=cjs --external='vscode' --conditions='bun' src/server.ts src/extension.ts",
     "watch": "npm run build -- --watch",
     "pack": "npm run build && vsce package --pre-release",
     "release": "npm run build && vsce publish --pre-release"

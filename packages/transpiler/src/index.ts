@@ -2,6 +2,7 @@ import { parse, parseLoose } from "./parse";
 import { transformForVolar } from "./transform";
 import type { TranspileOption } from "./transform/gts";
 import type { VolarMappingResult } from "./transform/volar";
+export { GtsTranspilerError } from "./error";
 
 export function transpileForVolar(
   source: string,
