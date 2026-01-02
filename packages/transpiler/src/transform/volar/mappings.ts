@@ -267,7 +267,7 @@ export function convertToVolarMappings(
       token.loc.end.column,
       sourceLineOffsets
     );
-    const sourceLength = sourceEnd - sourceStart;
+    const sourceLength = token.sourceLength ?? sourceEnd - sourceStart;
     const genLineCol = getGeneratedPosition(
       token.loc.start.line,
       token.loc.start.column,
@@ -286,11 +286,13 @@ export function convertToVolarMappings(
       genStart += token.locationAdjustment.startOffset;
     }
 
+    const generatedLength = token.generatedLength ?? sourceLength;
+
     mappings.push({
       sourceOffsets: [sourceStart],
       generatedOffsets: [genStart],
       lengths: [sourceLength],
-      generatedLengths: [sourceLength],
+      generatedLengths: [generatedLength],
       data: DEFAULT_VOLAR_MAPPING_DATA,
     });
   }

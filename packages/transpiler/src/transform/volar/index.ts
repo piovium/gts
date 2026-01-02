@@ -8,10 +8,7 @@ import {
   type TranspileOption,
   type TranspileState,
 } from "../gts";
-import {
-  gtsToTypingsWalker,
-  type TypingTranspileState,
-} from "./walker";
+import { gtsToTypingsWalker, type TypingTranspileState } from "./walker";
 import { applyReplacements } from "./replacements";
 import type { Program } from "estree";
 import { convertToVolarMappings, type VolarMappingResult } from "./mappings";
@@ -50,6 +47,14 @@ function gtsToTypings(
     getLeadingComments: (node) => (node as AST.Node).leadingComments,
     getTrailingComments: (node) => (node as AST.Node).trailingComments,
   });
+  const prevIdentifier = printer.Identifier!;
+  printer.Identifier = function (node, context) {
+    if (node.isDummy) {
+      context.write("", node);
+    } else {
+      prevIdentifier(node, context);
+    }
+  };
   const { code, map } = print(newAst, printer, {
     indent: "  ",
   });

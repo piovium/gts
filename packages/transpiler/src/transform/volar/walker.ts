@@ -413,7 +413,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
           const token = state.leafTokens.find((t) => t.loc === attr.loc);
           if (token) {
-            console.log("FOUND");
             token.locationAdjustment = {
               startOffset: 1,
             };
@@ -550,17 +549,16 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
   GTSShortcutArgumentExpression(node, { state, visit }): MemberExpression {
     const lhs = { ...state.fnArgId };
     if (node.loc) {
-      lhs.loc = {
-        start: { ...node.loc.start },
-        end: { ...node.loc.start },
-      };
-      state.leafTokens.push({
-        type: lhs.type,
-        loc: lhs.loc,
-        locationAdjustment: {
-          startOffset: lhs.name.length,
-        },
-      });
+      // lhs.loc = {
+      //   start: { ...node.loc.start },
+      //   end: { ...node.loc.start },
+      // };
+      // state.leafTokens.push({
+      //   loc: lhs.loc,
+      //   locationAdjustment: {
+      //     startOffset: lhs.name.length,
+      //   },
+      // });
     }
     return {
       type: "MemberExpression",
