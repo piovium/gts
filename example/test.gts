@@ -29,9 +29,7 @@ define character {
 define skill {
   id 12011 as WhisperOfWater;
   cost hydro, 3;
-  // :getVariable();
-  void 0;
-  __gts_fnArg
+  :getVariable()
   :damage(hydro, 1);
   :summon(MelodyLoop);
 }
@@ -60,6 +58,9 @@ const sub = (a: number, b: number) => {
 }
 
 export const obj = {
-  foo: "bar"
+  foo: "bar",
+  sub: (name: string) => {}
 };
 obj.foo;
+
+obj.sub()

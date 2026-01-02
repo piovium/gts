@@ -257,7 +257,7 @@ export function convertToVolarMappings(
   const mappings: CodeMapping[] = [];
 
   for (const token of tokens) {
-    const sourceStart = locToOffset(
+    let sourceStart = locToOffset(
       token.loc.start.line,
       token.loc.start.column,
       sourceLineOffsets
@@ -267,7 +267,7 @@ export function convertToVolarMappings(
       token.loc.end.column,
       sourceLineOffsets
     );
-    const sourceLength = token.sourceLength ?? sourceEnd - sourceStart;
+    let sourceLength = token.sourceLength ?? sourceEnd - sourceStart;
     const genLineCol = getGeneratedPosition(
       token.loc.start.line,
       token.loc.start.column,
@@ -283,7 +283,29 @@ export function convertToVolarMappings(
       generatedLineOffsets
     );
     if (token.locationAdjustment) {
+      // maps verification back to the start of source
+      mappings.push({
+        sourceOffsets: [sourceStart],
+        generatedOffsets: [genStart],
+        lengths: [0],
+        generatedLengths: [token.locationAdjustment.generatedLength],
+        data: {
+          verification: true,
+        },
+      });
       genStart += token.locationAdjustment.startOffset;
+    }
+    if (token.isDummy) {
+      // A dummy token might be generated for a missing property / argument.
+      // Notice that when facing this scenario, the parser tries to 'defer' and step through
+      // all whitespaces and insert the invalid node just before the next token.
+      // But in a mapping context, we need the caret next to the previous token (commonly the `.` dot)
+      // to allow triggering completion correctly. So we adjust the sourceStart and sourceLength accordingly.
+      // After adjustment, the mapping will include all whitespaces as the invalid node and maps to an empty string.
+      while (sourceStart > 0 && /\s/.test(source[sourceStart - 1])) {
+        sourceStart--;
+        sourceLength++;
+      }
     }
 
     const generatedLength = token.generatedLength ?? sourceLength;

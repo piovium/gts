@@ -415,6 +415,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           if (token) {
             token.locationAdjustment = {
               startOffset: 1,
+              generatedLength: attr.name.length + 2, // quotation mark
             };
           }
           return {

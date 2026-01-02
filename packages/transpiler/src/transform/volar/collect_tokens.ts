@@ -29,11 +29,19 @@ function isLeafNode(node: any): boolean {
 }
 
 export interface LocationAdjustment {
+  /**
+   * Adjust the start position of generated code
+   */
   startOffset: number;
+  /**
+   * The original length of generated code, used for mapping diagnostics
+   */
+  generatedLength: number;
 }
 
 export interface LeafToken {
   loc: SourceLocation;
+  isDummy?: boolean;
   sourceLength?: number;
   generatedLength?: number;
   locationAdjustment?: LocationAdjustment;
@@ -48,6 +56,7 @@ export function collectLeafTokens(ast: any): LeafToken[] {
           loc: node.loc
         };
         if (node.isDummy) {
+          token.isDummy = true;
           token.sourceLength = 0;
           token.generatedLength = 0;
         }
