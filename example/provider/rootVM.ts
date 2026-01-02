@@ -68,9 +68,6 @@ const CharacterVM = defineViewModel(
           vars: TMeta["vars"] | TVarName;
         }
       >;
-      required<TMeta extends BuilderMeta>(
-        this: AR.This<TMeta>
-      ): TMeta["vars"] extends never ? true : false;
     }>(() => {}),
 
     // skill: helper.attribute<{
@@ -226,7 +223,7 @@ type FinalMeta = Meta3;
 let finalObj = obj3;
 type FinalObj = typeof finalObj;
 type RequiredProperties = {
-  [K in keyof FinalObj]: FinalObj[K] extends { required(this: FinalObj): true }
+  [K in keyof VMDef]: FinalObj[K] extends { required(this: FinalObj): true }
     ? K
     : never;
 }[keyof VMDef];

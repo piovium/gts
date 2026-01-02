@@ -1,6 +1,5 @@
 import type { ExpressionStatement } from "estree";
 import type { TypingTranspileState } from "./walker";
-import { DUMMY_PLACEHOLDER } from "../../parse/loose_plugin";
 
 type ReplacementPayload =
   | {
@@ -18,7 +17,10 @@ type ReplacementPayload =
   | {
       type: "exitVM";
       metaType: string;
+      defType: string;
+      collectedAttrs: string[];
       finalMetaType: string;
+      errorLoc?: string;
     }
   | {
       type: "enterAttr";
@@ -74,6 +76,7 @@ export function applyReplacements(state: TypingTranspileState, code: string) {
   const {
     symbolsId: { NamedDefinition, Meta },
   } = state;
+  // All replacement should be written in one line to avoid messing up source map
   return code.replace(replacementRegex, (_, rawPayload) => {
     const payload: ReplacementPayload = JSON.parse(rawPayload);
     if (payload.type === "enterVMFromRoot") {
@@ -81,7 +84,14 @@ export function applyReplacements(state: TypingTranspileState, code: string) {
     } else if (payload.type === "enterVMFromAttr") {
       return `type ${payload.defType} = ${payload.returnType} extends { namedDefinition: infer Def } ? Def : { [${Meta.name}]: unknown }; type ${payload.metaType} = ${payload.defType}[${Meta.name}];`;
     } else if (payload.type === "exitVM") {
-      return `type ${payload.finalMetaType} = ${payload.metaType};`;
+      const lhs = `${payload.finalMetaType}_lhs`;
+      const requiredAttrsNs = `${payload.finalMetaType}_rans`;
+      const collectedAttrsExpr = `${payload.collectedAttrs.join(" | ")}`;
+      const needleString = `null! as ${requiredAttrsNs}.RequiredAttributes`;
+      if (payload.errorLoc) {
+        state.additionalMappings.set(payload.errorLoc, needleString);
+      }
+      return `type ${payload.finalMetaType} = ${payload.metaType}; const ${lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = 0 as any; type ${lhs} = typeof ${lhs}; namespace ${requiredAttrsNs} { export type CollectedAttributes = ${collectedAttrsExpr}; export type RequiredAttributes = { [K in keyof ${payload.defType}]: ${lhs}[K] extends { required(this: ${lhs}): true } ? K : never }[keyof ${payload.defType}]; }; ((_: ${requiredAttrsNs}.CollectedAttributes) => 0)(${needleString});`;
     } else if (payload.type === "enterAttr") {
       return `const ${payload.lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = 0 as any;`;
     } else if (payload.type === "createBindingTyping") {

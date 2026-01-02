@@ -244,7 +244,8 @@ export function convertToVolarMappings(
   generated: string,
   source: string,
   sourceMap: SourceMap,
-  tokens: LeafToken[]
+  tokens: LeafToken[],
+  additionalMappings: Map<string, string>
 ): CodeMapping[] {
   const sourceLineOffsets = createLineOffsets(source);
   const generatedLineOffsets = createLineOffsets(generated);
@@ -316,6 +317,28 @@ export function convertToVolarMappings(
       lengths: [sourceLength],
       generatedLengths: [generatedLength],
       data: DEFAULT_VOLAR_MAPPING_DATA,
+    });
+  }
+
+  for (const [loc, codeSnippet] of additionalMappings) {
+    const generatedStart = generated.indexOf(codeSnippet);
+    if (generatedStart === -1) {
+      continue;
+    }
+    const [lineStr, columnStr] = loc.split(":");
+    const line = Number(lineStr);
+    const column = Number(columnStr);
+    const sourceStart = locToOffset(line, column, sourceLineOffsets);
+    const sourceLength = 1;
+    const generatedLength = codeSnippet.length;
+    mappings.push({
+      sourceOffsets: [sourceStart],
+      generatedOffsets: [generatedStart],
+      lengths: [sourceLength],
+      generatedLengths: [generatedLength],
+      data: {
+        verification: true,
+      },
     });
   }
 

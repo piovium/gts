@@ -128,8 +128,8 @@ interface AttributePositionalReturnBase {
 
 
 export namespace AttributeReturn {
-  export type This<Meta = any> = {
-    [Meta]: Meta;
+  export type This<TMeta = any> = {
+    [Meta]: TMeta;
   };
 
   export type Done = {
@@ -138,9 +138,9 @@ export namespace AttributeReturn {
 
   export type With<
     VM extends ViewModel<any, any>,
-    Meta = VM[NamedDefinition][Meta],
+    TMeta = VM[NamedDefinition][Meta],
   > = {
-    namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], Meta>;
+    namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], TMeta>;
   };
 
   export type WithRewriteMeta<VM extends ViewModel<any, any>, Meta> = {

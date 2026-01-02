@@ -1,14 +1,4 @@
-import { decode } from "@jridgewell/sourcemap-codec";
-import type {
-  CodeInformation,
-  CodeMapping,
-  Mapping,
-} from "@volar/language-core";
-import type { AST } from "../../types";
-import { walk, type Visitors } from "zimmerframe";
-import type { SourceInfo, TranspileResult } from "..";
-import { print } from "esrap";
-import tsPrinter from "esrap/languages/ts";
+import type { Visitors } from "zimmerframe";
 import type {
   ArrayExpression,
   ArrowFunctionExpression,
@@ -20,6 +10,7 @@ import type {
   ExpressionStatement,
   GTSDefineStatement,
   Identifier,
+  Literal,
   MemberExpression,
   Node,
   Program,
@@ -29,9 +20,7 @@ import type {
 } from "estree";
 import {
   commonGtsVisitor,
-  initialTranspileState,
   type ExternalizedBinding,
-  type TranspileOption,
   type TranspileState,
 } from "../gts";
 import type { LeafToken } from "./collect_tokens";
@@ -52,6 +41,8 @@ export interface TypingTranspileState extends TranspileState {
   };
   // type of current VM's definition
   vmDefTypeIdStack: Identifier[];
+  // current collected Attribute names
+  attrsOfCurrentVm: string[][];
   // type of current Meta
   metaTypeIdStack: Identifier[];
   // type of final Meta
@@ -62,6 +53,7 @@ export interface TypingTranspileState extends TranspileState {
   /** Pending statements to be inserted to the top-level */
   pendingStatements: Statement[];
   replacementTag: Identifier;
+  additionalMappings: Map<string, string>;
 }
 
 const EMPTY: EmptyStatement = { type: "EmptyStatement" };
@@ -163,6 +155,7 @@ const enterVMFromRoot = (state: TypingTranspileState) => {
   state.vmDefTypeIdStack.push(defTypeId);
   state.metaTypeIdStack.push(metaTypeId);
   state.finalMetaTypeIdStack.push(finalMetaTypeId);
+  state.attrsOfCurrentVm.push([]);
 };
 const enterVMFromAttr = (
   state: TypingTranspileState,
@@ -191,27 +184,37 @@ const enterVMFromAttr = (
   state.vmDefTypeIdStack.push(defTypeId);
   state.metaTypeIdStack.push(metaTypeId);
   state.finalMetaTypeIdStack.push(finalMetaTypeId);
+  state.attrsOfCurrentVm.push([]);
 };
-const exitVM = (state: TypingTranspileState) => {
-  state.vmDefTypeIdStack.pop();
+
+const exitVM = (state: TypingTranspileState, errorLoc?: string) => {
+  const currentDefTypeId = state.vmDefTypeIdStack.pop()!;
   const currentMetaId = state.metaTypeIdStack.pop()!;
   const finalMetaId = state.finalMetaTypeIdStack.pop()!;
+  const collectedAttrNames = state.attrsOfCurrentVm.pop()!;
   state.pendingStatements.push(
     createReplacementHolder(state, {
       type: "exitVM",
       metaType: currentMetaId.name,
+      defType: currentDefTypeId.name,
       finalMetaType: finalMetaId.name,
+      collectedAttrs: collectedAttrNames,
+      errorLoc,
     })
   );
 };
 
-const enterAttr = (state: TypingTranspileState): { lhsId: Identifier } => {
+const enterAttr = (
+  state: TypingTranspileState,
+  attrName: string
+): { lhsId: Identifier } => {
   const defTypeId = state.vmDefTypeIdStack.at(-1);
   const metaTypeId = state.metaTypeIdStack.at(-1);
   if (!defTypeId || !metaTypeId) {
     // TODO error handling?
     return { lhsId: { type: "Identifier", name: "__invalid_attr_obj" } };
   }
+  state.attrsOfCurrentVm.at(-1)!.push(attrName);
   const lhsId: Identifier = {
     type: "Identifier",
     name: `__gts_attr_obj_${state.idCounter++}`,
@@ -412,7 +415,10 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
     const { name, body, bindingName } = node;
-    const { lhsId } = enterAttr(state);
+    const attrName = JSON.stringify(
+      name.type === "Literal" ? String(name.value) : name.name
+    );
+    const { lhsId } = enterAttr(state, attrName);
     const positionals = body.positionalAttributes.attributes.map(
       (attr): Expression => {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
@@ -462,7 +468,10 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     if (body.namedAttributes) {
       enterVMFromAttr(state, returnValue);
       visit(body.namedAttributes);
-      exitVM(state);
+      exitVM(
+        state,
+        `${body.namedAttributes.loc?.start.line}:${body.namedAttributes.loc?.start.column}`
+      );
     }
     if (bindingName) {
       const export_ = node.bindingAccessModifier !== "private";
@@ -475,9 +484,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         name: `gts_binding_type_${state.externalizedBindings.length}`,
       };
       genBindingTyping(state, {
-        attrName: JSON.stringify(
-          name.type === "Literal" ? String(name.value) : name.name
-        ),
+        attrName,
         typingId,
       });
       state.externalizedBindings.push({
@@ -512,7 +519,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       visit(attr);
     }
     if (node.directAction) {
-      const { lhsId } = enterAttr(state);
+      const { lhsId } = enterAttr(state, state.ActionId.name);
       const fn: ArrowFunctionExpression = {
         type: "ArrowFunctionExpression",
         params: state.shortcutFunctionParameters,
@@ -554,18 +561,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
   ...(commonGtsVisitor as Visitors<Node, TypingTranspileState>),
   GTSShortcutArgumentExpression(node, { state, visit }): MemberExpression {
     const lhs = { ...state.fnArgId };
-    if (node.loc) {
-      // lhs.loc = {
-      //   start: { ...node.loc.start },
-      //   end: { ...node.loc.start },
-      // };
-      // state.leafTokens.push({
-      //   loc: lhs.loc,
-      //   locationAdjustment: {
-      //     startOffset: lhs.name.length,
-      //   },
-      // });
-    }
     return {
       type: "MemberExpression",
       object: lhs,

@@ -16,6 +16,8 @@ import { collectLeafTokens, type LeafToken } from "./collect_tokens";
 
 interface TypingTranspileOption extends TranspileOption {
   leafTokens: LeafToken[];
+  // "row:col" -> "replacement string"
+  additionalMappings: Map<string, string>;
 }
 
 function gtsToTypings(
@@ -40,6 +42,8 @@ function gtsToTypings(
     vmDefTypeIdStack: [],
     metaTypeIdStack: [],
     finalMetaTypeIdStack: [],
+    attrsOfCurrentVm: [],
+    additionalMappings: option.additionalMappings,
   };
   const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
   const printer = tsPrinter({
@@ -69,15 +73,18 @@ export function transformForVolar(
   sourceInfo: Required<SourceInfo>
 ): VolarMappingResult {
   const tokens = collectLeafTokens(ast);
+  const additionalMappings = new Map<string, string>();
   const { code, sourceMap } = gtsToTypings(ast, {
     ...option,
     leafTokens: tokens,
+    additionalMappings,
   });
   const volarMappings = convertToVolarMappings(
     code,
     sourceInfo.content,
     sourceMap,
-    tokens
+    tokens,
+    additionalMappings
   );
   return {
     code,
