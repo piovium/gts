@@ -3369,6 +3369,28 @@
     "expression-operators": {
       "patterns": [
         {
+          "match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(as)\\s+(private|public)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))",
+          "captures": {
+            "1": {
+              "name": "keyword.control.as.ts"
+            },
+            "2": {
+              "name": "storage.modifier.ts"
+            }
+          }
+        },
+        {
+          "match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(query)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?:\\s*(\\*))?",
+          "captures": {
+            "1": {
+              "name": "keyword.control.query.gts"
+            },
+            "2": {
+              "name": "keyword.control.query.asterisk.gts"
+            }
+          }
+        },
+        {
           "name": "keyword.control.flow.ts",
           "match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(await)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
         },
@@ -3544,17 +3566,6 @@
             },
             "2": {
               "name": "keyword.operator.arithmetic.ts"
-            }
-          }
-        },
-        {
-          "match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(query)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?:\\s*(\\*))?",
-          "captures": {
-            "1": {
-              "name": "keyword.control.query.gts"
-            },
-            "2": {
-              "name": "keyword.control.query.asterisk.gts"
             }
           }
         }

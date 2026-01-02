@@ -86,22 +86,37 @@ patched.repository["define-statement"] = {
     },
   ],
 };
+
 patched.repository["declaration"].patterns.push({
   include: "#define-statement",
 });
 
-patched.repository["expression-operators"].patterns.push({
-  match:
-    "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(query)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?:\\s*(\\*))?",
-  captures: {
-    "1": {
-      name: "keyword.control.query.gts",
-    },
-    "2": {
-      name: "keyword.control.query.asterisk.gts",
+patched.repository["expression-operators"].patterns.unshift(
+  {
+    match:
+      "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(as)\\s+(private|public)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))",
+    captures: {
+      "1": {
+        name: "keyword.control.as.ts",
+      },
+      "2": {
+        name: "storage.modifier.ts",
+      },
     },
   },
-});
+  {
+    match:
+      "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(query)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?:\\s*(\\*))?",
+    captures: {
+      "1": {
+        name: "keyword.control.query.gts",
+      },
+      "2": {
+        name: "keyword.control.query.asterisk.gts",
+      },
+    },
+  }
+);
 
 await Bun.write(
   `./syntaxes/GamingTS.tmLanguage.json`,

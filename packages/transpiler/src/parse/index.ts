@@ -1,4 +1,4 @@
-import { Parser, type SourceLocation } from "acorn";
+import { Parser } from "acorn";
 import type { Program } from "estree";
 import { tsPlugin } from "@sveltejs/acorn-typescript";
 import { gtsPlugin, type GtsPluginOption } from "./gts_plugin.js";
@@ -18,7 +18,11 @@ export function parse(input: string, options?: GtsPluginOption): Program {
     }) as Program;
   } catch (e) {
     if (e instanceof SyntaxError && "loc" in e) {
-      throw new GtsTranspilerError(e.message, e.loc as SourceLocation);
+      const loc = e.loc as Position;
+      throw new GtsTranspilerError(e.message, {
+        start: loc,
+        end: { line: loc.line, column: loc.column + 1 },
+      });
     } else {
       throw new GtsTranspilerError((e as Error)?.message, null);
     }
@@ -46,7 +50,11 @@ export function parseLoose(input: string, options?: GtsPluginOption): Program {
     return ast;
   } catch (e) {
     if (e instanceof SyntaxError && "loc" in e) {
-      throw new GtsTranspilerError(e.message, e.loc as SourceLocation);
+      const loc = e.loc as Position;
+      throw new GtsTranspilerError(e.message, {
+        start: loc,
+        end: { line: loc.line, column: loc.column + 1 },
+      });
     } else {
       throw new GtsTranspilerError((e as Error)?.message, null);
     }

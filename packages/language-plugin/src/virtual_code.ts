@@ -18,10 +18,11 @@ export class GtsVirtualCode implements VirtualCode {
     const source = snapshot.getText(0, snapshot.getLength());
     try {
       const { code, mappings } = transpileForVolar(source, filename, config);
+      this.errors = [];
       this.mappings = mappings;
       this.snapshot = {
-        getLength: () => code.length,
         getText: (start, end) => code.slice(start, end),
+        getLength: () => code.length,
         getChangeRange: () => void 0,
       };
     } catch (e) {
@@ -31,14 +32,18 @@ export class GtsVirtualCode implements VirtualCode {
         this.errors = [new GtsTranspilerError((e as Error)?.message, null)];
       }
 
-      const emptyGeneration = " ".repeat(source.length) + "export {};\n";
+      const emptyGeneration = source
+        .split("\n")
+        .map((line) => " ".repeat(line.length))
+        .join("\n");
       this.mappings = [
         {
           sourceOffsets: [0],
           generatedOffsets: [0],
-          lengths: [source.length],
-          generatedLengths: [emptyGeneration.length],
-          data: {},
+          lengths: [emptyGeneration.length],
+          data: {
+            verification: true,
+          },
         },
       ];
 

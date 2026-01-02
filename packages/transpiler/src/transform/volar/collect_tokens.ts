@@ -58,7 +58,8 @@ export function collectLeafTokens(ast: any): LeafToken[] {
         if (node.isDummy) {
           token.isDummy = true;
           token.sourceLength = 0;
-          token.generatedLength = 0;
+          // include next character for diagnostic
+          token.generatedLength = 1;
         }
         state.push(token);
       }

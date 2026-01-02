@@ -47,35 +47,7 @@ connection.onInitialize((params) => {
     ),
     [
       ...createTypeScriptServices(tsdk.typescript),
-      {
-        capabilities: {
-          diagnosticProvider: {
-            interFileDependencies: false,
-            workspaceDiagnostics: false,
-          },
-        },
-        create: (context) => {
-          return {
-            provideDiagnostics: (document) => {
-              const diagnostics: Diagnostic[] = [
-                {
-                  severity: 1,
-                  range: {
-                    start: { line: 0, character: 0 },
-                    end: { line: 0, character: 1 },
-                  },
-                  message: "Sample diagnostic from custom plugin",
-                  source: "custom-plugin",
-                },
-              ];
-              // Custom diagnostics logic can be added here
-              return diagnostics;
-            },
-          };
-        },
-      },
-      // createDiagnosticsPlugin(),
-      // createDocumentHighlightPlugin(),
+      createDiagnosticsPlugin(),
     ]
   );
 });
@@ -83,3 +55,12 @@ connection.onInitialize((params) => {
 connection.onInitialized(server.initialized);
 
 connection.onShutdown(server.shutdown);
+
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled rejection at:", promise, "reason:", reason);
+});

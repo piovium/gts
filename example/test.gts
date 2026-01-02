@@ -27,7 +27,7 @@ define character {
  * 造成1点水元素伤害，召唤歌声之环。
  */
 define skill {
-  id 12011 as WhisperOfWater;
+  id 12011 as private WhisperOfWater;
   cost hydro, 3;
   :getVariable(
   :damage(hydro, 1);
@@ -62,5 +62,3 @@ export const obj = {
   sub: (name: string) => {}
 };
 obj.foo;
-
-obj.sub()

@@ -23,19 +23,19 @@ export const createDiagnosticsPlugin = (): LanguageServicePlugin => {
             if (!virtualCode) {
               return;
             }
-            console.log('AAAA', virtualCode.errors);
             return virtualCode.errors.map((err) => {
               const loc = err.position ?? {
-                start: { line: 1, column: 1 },
+                start: { line: 1, column: 0 },
                 end: { line: 1, column: 1 },
               };
               const range: Range = {
                 start: {
                   line: loc.start.line - 1,
-                  character: loc.start.column - 1,
+                  character: loc.start.column,
                 },
-                end: { line: loc.end.line - 1, character: loc.end.column - 1 },
+                end: { line: loc.end.line - 1, character: loc.end.column },
               };
+              console.log(range);
               return {
                 severity: DiagnosticSeverity.Error,
                 range,
