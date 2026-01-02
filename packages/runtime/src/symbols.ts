@@ -1,14 +1,18 @@
-export const MetaSymbol: unique symbol = Symbol("Meta");
-export type MetaSymbol = typeof MetaSymbol;
+export const Meta: unique symbol = Symbol("Meta");
+export type Meta = typeof Meta;
 
-export const ActionSymbol: unique symbol = Symbol("Action");
-export type ActionSymbol = typeof ActionSymbol;
+export const Action: unique symbol = Symbol("Action");
+export type Action = typeof Action;
 
 export const NamedDefinition: unique symbol = Symbol("NamedDefinition");
 export type NamedDefinition = typeof NamedDefinition;
 
+export const Prelude: unique symbol = Symbol("Prelude");
+export type Prelude = typeof Prelude;
+
 export type AllSymbols = {
-  MetaSymbol: MetaSymbol;
-  ActionSymbol: ActionSymbol;
+  Meta: Meta;
+  Action: Action;
   NamedDefinition: NamedDefinition;
+  Prelude: Prelude;
 };

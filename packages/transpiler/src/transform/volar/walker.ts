@@ -47,8 +47,7 @@ export interface TypingTranspileState extends TranspileState {
   idCounter: number;
   rootVmId: Identifier;
   symbolsId: {
-    MetaSymbol: Identifier;
-    ActionSymbol: Identifier;
+    Meta: Identifier;
     NamedDefinition: Identifier;
   };
   // type of current VM's definition
@@ -89,9 +88,10 @@ const emitPreface = (state: TypingTranspileState) => {
     right: { type: "Identifier", name: "_symbols" },
   };
   for (const symbolName of [
-    "MetaSymbol",
-    "ActionSymbol",
+    "Meta",
+    "Action",
     "NamedDefinition",
+    "Prelude",
   ] as const) {
     const init = {
       type: "TSTypeQuery",
@@ -101,7 +101,12 @@ const emitPreface = (state: TypingTranspileState) => {
         right: { type: "Identifier", name: symbolName },
       },
     };
-    const symbolId = state.symbolsId[symbolName];
+    const symbolId =
+      symbolName === "Action"
+        ? state.ActionId
+        : symbolName === "Prelude"
+        ? state.preludeSymbolId
+        : state.symbolsId[symbolName];
     state.pendingStatements.push(
       {
         type: "TSTypeAliasDeclaration",
@@ -510,7 +515,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       const { lhsId } = enterAttr(state);
       const fn: ArrowFunctionExpression = {
         type: "ArrowFunctionExpression",
-        params: [state.fnArgId],
+        params: state.shortcutFunctionParameters,
         body: {
           type: "BlockStatement",
           body: node.directAction.body.map((stmt) => visit(stmt) as Statement),
@@ -534,7 +539,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
               callee: {
                 type: "MemberExpression",
                 object: lhsId,
-                property: state.symbolsId.ActionSymbol,
+                property: state.ActionId,
                 computed: true,
                 optional: false,
               },

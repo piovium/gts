@@ -1,5 +1,6 @@
 import {
-  ActionSymbol,
+  Action,
+  Prelude,
   defineViewModel,
   type AttributeReturn as AR,
 } from "~runtime";
@@ -88,6 +89,16 @@ const CharacterVM = defineViewModel(
 class CharacterSkillBuilder {}
 
 interface SkillContext<TMeta extends BuilderMeta> {
+  [Prelude]: {
+    cryo: number;
+    hydro: number;
+    pyro: number;
+    electro: number;
+    anemo: number;
+    geo: number;
+    dendro: number;
+    omni: number;
+  };
   getVariable<TVarName extends TMeta["vars"]>(name: TVarName): number;
 }
 
@@ -109,7 +120,7 @@ const CharacterSkillVM = defineViewModel(
     cost: helper.attribute<{
       (element: string, amount: number): AR.Done;
     }>((model, [element, amount]) => {}),
-    [ActionSymbol]: helper.attribute<{
+    [Action]: helper.attribute<{
       <TMeta extends BuilderMeta>(
         this: AR.This<TMeta>,
         action: SkillAction<TMeta>
@@ -144,28 +155,28 @@ const Abc: Binding2 = (void 0)!;
 
 // Preface region
 
-type MetaSymbol = typeof CharacterVM._symbols.MetaSymbol;
-let MetaSymbol!: MetaSymbol;
+type Meta = typeof CharacterVM._symbols.Meta;
+let Meta!: Meta;
 type NamedDefinition = typeof CharacterVM._symbols.NamedDefinition;
 
 // Block Start
 
 type VMDef = (typeof CharacterVM)[NamedDefinition];
-type Meta0 = VMDef[MetaSymbol];
+type Meta0 = VMDef[Meta];
 
 // Attribute
 
-let obj0!: { [MetaSymbol]: Meta0 } & Omit<VMDef, MetaSymbol>;
+let obj0!: { [Meta]: Meta0 } & Omit<VMDef, Meta>;
 let return0 = obj0.id(123);
 type Return0 = typeof return0;
 type Meta1 = Return0 extends { rewriteMeta: infer NewMeta extends {} }
   ? NewMeta
   : Meta0;
 
-let obj1!: { [MetaSymbol]: Meta1 } & Omit<VMDef, MetaSymbol>;
+let obj1!: { [Meta]: Meta1 } & Omit<VMDef, Meta>;
 
 type InferBindingObj = {
-  [MetaSymbol]: FinalMeta;
+  [Meta]: FinalMeta;
   as: VMDef["id"] extends { as: infer As } ? As : unknown;
 };
 let inferBindingObj1!: InferBindingObj;
@@ -177,15 +188,14 @@ type Return1 = typeof return1;
 type Meta2 = Return1["rewriteMeta"] extends undefined
   ? Meta1
   : Return1["rewriteMeta"];
-let obj2!: { [MetaSymbol]: Meta2 } & Omit<VMDef, MetaSymbol>;
-
+let obj2!: { [Meta]: Meta2 } & Omit<VMDef, Meta>;
 
 let return2 = obj2.variable("stamina", 5);
 type Return2 = typeof return2;
 type Meta3 = Return2["rewriteMeta"] extends undefined
   ? Meta2
   : Return2["rewriteMeta"];
-let obj3!: { [MetaSymbol]: Meta3 } & Omit<VMDef, MetaSymbol>;
+let obj3!: { [Meta]: Meta3 } & Omit<VMDef, Meta>;
 
 let return3 = obj3.skill();
 type Return3 = typeof return3;
@@ -193,8 +203,8 @@ type Return3 = typeof return3;
 // Block2 start
 
 /****/ type VMDef3 = Return3 extends { namedDefinition: infer Def } ? Def : {};
-/****/ type Meta3_1 = VMDef3[MetaSymbol];
-/****/ let obj3_1!: { [MetaSymbol]: Meta3_1 } & Omit<VMDef3, MetaSymbol>;
+/****/ type Meta3_1 = VMDef3[Meta];
+/****/ let obj3_1!: { [Meta]: Meta3_1 } & Omit<VMDef3, Meta>;
 /****/ let return3_1 = obj3_1.cost("mana", 20);
 /****/ type Return3_1 = typeof return3_1;
 
@@ -203,8 +213,8 @@ type Return3 = typeof return3;
 }
   ? NewMeta
   : Meta3_1;
-/****/ let obj3_2!: { [MetaSymbol]: Meta3_2 } & Omit<VMDef3, MetaSymbol>;
-/****/ let return3_2 = obj3_2[ActionSymbol]((arg) => {
+/****/ let obj3_2!: { [Meta]: Meta3_2 } & Omit<VMDef3, Meta>;
+/****/ let return3_2 = obj3_2[Action]((arg) => {
   /****/ let v0 = arg.getVariable("health");
   /****/
 });

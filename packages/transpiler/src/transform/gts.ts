@@ -13,11 +13,16 @@ import type {
   Node,
   ObjectExpression,
   ObjectPattern,
+  Pattern,
   Program,
   Statement,
 } from "estree";
 import { walk, type Visitors } from "zimmerframe";
 import { GtsTranspilerError } from "../error";
+import {
+  DEFAULT_QUERY_BINDINGS,
+  DEFAULT_SHORTCUT_FUNCTION_PRELUDES,
+} from "./constants";
 
 export interface ExternalizedBinding {
   bindingName: Identifier;
@@ -29,11 +34,14 @@ export interface ExternalizedBinding {
 
 export interface TranspileState {
   readonly createDefineFnId: Identifier;
-  readonly actionSymbolId: Identifier;
+  readonly ActionId: Identifier;
+  readonly preludeSymbolId: Identifier;
   readonly fnArgId: Identifier;
+  readonly shortcutFunctionParameters: Pattern[];
   readonly rootVmId: Identifier;
   readonly binderFnId: Identifier;
   readonly queryFnId: Identifier;
+  readonly queryParameters: Pattern[];
 
   readonly runtimeImportSource: string;
   readonly providerImportSource: string;
@@ -59,7 +67,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
             kind: "init",
             method: false,
             shorthand: false,
-            value: state.actionSymbolId,
+            value: state.ActionId,
             loc: node.loc,
           },
           {
@@ -74,7 +82,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
               elements: [
                 {
                   type: "ArrowFunctionExpression",
-                  params: [state.fnArgId],
+                  params: state.shortcutFunctionParameters,
                   body: {
                     type: "BlockStatement",
                     body: node.body.map((stmt) => visit(stmt) as Statement),
@@ -108,7 +116,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
   ): ArrowFunctionExpression {
     return {
       type: "ArrowFunctionExpression",
-      params: [state.fnArgId],
+      params: state.shortcutFunctionParameters,
       body: visit(node.body) as Expression | BlockStatement,
       expression: node.expression,
       loc: node.loc,
@@ -135,7 +143,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
         {
           type: "ArrowFunctionExpression",
           body: visit(node.argument) as Expression,
-          params: [state.queryArg],
+          params: state.queryParameters,
           expression: true,
           loc: node.argument.loc,
         },
@@ -281,8 +289,13 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         },
         {
           type: "ImportSpecifier",
-          imported: { type: "Identifier", name: "ActionSymbol" },
-          local: state.actionSymbolId,
+          imported: { type: "Identifier", name: "Action" },
+          local: state.ActionId,
+        },
+        {
+          type: "ImportSpecifier",
+          imported: { type: "Identifier", name: "Prelude" },
+          local: state.preludeSymbolId,
         },
       ],
       source: { type: "Literal", value: state.runtimeImportSource },
@@ -470,38 +483,91 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
 export interface TranspileOption {
   runtimeImportSource?: string;
   providerImportSource?: string;
-  queryExposeId?: string[];
+  shortcutFunctionPreludes?: string[];
+  queryBindings?: string[];
 }
 
 export const initialTranspileState = (
   option: TranspileOption = {}
-): TranspileState => ({
-  createDefineFnId: { type: "Identifier", name: "__gts_createDefine" },
-  actionSymbolId: { type: "Identifier", name: "__gts_ActionSymbol" },
-  fnArgId: { type: "Identifier", name: "__gts_fnArg" },
-  rootVmId: { type: "Identifier", name: "__gts_rootVm" },
-  binderFnId: { type: "Identifier", name: "__gts_Binder" },
-  queryFnId: { type: "Identifier", name: "__gts_query" },
+): TranspileState => {
+  const shortcutFunctionPreludes =
+    option.shortcutFunctionPreludes ?? DEFAULT_SHORTCUT_FUNCTION_PRELUDES;
+  const queryBindings = option.queryBindings ?? DEFAULT_QUERY_BINDINGS;
+  const fnArgId: Identifier = { type: "Identifier", name: "__gts_fnArg" };
+  const preludeSymbolId: Identifier = {
+    type: "Identifier",
+    name: "__gts_Prelude",
+  };
+  const shortcutFunctionParameters: Pattern[] = [
+    fnArgId,
+    {
+      type: "AssignmentPattern",
+      left: {
+        type: "ObjectPattern",
+        properties: shortcutFunctionPreludes.map((name) => ({
+          type: "Property",
+          computed: false,
+          key: { type: "Identifier", name },
+          value: { type: "Identifier", name },
+          kind: "init",
+          method: false,
+          shorthand: true,
+        })),
+      },
+      right: {
+        type: "MemberExpression",
+        object: fnArgId,
+        property: preludeSymbolId,
+        computed: true,
+        optional: false,
+      },
+    },
+  ];
+  const queryParameters: Pattern[] = [
+    {
+      type: "ObjectPattern",
+      properties: queryBindings.map((name) => ({
+        type: "Property",
+        computed: false,
+        key: { type: "Identifier", name },
+        value: { type: "Identifier", name },
+        kind: "init",
+        method: false,
+        shorthand: true,
+      })),
+    },
+  ];
+  return {
+    createDefineFnId: { type: "Identifier", name: "__gts_createDefine" },
+    ActionId: { type: "Identifier", name: "__gts_Action" },
+    preludeSymbolId,
+    fnArgId,
+    shortcutFunctionParameters,
+    rootVmId: { type: "Identifier", name: "__gts_rootVm" },
+    binderFnId: { type: "Identifier", name: "__gts_Binder" },
+    queryFnId: { type: "Identifier", name: "__gts_query" },
+    queryParameters,
 
-  runtimeImportSource: option.runtimeImportSource ?? "@gi-tcg/gts-runtime",
-  providerImportSource: option.providerImportSource ?? "@gi-tcg/core/gts",
-  queryArg: {
-    type: "ObjectPattern",
-    properties: (option.queryExposeId ?? []).map((name) => ({
-      type: "Property",
-      key: { type: "Identifier", name },
-      computed: false,
-      kind: "init",
-      method: false,
-      shorthand: true,
-      value: { type: "Identifier", name },
-    })),
-  },
+    runtimeImportSource: option.runtimeImportSource ?? "@gi-tcg/gts-runtime",
+    providerImportSource: option.providerImportSource ?? "@gi-tcg/core/gts",
+    queryArg: {
+      type: "ObjectPattern",
+      properties: (option.queryBindings ?? []).map((name) => ({
+        type: "Property",
+        key: { type: "Identifier", name },
+        computed: false,
+        kind: "init",
+        method: false,
+        shorthand: true,
+        value: { type: "Identifier", name },
+      })),
+    },
 
-  attributeNames: [],
-  externalizedBindings: [],
-  hasQueryExpressions: false,
-});
+    attributeNames: [],
+    externalizedBindings: [],
+    hasQueryExpressions: false,
+  };
+};
 
 export const gtsToTs = (
   ast: Program,

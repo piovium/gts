@@ -34,8 +34,7 @@ function gtsToTypings(
     rootVmId: { type: "Identifier", name: "__root_vm" },
     replacementTag: { type: "Identifier", name: "__gts_replacement_tag" },
     symbolsId: {
-      MetaSymbol: { type: "Identifier", name: "__gts_symbols_meta" },
-      ActionSymbol: { type: "Identifier", name: "__gts_symbols_action" },
+      Meta: { type: "Identifier", name: "__gts_symbols_meta" },
       NamedDefinition: { type: "Identifier", name: "__gts_symbols_namedDef" },
     },
     vmDefTypeIdStack: [],

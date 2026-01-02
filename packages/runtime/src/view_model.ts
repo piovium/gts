@@ -1,10 +1,10 @@
-import { ActionSymbol, AllSymbols, MetaSymbol, NamedDefinition } from "./symbols";
+import { Action, AllSymbols, Meta, NamedDefinition } from "./symbols";
 import { View } from "./view";
 
 export interface AttributeBlockDefinition {
   [name: string]: AttributeDefinition;
-  [ActionSymbol]?: AttributeDefinition;
-  [MetaSymbol]: any;
+  [Action]?: AttributeDefinition;
+  [Meta]: any;
 }
 
 type Computed<T> = T extends infer U extends { [K in keyof T]: unknown }
@@ -15,7 +15,7 @@ type BlockDefinitionRewriteMeta<
   BlockDef extends AttributeBlockDefinition,
   NewMeta,
 > = Computed<
-  Omit<BlockDef, MetaSymbol> & { [MetaSymbol]: NewMeta }
+  Omit<BlockDef, Meta> & { [Meta]: NewMeta }
 > extends infer R extends AttributeBlockDefinition
   ? R
   : never;
@@ -107,8 +107,8 @@ export function defineViewModel<
   Ctor: new () => T,
   modelDefFn: (helper: AttributeDefHelper<T>) => BlockDef,
   initMeta?: InitMeta,
-): ViewModel<T, BlockDef & { [MetaSymbol]: InitMeta }> {
-  const vm = new ViewModel<T, BlockDef & { [MetaSymbol]: InitMeta }>(Ctor);
+): ViewModel<T, BlockDef & { [Meta]: InitMeta }> {
+  const vm = new ViewModel<T, BlockDef & { [Meta]: InitMeta }>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult = modelDefFn(helper);
   helper._assignActions(defResult);
@@ -129,16 +129,16 @@ interface AttributePositionalReturnBase {
 
 export namespace AttributeReturn {
   export type This<Meta = any> = {
-    [MetaSymbol]: Meta;
+    [Meta]: Meta;
   };
 
   export type Done = {
-    namedDefinition: { [MetaSymbol]: void };
+    namedDefinition: { [Meta]: void };
   };
 
   export type With<
     VM extends ViewModel<any, any>,
-    Meta = VM[NamedDefinition][MetaSymbol],
+    Meta = VM[NamedDefinition][Meta],
   > = {
     namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], Meta>;
   };
@@ -155,6 +155,6 @@ export type AttributeAction<Model, T extends AttributeDefinition, BindingT> = (
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]
-      : { [MetaSymbol]: void }
+      : { [Meta]: void }
   >,
 ) => BindingT;
