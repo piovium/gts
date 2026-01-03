@@ -29,7 +29,7 @@ define character {
 define skill {
   id 12011 as private WhisperOfWater;
   cost hydro, 3;
-  :getVariable(
+  :getVariable()
   :damage(hydro, 1);
   :summon(MelodyLoop);
 }

@@ -3,6 +3,7 @@ import type {
   ArrayExpression,
   ArrowFunctionExpression,
   BlockStatement,
+  Comment,
   Declaration,
   EmptyStatement,
   ExportNamedDeclaration,
@@ -28,6 +29,7 @@ import { createReplacementHolder } from "./replacements";
 
 interface ExternalizedTypedBinding extends ExternalizedBinding {
   typingId: Identifier;
+  leadingComments?: Comment[];
 }
 
 export interface TypingTranspileState extends TranspileState {
@@ -39,6 +41,7 @@ export interface TypingTranspileState extends TranspileState {
     Meta: Identifier;
     NamedDefinition: Identifier;
   };
+  defineLeadingComments: Comment[] | undefined;
   // type of current VM's definition
   vmDefTypeIdStack: Identifier[];
   // current collected Attribute names
@@ -281,6 +284,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       if (
         (stmt as Statement | GTSDefineStatement).type === "GTSDefineStatement"
       ) {
+        state.defineLeadingComments = stmt.leadingComments;
         visit(stmt);
         body.push(...state.pendingStatements);
         state.pendingStatements = [];
@@ -363,9 +367,16 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
                     declaration: externalDecl,
                     specifiers: [],
                     attributes: [],
+                    leadingComments: binding.leadingComments,
                   },
                 ]
-              : [internalDecl, externalDecl];
+              : [
+                  internalDecl,
+                  {
+                    ...externalDecl,
+                    leadingComments: binding.leadingComments,
+                  },
+                ];
           }
         )
       );
@@ -509,6 +520,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           }
         }),
         typingId,
+        leadingComments: state.defineLeadingComments,
       });
     }
     exitAttr(state, returnValue);
