@@ -392,7 +392,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         ],
         source: {
           type: "Literal",
-          value: `${state.providerImportSource}/rootVM`,
+          value: `${state.providerImportSource}/vm`,
         },
         attributes: [],
       });

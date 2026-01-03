@@ -13,13 +13,12 @@ type Computed<T> = T extends infer U extends { [K in keyof T]: unknown }
 
 type BlockDefinitionRewriteMeta<
   BlockDef extends AttributeBlockDefinition,
-  NewMeta,
+  NewMeta
 > = Computed<
   Omit<BlockDef, Meta> & { [Meta]: NewMeta }
 > extends infer R extends AttributeBlockDefinition
   ? R
   : never;
-
 
 export interface IViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT;
@@ -46,6 +45,7 @@ export class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
 
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT {
     const model = new this.Ctor();
+    console.log(this.#registeredActions);
     for (const attrFactory of view._node.attributes) {
       let { name, positionals, named } = attrFactory();
       const action = this.#registeredActions.get(name);
@@ -53,11 +53,7 @@ export class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
         throw new Error(`No action registered for attribute: ${name}`);
       }
       named ??= { attributes: [] };
-      const value = action(
-        model,
-        positionals,
-        new View(named, view._addBinding),
-      );
+      const value = action(model, positionals, new View(named));
       // TODO value binding
     }
     return model;
@@ -76,7 +72,7 @@ class AttributeDefHelper<ModelT> {
     for (const [name, returnValue] of Object.entries(defResult)) {
       const desc = Object.getOwnPropertyDescriptor(
         returnValue,
-        AttributeDefHelper.#actionSlot,
+        AttributeDefHelper.#actionSlot
       );
       if (desc) {
         this.#viewModel._setAction(name, desc.value);
@@ -85,28 +81,25 @@ class AttributeDefHelper<ModelT> {
   }
 
   attribute<T extends AttributeDefinition>(
-    action: AttributeAction<
-      ModelT,
-      T,
-      T["as"] extends () => infer R ? R : void
-    >,
+    action: AttributeAction<ModelT, T, T["as"] extends () => infer R ? R : void>
   ): T {
     const returnValue = {} as T;
     Object.defineProperty(returnValue, AttributeDefHelper.#actionSlot, {
       value: action,
+      enumerable: true
     });
-    return {} as T;
+    return returnValue as T;
   }
 }
 
 export function defineViewModel<
   T,
   const BlockDef extends Record<string, AttributeDefinition>,
-  InitMeta = void,
+  InitMeta = void
 >(
   Ctor: new () => T,
   modelDefFn: (helper: AttributeDefHelper<T>) => BlockDef,
-  initMeta?: InitMeta,
+  initMeta?: InitMeta
 ): ViewModel<T, BlockDef & { [Meta]: InitMeta }> {
   const vm = new ViewModel<T, BlockDef & { [Meta]: InitMeta }>(Ctor);
   const helper = new AttributeDefHelper(vm);
@@ -126,7 +119,6 @@ interface AttributePositionalReturnBase {
   namedDefinition: AttributeBlockDefinition;
 }
 
-
 export namespace AttributeReturn {
   export type This<TMeta = any> = {
     [Meta]: TMeta;
@@ -138,7 +130,7 @@ export namespace AttributeReturn {
 
   export type With<
     VM extends ViewModel<any, any>,
-    TMeta = VM[NamedDefinition][Meta],
+    TMeta = VM[NamedDefinition][Meta]
   > = {
     namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], TMeta>;
   };
@@ -149,12 +141,12 @@ export namespace AttributeReturn {
   };
 }
 
-export type AttributeAction<Model, T extends AttributeDefinition, BindingT> = (
-  model: Model,
+export type AttributeAction<Model, T extends AttributeDefinition, BindingT = void> = (
+  model: BindingT extends void ? Model : Model | null,
   positional: Parameters<T>,
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]
       : { [Meta]: void }
-  >,
+  >
 ) => BindingT;

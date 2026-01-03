@@ -279,28 +279,44 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         attributes: [],
       });
     }
-    body.unshift({
-      type: "ImportDeclaration",
-      specifiers: [
-        {
-          type: "ImportSpecifier",
-          imported: { type: "Identifier", name: "createDefine" },
-          local: state.createDefineFnId,
+    body.unshift(
+      {
+        type: "ImportDeclaration",
+        specifiers: [
+          {
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name: "createDefine" },
+            local: state.createDefineFnId,
+          },
+          {
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name: "Action" },
+            local: state.ActionId,
+          },
+          {
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name: "Prelude" },
+            local: state.preludeSymbolId,
+          },
+        ],
+        source: { type: "Literal", value: state.runtimeImportSource },
+        attributes: [],
+      },
+      {
+        type: "ImportDeclaration",
+        specifiers: [
+          {
+            type: "ImportDefaultSpecifier",
+            local: state.rootVmId,
+          },
+        ],
+        source: {
+          type: "Literal",
+          value: `${state.providerImportSource}/vm`,
         },
-        {
-          type: "ImportSpecifier",
-          imported: { type: "Identifier", name: "Action" },
-          local: state.ActionId,
-        },
-        {
-          type: "ImportSpecifier",
-          imported: { type: "Identifier", name: "Prelude" },
-          local: state.preludeSymbolId,
-        },
-      ],
-      source: { type: "Literal", value: state.runtimeImportSource },
-      attributes: [],
-    });
+        attributes: [],
+      }
+    );
     return {
       ...node,
       body,

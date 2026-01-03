@@ -1,7 +1,6 @@
 {
   "name": "@gi-tcg/gts-transpiler",
-  "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "exports": {
     ".": {
@@ -9,6 +8,14 @@
       "bun": "./src/index.ts",
       "import": "./dist/index.js"
     }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build --outdir=dist --target=node --format=esm --conditions='bun' --packages=external src/index.ts",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.5.5",

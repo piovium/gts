@@ -5,4 +5,4 @@ export {
 } from "./view_model";
 export { Action, Prelude } from "./symbols";
 
-export { defineAttribute } from "./view";
+export { createDefine } from "./view";

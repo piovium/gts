@@ -1,0 +1,26 @@
+{
+  "name": "@gi-tcg/gts-esbuild-plugin",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build --outdir=dist --target=node --format=esm --conditions='bun' --packages=external src/index.ts",
+    "prepublishOnly": "bun run build"
+  },
+  "peerDependencies": {
+    "esbuild": "~0.27.2"
+  },
+  "dependencies": {
+    "@gi-tcg/gts-transpiler": "workspace:*"
+  }
+}

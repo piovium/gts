@@ -26,21 +26,13 @@ export type Bindings = BindingValue[];
 export class View<BlockDef extends AttributeBlockDefinition> {
   #phantom!: BlockDef;
 
-  constructor(
-    public _node: NamedAttributesNode,
-    public _addBinding: (binding: BindingValue) => void
-  ) {}
+  constructor(public _node: NamedAttributesNode) {}
 }
 
-export function defineAttribute(
+export function createDefine(
   rootVM: ViewModel<any, any>,
-  factory: SingleAttributeViewFactory
-): Bindings {
-  const bindings: BindingValue[] = [];
-  const view = new View<any>({ attributes: [factory] }, (binding) => {
-    bindings.push(binding);
-  });
+  node: { attributes: [SingleAttributeViewFactory] }
+): void {
+  const view = new View<any>(node);
   rootVM.parse(view);
-
-  return bindings;
 }
