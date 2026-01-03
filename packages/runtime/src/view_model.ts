@@ -34,12 +34,12 @@ export class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
   declare _symbols: AllSymbols;
 
   declare [NamedDefinition]: BlockDef;
-  #registeredActions: Map<string, AttributeAction<ModelT, any, any>> =
+  #registeredActions: Map<string, AttributeAction<ModelT, any>> =
     new Map();
 
   constructor(private Ctor: new () => ModelT) {}
 
-  _setAction(name: string, action: AttributeAction<ModelT, any, any>) {
+  _setAction(name: string, action: AttributeAction<ModelT, any>) {
     this.#registeredActions.set(name, action);
   }
 
@@ -81,7 +81,7 @@ class AttributeDefHelper<ModelT> {
   }
 
   attribute<T extends AttributeDefinition>(
-    action: AttributeAction<ModelT, T, T["as"] extends () => infer R ? R : void>
+    action: AttributeAction<ModelT, T>
   ): T {
     const returnValue = {} as T;
     Object.defineProperty(returnValue, AttributeDefHelper.#actionSlot, {
@@ -141,12 +141,12 @@ export namespace AttributeReturn {
   };
 }
 
-export type AttributeAction<Model, T extends AttributeDefinition, BindingT = void> = (
-  model: BindingT extends void ? Model : Model | null,
+export type AttributeAction<Model, T extends AttributeDefinition> = (
+  model: Model,
   positional: Parameters<T>,
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]
       : { [Meta]: void }
   >
-) => BindingT;
+) => void;

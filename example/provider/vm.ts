@@ -112,7 +112,6 @@ const CharacterSkillVM = defineViewModel(
       as<TMeta extends BuilderMeta>(this: AR.This<TMeta>): CharacterSkillHandle;
     }>((model, [id]) => {
       // model.setId(id);
-      return id as CharacterSkillHandle;
     }),
     cost: helper.attribute<{
       (element: string, amount: number): AR.Done;
