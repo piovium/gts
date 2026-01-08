@@ -2,8 +2,6 @@ import { Parser } from "acorn";
 import { DUMMY_PLACEHOLDER, loosePlugin } from "../src/parse/loose_plugin.js";
 import { describe, test, expect } from "bun:test";
 import { parseLoose } from "../src/parse/index.js";
-import type { Statement } from "estree";
-import type { AST } from "../src/types.js";
 
 const LooseParser = Parser.extend(loosePlugin());
 
