@@ -420,8 +420,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           },
         } as Identifier,
         export: export_,
-        index: 0,
-        defineId: 0,
         typingId,
         leadingComments: state.defineLeadingComments,
       });

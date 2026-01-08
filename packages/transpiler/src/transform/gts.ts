@@ -2,11 +2,8 @@ import type {
   ArrayExpression,
   ArrowFunctionExpression,
   BlockStatement,
-  CallExpression,
   Declaration,
-  ExportNamedDeclaration,
   Expression,
-  ExpressionStatement,
   Identifier,
   Literal,
   MemberExpression,
@@ -28,10 +25,6 @@ import {
 export interface ExternalizedBinding {
   bindingName: Identifier;
   export: boolean;
-  /** 0-based index in traversal order within the current `define` statement */
-  index: number;
-  /** 0-based define statement id in the current module */
-  defineId: number;
 }
 
 export interface TranspileState {
@@ -48,18 +41,15 @@ export interface TranspileState {
   readonly runtimeImportSource: string;
   readonly providerImportSource: string;
   readonly queryArg: ObjectPattern;
-
-  readonly attributeNames: (Identifier | Literal)[];
-  readonly externalizedBindings: ExternalizedBinding[];
+  
   hasQueryExpressions: boolean;
 
+  externalizedBindings: ExternalizedBinding[];
   /** Internal counters / state for emitting per-define nodes & bindings */
   defineIdCounter: number;
-  currentDefineId: number | null;
-  currentDefineBindingIndex: number;
 
   /** Buffered statements to be inserted after visiting a define statement */
-  pendingTopLevelStatements: (Statement | ModuleDeclaration)[];
+  pendingStatements: (Statement | ModuleDeclaration)[];
 }
 
 export const commonGtsVisitor: Visitors<Node, TranspileState> = {
@@ -196,9 +186,9 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       if (visited.type !== "EmptyStatement") {
         body.push(visited);
       }
-      if (state.pendingTopLevelStatements.length > 0) {
-        body.push(...(state.pendingTopLevelStatements));
-        state.pendingTopLevelStatements = [];
+      if (state.pendingStatements.length > 0) {
+        body.push(...(state.pendingStatements));
+        state.pendingStatements = [];
       }
     }
 
@@ -267,10 +257,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
     };
   },
   GTSDefineStatement(node, { state, visit }): Statement {
-    const startBindingLen = state.externalizedBindings.length;
     const defineId = state.defineIdCounter++;
-    state.currentDefineId = defineId;
-    state.currentDefineBindingIndex = 0;
 
     const rootAttr = visit(node.body) as Expression;
 
@@ -283,7 +270,8 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       name: `__gts_bindings_${defineId}`,
     };
 
-    const newBindings = state.externalizedBindings.slice(startBindingLen);
+    const newBindings = state.externalizedBindings;
+    state.externalizedBindings = [];
     const statements: (Statement | ModuleDeclaration)[] = [];
 
     statements.push({
@@ -317,7 +305,8 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       loc: node.loc,
     });
 
-    for (const binding of newBindings) {
+    for (let i = 0; i < newBindings.length; i++) {
+      const binding = newBindings[i];
       const decl: Declaration = {
         type: "VariableDeclaration",
         kind: "const",
@@ -328,7 +317,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
             init: {
               type: "MemberExpression",
               object: bindingsVarId,
-              property: { type: "Literal", value: binding.index },
+              property: { type: "Literal", value: i },
               computed: true,
               optional: false,
             },
@@ -361,16 +350,11 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       loc: node.loc,
     });
 
-    state.currentDefineId = null;
-    state.currentDefineBindingIndex = 0;
-
-    state.pendingTopLevelStatements.push(...statements);
+    state.pendingStatements.push(...statements);
     return { type: "EmptyStatement" };
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
-    state.attributeNames.push(node.name);
     const namedBody = visit(node.body) as ObjectExpression;
-    state.attributeNames.pop();
     const properties = [...namedBody.properties];
     const nameValue: Literal =
       node.name.type === "Literal"
@@ -402,18 +386,9 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         );
       }
       const export_ = node.bindingAccessModifier !== "private";
-      if (state.currentDefineId == null) {
-        throw new GtsTranspilerError(
-          "Binding found outside of a define statement.",
-          node.loc ?? null
-        );
-      }
-      const bindingIndex = state.currentDefineBindingIndex++;
       state.externalizedBindings.push({
         bindingName: node.bindingName,
         export: export_,
-        index: bindingIndex,
-        defineId: state.currentDefineId,
       });
 
       body.properties.push({
@@ -597,15 +572,11 @@ export const initialTranspileState = (
       })),
     },
 
-    attributeNames: [],
     externalizedBindings: [],
     hasQueryExpressions: false,
-
     defineIdCounter: 0,
-    currentDefineId: null,
-    currentDefineBindingIndex: 0,
 
-    pendingTopLevelStatements: [],
+    pendingStatements: [],
   };
 };
 

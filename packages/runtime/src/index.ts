@@ -6,4 +6,3 @@ export {
 export { Action, Prelude } from "./symbols";
 
 export { createBinding, createDefine } from "./view";
-export { createBinding } from "./view";
