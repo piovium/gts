@@ -9,8 +9,12 @@
     },
     "packages/esbuild-plugin": {
       "name": "@gi-tcg/gts-esbuild-plugin",
+      "version": "0.1.0",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^24.3.0",
       },
       "peerDependencies": {
         "esbuild": "~0.27.2",
@@ -28,7 +32,7 @@
     },
     "packages/language-server": {
       "name": "@gi-tcg/gts-language-server",
-      "version": "0.0.1",
+      "version": "0.1.0",
       "bin": {
         "gts-language-server": "./bin/gts-language-server.js",
       },
@@ -46,7 +50,7 @@
     },
     "packages/transpiler": {
       "name": "@gi-tcg/gts-transpiler",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@jridgewell/sourcemap-codec": "^1.5.5",
         "@sveltejs/acorn-typescript": "^1.0.8",
@@ -158,7 +162,7 @@
 
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 
-    "@types/node": ["@types/node@25.0.1", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-czWPzKIAXucn9PtsttxmumiQ9N0ok9FrBwgRWrwmVLlp86BrMExzvXRLFYRJ+Ex3g6yqj+KuaxfX1JTgV2lpfg=="],
+    "@types/node": ["@types/node@24.10.4", "https://bnpm.byted.org/@types/node/-/node-24.10.4.tgz", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-vnDVpYPMzs4wunl27jHrfmwojOGKya0xyM3sH+UE5iv5uPS6vX7UIoh6m+vQc5LGBq52HBKPIn/zcSZVzeDEZg=="],
 
     "@types/vscode": ["@types/vscode@1.107.0", "", {}, "sha512-XS8YE1jlyTIowP64+HoN30OlC1H9xqSlq1eoLZUgFEC8oUTO6euYZxti1xRiLSfZocs4qytTzR6xCBYtioQTCg=="],
 
@@ -459,6 +463,8 @@
     "yazl": ["yazl@2.5.1", "", { "dependencies": { "buffer-crc32": "~0.2.3" } }, "sha512-phENi2PLiHnHb6QBVot+dJnaAZ0xosj7p3fWl+znIjBDlnMI2PsZCJZ306BPTFOaHf5qdDEI8x5qFrSOBN5vrw=="],
 
     "zimmerframe": ["zimmerframe@1.1.4", "", {}, "sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ=="],
+
+    "bun-types/@types/node": ["@types/node@25.0.1", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-czWPzKIAXucn9PtsttxmumiQ9N0ok9FrBwgRWrwmVLlp86BrMExzvXRLFYRJ+Ex3g6yqj+KuaxfX1JTgV2lpfg=="],
 
     "dom-serializer/entities": ["entities@4.5.0", "", {}, "sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw=="],
 

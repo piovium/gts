@@ -44,7 +44,6 @@ export class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
 
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT {
     const model = new this.Ctor();
-    let bindingIndex = 0;
     for (const attrNode of view._node.attributes) {
       let { name, positionals, named, binding } = attrNode;
       const action = this.#registeredActions.get(name);
@@ -52,10 +51,10 @@ export class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
         throw new Error(`No action registered for attribute: ${String(name)}`);
       }
       named ??= { attributes: [] };
-      const positionalValues = typeof positionals === "function" ? positionals() : positionals;
+      const positionalValues = positionals();
       const value = action(model, positionalValues, new View(named));
-      if (binding && view._bindings) {
-        view._bindings[bindingIndex++] = value;
+      if (binding && view._bindingCtx) {
+        view._bindingCtx.addBinding(value);
       }
     }
     return model;
