@@ -31,7 +31,7 @@ function gtsToTypings(
     >),
     leafTokens: option.leafTokens,
     idCounter: 0,
-    pendingStatements: [],
+    typingPendingStatements: [],
     prefaceInserted: false,
     rootVmId: { type: "Identifier", name: "__root_vm" },
     replacementTag: { type: "Identifier", name: "__gts_replacement_tag" },

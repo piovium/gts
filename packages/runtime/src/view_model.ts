@@ -34,27 +34,29 @@ export class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
   declare _symbols: AllSymbols;
 
   declare [NamedDefinition]: BlockDef;
-  #registeredActions: Map<string, AttributeAction<ModelT, any>> =
-    new Map();
+  #registeredActions: Map<PropertyKey, AttributeAction<ModelT, any>> = new Map();
 
   constructor(private Ctor: new () => ModelT) {}
 
-  _setAction(name: string, action: AttributeAction<ModelT, any>) {
+  _setAction(name: PropertyKey, action: AttributeAction<ModelT, any>) {
     this.#registeredActions.set(name, action);
   }
 
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT {
     const model = new this.Ctor();
-    console.log(this.#registeredActions);
-    for (const attrFactory of view._node.attributes) {
-      let { name, positionals, named } = attrFactory();
+    let bindingIndex = 0;
+    for (const attrNode of view._node.attributes) {
+      let { name, positionals, named, binding } = attrNode;
       const action = this.#registeredActions.get(name);
       if (!action) {
-        throw new Error(`No action registered for attribute: ${name}`);
+        throw new Error(`No action registered for attribute: ${String(name)}`);
       }
       named ??= { attributes: [] };
-      const value = action(model, positionals, new View(named));
-      // TODO value binding
+      const positionalValues = typeof positionals === "function" ? positionals() : positionals;
+      const value = action(model, positionalValues, new View(named));
+      if (binding && view._bindings) {
+        view._bindings[bindingIndex++] = value;
+      }
     }
     return model;
   }

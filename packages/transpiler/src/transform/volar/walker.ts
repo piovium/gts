@@ -54,7 +54,7 @@ export interface TypingTranspileState extends TranspileState {
   // attrLhsIdStack: Identifier[];
   prefaceInserted: boolean;
   /** Pending statements to be inserted to the top-level */
-  pendingStatements: Statement[];
+  typingPendingStatements: Statement[];
   replacementTag: Identifier;
   additionalMappings: Map<string, string>;
 }
@@ -102,7 +102,7 @@ const emitPreface = (state: TypingTranspileState) => {
         : symbolName === "Prelude"
         ? state.preludeSymbolId
         : state.symbolsId[symbolName];
-    state.pendingStatements.push(
+    state.typingPendingStatements.push(
       {
         type: "TSTypeAliasDeclaration",
         id: symbolId,
@@ -147,7 +147,7 @@ const enterVMFromRoot = (state: TypingTranspileState) => {
     type: "Identifier",
     name: `__gts_rootVmFinalMetaType_${state.idCounter++}`,
   };
-  state.pendingStatements.push(
+  state.typingPendingStatements.push(
     createReplacementHolder(state, {
       type: "enterVMFromRoot",
       vm: state.rootVmId.name,
@@ -176,7 +176,7 @@ const enterVMFromAttr = (
     type: "Identifier",
     name: `__gts_nestedVmFinalMetaType_${state.idCounter++}`,
   };
-  state.pendingStatements.push(
+  state.typingPendingStatements.push(
     createReplacementHolder(state, {
       type: "enterVMFromAttr",
       returnType: returningId.name,
@@ -195,7 +195,7 @@ const exitVM = (state: TypingTranspileState, errorLoc?: string) => {
   const currentMetaId = state.metaTypeIdStack.pop()!;
   const finalMetaId = state.finalMetaTypeIdStack.pop()!;
   const collectedAttrNames = state.attrsOfCurrentVm.pop()!;
-  state.pendingStatements.push(
+  state.typingPendingStatements.push(
     createReplacementHolder(state, {
       type: "exitVM",
       metaType: currentMetaId.name,
@@ -222,7 +222,7 @@ const enterAttr = (
     type: "Identifier",
     name: `__gts_attr_obj_${state.idCounter++}`,
   };
-  state.pendingStatements.push(
+  state.typingPendingStatements.push(
     createReplacementHolder(state, {
       type: "enterAttr",
       defType: defTypeId.name,
@@ -245,7 +245,7 @@ const genBindingTyping = (
   if (!finalMetaId || !defTypeId) {
     return;
   }
-  state.pendingStatements.push(
+  state.typingPendingStatements.push(
     createReplacementHolder(state, {
       type: "createBindingTyping",
       finalMetaType: finalMetaId.name,
@@ -266,7 +266,7 @@ const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
     name: `__gts_newMeta__${state.idCounter++}`,
   };
   const [oldMetaTypeId] = state.metaTypeIdStack.splice(-1, 1, newMetaTypeId);
-  state.pendingStatements.push(
+  state.typingPendingStatements.push(
     createReplacementHolder(state, {
       type: "exitAttr",
       defType: currentDefId.name,
@@ -286,100 +286,14 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       ) {
         state.defineLeadingComments = stmt.leadingComments;
         visit(stmt);
-        body.push(...state.pendingStatements);
-        state.pendingStatements = [];
+        body.push(...state.typingPendingStatements);
+        state.typingPendingStatements = [];
       } else {
         body.push(visit(stmt) as Statement);
       }
     }
     if (state.externalizedBindings.length > 0) {
-      body.unshift(
-        {
-          type: "ImportDeclaration",
-          specifiers: [
-            {
-              type: "ImportDefaultSpecifier",
-              local: state.binderFnId,
-            },
-          ],
-          source: {
-            type: "Literal",
-            value: `${state.providerImportSource}/binder`,
-          },
-          attributes: [],
-        },
-        ...state.externalizedBindings.flatMap(
-          (binding): (Declaration | ExportNamedDeclaration)[] => {
-            const internalDecl: Declaration = {
-              type: "VariableDeclaration",
-              kind: "const",
-              declarations: [
-                {
-                  type: "VariableDeclarator",
-                  id: binding.internalId,
-                  init: binding.value,
-                },
-              ],
-            };
-            const externalDecl: Declaration = {
-              type: "VariableDeclaration",
-              kind: "const",
-              declarations: [
-                {
-                  type: "VariableDeclarator",
-                  id: binding.bindingName,
-                  init: {
-                    type: "CallExpression",
-                    optional: false,
-                    callee: state.binderFnId,
-                    arguments: [
-                      binding.internalId,
-                      {
-                        type: "ObjectExpression",
-                        properties: [
-                          {
-                            type: "Property",
-                            key: { type: "Identifier", name: "path" },
-                            computed: false,
-                            kind: "init",
-                            method: false,
-                            shorthand: false,
-                            value: {
-                              type: "ArrayExpression",
-                              elements: binding.path.map((segment) => ({
-                                type: "Literal",
-                                value: segment,
-                              })),
-                            },
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                },
-              ],
-            };
-            return binding.export
-              ? [
-                  internalDecl,
-                  {
-                    type: "ExportNamedDeclaration",
-                    declaration: externalDecl,
-                    specifiers: [],
-                    attributes: [],
-                    leadingComments: binding.leadingComments,
-                  },
-                ]
-              : [
-                  internalDecl,
-                  {
-                    ...externalDecl,
-                    leadingComments: binding.leadingComments,
-                  },
-                ];
-          }
-        )
-      );
+      // TODO
     }
     if (state.prefaceInserted) {
       body.unshift({
@@ -454,7 +368,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       type: "Identifier",
       name: `__gts_attrRet_${state.idCounter++}`,
     };
-    state.pendingStatements.push({
+    state.typingPendingStatements.push({
       type: "VariableDeclaration",
       kind: "const",
       declarations: [
@@ -486,10 +400,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     }
     if (bindingName) {
       const export_ = node.bindingAccessModifier !== "private";
-      const internalId: Identifier = {
-        type: "Identifier",
-        name: `__gts_internal_binding_${state.externalizedBindings.length}`,
-      };
       const typingId: Identifier = {
         type: "Identifier",
         name: `gts_binding_type_${state.externalizedBindings.length}`,
@@ -510,15 +420,8 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           },
         } as Identifier,
         export: export_,
-        internalId,
-        value: { type: "Literal", value: null }, // TODO
-        path: [...state.attributeNames, node.name].map((n) => {
-          if (n.type === "Literal") {
-            return String(n.value);
-          } else {
-            return n.name;
-          }
-        }),
+        index: 0,
+        defineId: 0,
         typingId,
         leadingComments: state.defineLeadingComments,
       });
@@ -545,7 +448,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         type: "Identifier",
         name: `__gts_attrRet_${state.idCounter++}`,
       };
-      state.pendingStatements.push({
+      state.typingPendingStatements.push({
         type: "VariableDeclaration",
         kind: "const",
         declarations: [

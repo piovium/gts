@@ -10,6 +10,7 @@ import type {
   Identifier,
   Literal,
   MemberExpression,
+  ModuleDeclaration,
   Node,
   ObjectExpression,
   ObjectPattern,
@@ -27,19 +28,20 @@ import {
 export interface ExternalizedBinding {
   bindingName: Identifier;
   export: boolean;
-  internalId: Identifier;
-  value: Expression;
-  path: string[];
+  /** 0-based index in traversal order within the current `define` statement */
+  index: number;
+  /** 0-based define statement id in the current module */
+  defineId: number;
 }
 
 export interface TranspileState {
   readonly createDefineFnId: Identifier;
+  readonly createBindingFnId: Identifier;
   readonly ActionId: Identifier;
   readonly preludeSymbolId: Identifier;
   readonly fnArgId: Identifier;
   readonly shortcutFunctionParameters: Pattern[];
   readonly rootVmId: Identifier;
-  readonly binderFnId: Identifier;
   readonly queryFnId: Identifier;
   readonly queryParameters: Pattern[];
 
@@ -50,34 +52,42 @@ export interface TranspileState {
   readonly attributeNames: (Identifier | Literal)[];
   readonly externalizedBindings: ExternalizedBinding[];
   hasQueryExpressions: boolean;
+
+  /** Internal counters / state for emitting per-define nodes & bindings */
+  defineIdCounter: number;
+  currentDefineId: number | null;
+  currentDefineBindingIndex: number;
+
+  /** Buffered statements to be inserted after visiting a define statement */
+  pendingTopLevelStatements: (Statement | ModuleDeclaration)[];
 }
 
 export const commonGtsVisitor: Visitors<Node, TranspileState> = {
-  GTSDirectFunction(node, { visit, state }): ArrowFunctionExpression {
+  GTSDirectFunction(node, { visit, state }): ObjectExpression {
     return {
-      type: "ArrowFunctionExpression",
-      params: [],
-      body: {
-        type: "ObjectExpression",
-        properties: [
-          {
-            type: "Property",
-            key: { type: "Identifier", name: "name" },
-            computed: false,
-            kind: "init",
-            method: false,
-            shorthand: false,
-            value: state.ActionId,
-            loc: node.loc,
-          },
-          {
-            type: "Property",
-            key: { type: "Identifier", name: "positionals" },
-            computed: false,
-            kind: "init",
-            method: false,
-            shorthand: false,
-            value: {
+      type: "ObjectExpression",
+      properties: [
+        {
+          type: "Property",
+          key: { type: "Identifier", name: "name" },
+          computed: false,
+          kind: "init",
+          method: false,
+          shorthand: false,
+          value: state.ActionId,
+          loc: node.loc,
+        },
+        {
+          type: "Property",
+          key: { type: "Identifier", name: "positionals" },
+          computed: false,
+          kind: "init",
+          method: false,
+          shorthand: false,
+          value: {
+            type: "ArrowFunctionExpression",
+            params: [],
+            body: {
               type: "ArrayExpression",
               elements: [
                 {
@@ -91,22 +101,22 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
                 },
               ],
             },
+            expression: true,
           },
-          {
-            type: "Property",
-            key: { type: "Identifier", name: "named" },
-            computed: false,
-            kind: "init",
-            method: false,
-            shorthand: false,
-            value: {
-              type: "Literal",
-              value: null,
-            },
+        },
+        {
+          type: "Property",
+          key: { type: "Identifier", name: "named" },
+          computed: false,
+          kind: "init",
+          method: false,
+          shorthand: false,
+          value: {
+            type: "Literal",
+            value: null,
           },
-        ],
-      },
-      expression: true,
+        },
+      ],
       loc: node.loc,
     };
   },
@@ -178,91 +188,20 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
   //   }
   //   return next();
   // },
-  Program(node, { state, next }) {
-    node = (next() as Program) ?? node;
-    const body = [...node.body];
-    if (state.externalizedBindings.length > 0) {
-      body.unshift(
-        {
-          type: "ImportDeclaration",
-          specifiers: [
-            {
-              type: "ImportDefaultSpecifier",
-              local: state.binderFnId,
-            },
-          ],
-          source: {
-            type: "Literal",
-            value: `${state.providerImportSource}/binder`,
-          },
-          attributes: [],
-        },
-        ...state.externalizedBindings.flatMap(
-          (binding): (Declaration | ExportNamedDeclaration)[] => {
-            const internalDecl: Declaration = {
-              type: "VariableDeclaration",
-              kind: "const",
-              declarations: [
-                {
-                  type: "VariableDeclarator",
-                  id: binding.internalId,
-                  init: binding.value,
-                },
-              ],
-            };
-            const externalDecl: Declaration = {
-              type: "VariableDeclaration",
-              kind: "const",
-              declarations: [
-                {
-                  type: "VariableDeclarator",
-                  id: binding.bindingName,
-                  init: {
-                    type: "CallExpression",
-                    optional: false,
-                    callee: state.binderFnId,
-                    arguments: [
-                      binding.internalId,
-                      {
-                        type: "ObjectExpression",
-                        properties: [
-                          {
-                            type: "Property",
-                            key: { type: "Identifier", name: "path" },
-                            computed: false,
-                            kind: "init",
-                            method: false,
-                            shorthand: false,
-                            value: {
-                              type: "ArrayExpression",
-                              elements: binding.path.map((segment) => ({
-                                type: "Literal",
-                                value: segment,
-                              })),
-                            },
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                },
-              ],
-            };
-            return binding.export
-              ? [
-                  internalDecl,
-                  {
-                    type: "ExportNamedDeclaration",
-                    declaration: externalDecl,
-                    specifiers: [],
-                    attributes: [],
-                  },
-                ]
-              : [internalDecl, externalDecl];
-          }
-        )
-      );
+  Program(node, { state, visit }) {
+    const body: Program["body"] = [];
+    for (const stmt of node.body) {
+      const visited = visit(stmt) as Statement;
+      // `GTSDefineStatement` is expanded into multiple statements via buffer
+      if (visited.type !== "EmptyStatement") {
+        body.push(visited);
+      }
+      if (state.pendingTopLevelStatements.length > 0) {
+        body.push(...(state.pendingTopLevelStatements));
+        state.pendingTopLevelStatements = [];
+      }
     }
+
     if (state.hasQueryExpressions) {
       body.unshift({
         type: "ImportDeclaration",
@@ -287,6 +226,11 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
             type: "ImportSpecifier",
             imported: { type: "Identifier", name: "createDefine" },
             local: state.createDefineFnId,
+          },
+          {
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name: "createBinding" },
+            local: state.createBindingFnId,
           },
           {
             type: "ImportSpecifier",
@@ -322,26 +266,88 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       body,
     };
   },
-  GTSDefineStatement(node, { state, visit }): ExpressionStatement {
-    const body = visit(node.body) as Expression;
-    const wrapper: ObjectExpression = {
-      type: "ObjectExpression",
-      properties: [
+  GTSDefineStatement(node, { state, visit }): Statement {
+    const startBindingLen = state.externalizedBindings.length;
+    const defineId = state.defineIdCounter++;
+    state.currentDefineId = defineId;
+    state.currentDefineBindingIndex = 0;
+
+    const rootAttr = visit(node.body) as Expression;
+
+    const nodeVarId: Identifier = {
+      type: "Identifier",
+      name: `__gts_node_${defineId}`,
+    };
+    const bindingsVarId: Identifier = {
+      type: "Identifier",
+      name: `__gts_bindings_${defineId}`,
+    };
+
+    const newBindings = state.externalizedBindings.slice(startBindingLen);
+    const statements: (Statement | ModuleDeclaration)[] = [];
+
+    statements.push({
+      type: "VariableDeclaration",
+      kind: "const",
+      declarations: [
         {
-          type: "Property",
-          key: { type: "Identifier", name: "attributes" },
-          computed: false,
-          kind: "init",
-          method: false,
-          shorthand: false,
-          value: {
-            type: "ArrayExpression",
-            elements: [body],
+          type: "VariableDeclarator",
+          id: nodeVarId,
+          init: rootAttr,
+        },
+      ],
+      loc: node.loc,
+    });
+
+    statements.push({
+      type: "VariableDeclaration",
+      kind: "const",
+      declarations: [
+        {
+          type: "VariableDeclarator",
+          id: bindingsVarId,
+          init: {
+            type: "CallExpression",
+            optional: false,
+            callee: state.createBindingFnId,
+            arguments: [state.rootVmId, nodeVarId],
           },
         },
       ],
-    };
-    return {
+      loc: node.loc,
+    });
+
+    for (const binding of newBindings) {
+      const decl: Declaration = {
+        type: "VariableDeclaration",
+        kind: "const",
+        declarations: [
+          {
+            type: "VariableDeclarator",
+            id: binding.bindingName,
+            init: {
+              type: "MemberExpression",
+              object: bindingsVarId,
+              property: { type: "Literal", value: binding.index },
+              computed: true,
+              optional: false,
+            },
+          },
+        ],
+      };
+      if (binding.export) {
+        statements.push({
+          type: "ExportNamedDeclaration",
+          declaration: decl,
+          specifiers: [],
+          attributes: [],
+        });
+      } else {
+        statements.push(decl);
+      }
+    }
+
+    statements.push({
       type: "ExpressionStatement",
       expression: {
         type: "CallExpression",
@@ -350,10 +356,16 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
           ...state.createDefineFnId,
           loc: node.loc,
         },
-        arguments: [state.rootVmId, wrapper],
+        arguments: [state.rootVmId, nodeVarId],
       },
       loc: node.loc,
-    };
+    });
+
+    state.currentDefineId = null;
+    state.currentDefineBindingIndex = 0;
+
+    state.pendingTopLevelStatements.push(...statements);
+    return { type: "EmptyStatement" };
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
     state.attributeNames.push(node.name);
@@ -382,13 +394,6 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       loc: node.loc,
     });
     const body = { ...namedBody, properties };
-    const arrow: ArrowFunctionExpression = {
-      type: "ArrowFunctionExpression",
-      params: [],
-      expression: true,
-      body,
-      loc: node.loc,
-    };
     if (node.bindingName) {
       if (node.bindingAccessModifier === "protected") {
         throw new GtsTranspilerError(
@@ -397,27 +402,34 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         );
       }
       const export_ = node.bindingAccessModifier !== "private";
-      const internalId: Identifier = {
-        type: "Identifier",
-        name: `__gts_internal_binding_${state.externalizedBindings.length}`,
-      };
+      if (state.currentDefineId == null) {
+        throw new GtsTranspilerError(
+          "Binding found outside of a define statement.",
+          node.loc ?? null
+        );
+      }
+      const bindingIndex = state.currentDefineBindingIndex++;
       state.externalizedBindings.push({
         bindingName: node.bindingName,
         export: export_,
-        internalId,
-        value: arrow,
-        path: [...state.attributeNames, node.name].map((n) => {
-          if (n.type === "Literal") {
-            return String(n.value);
-          } else {
-            return n.name;
-          }
-        }),
+        index: bindingIndex,
+        defineId: state.currentDefineId,
       });
-      return internalId;
-    } else {
-      return arrow;
+
+      body.properties.push({
+        type: "Property",
+        key: { type: "Identifier", name: "binding" },
+        computed: false,
+        kind: "init",
+        method: false,
+        shorthand: false,
+        value: {
+          type: "Literal",
+          value: export_ ? "public" : "private",
+        },
+      });
     }
+    return body;
   },
   GTSAttributeBody(node, { visit }) {
     const positionals = visit(node.positionalAttributes) as ArrayExpression;
@@ -434,7 +446,13 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
           kind: "init",
           method: false,
           shorthand: false,
-          value: positionals,
+          value: {
+            type: "ArrowFunctionExpression",
+            params: [],
+            body: positionals,
+            expression: true,
+            loc: positionals.loc,
+          },
           loc: positionals.loc,
         },
         {
@@ -555,12 +573,12 @@ export const initialTranspileState = (
   ];
   return {
     createDefineFnId: { type: "Identifier", name: "__gts_createDefine" },
+    createBindingFnId: { type: "Identifier", name: "__gts_createBinding" },
     ActionId: { type: "Identifier", name: "__gts_Action" },
     preludeSymbolId,
     fnArgId,
     shortcutFunctionParameters,
     rootVmId: { type: "Identifier", name: "__gts_rootVm" },
-    binderFnId: { type: "Identifier", name: "__gts_Binder" },
     queryFnId: { type: "Identifier", name: "__gts_query" },
     queryParameters,
 
@@ -582,6 +600,12 @@ export const initialTranspileState = (
     attributeNames: [],
     externalizedBindings: [],
     hasQueryExpressions: false,
+
+    defineIdCounter: 0,
+    currentDefineId: null,
+    currentDefineBindingIndex: 0,
+
+    pendingTopLevelStatements: [],
   };
 };
 
