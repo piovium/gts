@@ -34,7 +34,8 @@ export class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition>
   declare _symbols: AllSymbols;
 
   declare [NamedDefinition]: BlockDef;
-  #registeredActions: Map<PropertyKey, AttributeAction<ModelT, any>> = new Map();
+  #registeredActions: Map<PropertyKey, AttributeAction<ModelT, any>> =
+    new Map();
 
   constructor(private Ctor: new () => ModelT) {}
 
@@ -81,15 +82,20 @@ class AttributeDefHelper<ModelT> {
     }
   }
 
-  attribute<T extends AttributeDefinition>(
+  attribute<T extends AttributeDefinition & { as?: undefined }>(
     action: AttributeAction<ModelT, T>
-  ): T {
-    const returnValue = {} as T;
+  ): T;
+  attribute<T extends AttributeDefinition>(
+    action: AttributeAction<ModelT, T>,
+    binder: AttributeBinder<ModelT, T>
+  ): T;
+  attribute(action: any, binder?: any) {
+    const returnValue = {};
     Object.defineProperty(returnValue, AttributeDefHelper.#actionSlot, {
       value: action,
-      enumerable: true
+      enumerable: true,
     });
-    return returnValue as T;
+    return returnValue;
   }
 }
 
@@ -112,7 +118,7 @@ export function defineViewModel<
 interface AttributeDefinition {
   (...args: any[]): AttributePositionalReturnBase;
   as?(): any;
-  required?(): boolean;
+  // required?(): boolean;
 }
 
 interface AttributePositionalReturnBase {
@@ -151,3 +157,13 @@ export type AttributeAction<Model, T extends AttributeDefinition> = (
       : { [Meta]: void }
   >
 ) => void;
+
+export type AttributeBinder<Model, T extends AttributeDefinition> = (
+  model: Model,
+  positional: Parameters<T>,
+  named: View<
+    ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
+      ? ReturnType<T>["namedDefinition"]
+      : { [Meta]: void }
+  >
+) => T["as"] extends () => infer U ? U : never;

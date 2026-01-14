@@ -35,6 +35,7 @@ const CharacterVM = defineViewModel(
       ): CharacterHandle<TMeta["vars"]>;
     }>((model, [id]) => {
       // model.setId(id);
+    }, (_, [id]) => {
       return id as CharacterHandle<any>;
     }),
     since: helper.attribute<{
@@ -110,9 +111,12 @@ const CharacterSkillVM = defineViewModel(
       (id: number): AR.Done;
       required(): true;
       as<TMeta extends BuilderMeta>(this: AR.This<TMeta>): CharacterSkillHandle;
-    }>((model, [id]) => {
-      // model.setId(id);
-    }),
+    }>(
+      (model, [id]) => {
+        // model.setId(id);
+      },
+      (_, [id]) => id as CharacterSkillHandle
+    ),
     cost: helper.attribute<{
       (element: string, amount: number): AR.Done;
     }>((model, [element, amount]) => {}),
