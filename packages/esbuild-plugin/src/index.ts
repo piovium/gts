@@ -6,10 +6,11 @@ import {
   transpile,
   type TranspileOption,
 } from "@gi-tcg/gts-transpiler";
-import type { Plugin } from "esbuild";
+import type { Plugin as EsBuildPlugin } from "esbuild";
+import type { BunPlugin } from "bun";
 import { readFileSync } from "node:fs";
 
-export function gts(option: TranspileOption = {}): Plugin {
+export function gts(option: TranspileOption = {}): EsBuildPlugin & BunPlugin {
   return {
     name: "esbuild-plugin-gaming-ts",
     setup(build) {
@@ -34,6 +35,7 @@ export function gts(option: TranspileOption = {}): Plugin {
         } catch (error) {
           console.log(error);
           return {
+            contents: "",
             errors: [{ text: (error as Error).message }],
           };
         }
