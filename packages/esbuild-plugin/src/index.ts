@@ -1,14 +1,12 @@
-import fs from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
-  resolveGtsConfigSync,
-  type GtsConfig,
   transpile,
   type TranspileOption,
+  resolveGtsConfig,
 } from "@gi-tcg/gts-transpiler";
 import type { Plugin as EsBuildPlugin } from "esbuild";
 import type { BunPlugin } from "bun";
-import { readFileSync } from "node:fs";
 
 export function gts(option: TranspileOption = {}): EsBuildPlugin & BunPlugin {
   return {
@@ -16,10 +14,10 @@ export function gts(option: TranspileOption = {}): EsBuildPlugin & BunPlugin {
     setup(build) {
       build.onLoad({ filter: /\.gts$/ }, async (args) => {
         try {
-          const sourceCode = await fs.readFile(args.path, "utf8");
-          const resolvedOption = resolveGtsConfigSync(args.path, option, {
+          const sourceCode = await readFile(args.path, "utf8");
+          const resolvedOption = await resolveGtsConfig(args.path, option, {
             cwd: process.cwd(),
-            readFileFn: readFileSync,
+            readFileFn: readFile,
           });
           const { code, sourceMap } = transpile(
             sourceCode,
