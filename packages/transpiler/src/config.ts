@@ -8,9 +8,16 @@ export interface PackageJson {
 }
 
 type ReadFileFn = (path: string, encoding: "utf-8") => string;
+type ReadFileAsyncFn = (path: string, encoding: "utf-8") => Promise<string>;
 
-export interface ResolveGtsConfigOptions {
+export interface ResolveGtsConfigSyncOptions {
   readFileFn: ReadFileFn;
+  cwd?: string;
+  stopDir?: string;
+}
+
+export interface ResolveGtsConfigAsyncOptions {
+  readFileFn: ReadFileAsyncFn;
   cwd?: string;
   stopDir?: string;
 }
@@ -31,14 +38,14 @@ const DEFAULT_GTS_CONFIG: Required<GtsConfig> = {
   queryBindings: ["my", "opp"],
 };
 
-export function resolveGtsConfig(
+function* resolveGtsConfigImpl(
   filePath: string,
-  inlineOption: GtsConfig = {},
-  options: ResolveGtsConfigOptions,
-): Required<GtsConfig> {
+  inlineConfig: GtsConfig = {},
+  options: ResolveGtsConfigAsyncOptions | ResolveGtsConfigSyncOptions,
+): Generator<string | Promise<string>, Required<GtsConfig>, string> {
   const startDir = normalizeStartDir(filePath, options.cwd);
-  const stopDir = options.stopDir ? path.resolve(options.stopDir) : undefined;
-  const pkgConfig = findNearestPackageConfig(
+  const stopDir = options.stopDir ? path.resolve(options.stopDir) : void 0;
+  const pkgConfig = yield* findNearestPackageConfig(
     options.readFileFn,
     startDir,
     stopDir,
@@ -46,8 +53,43 @@ export function resolveGtsConfig(
   return {
     ...DEFAULT_GTS_CONFIG,
     ...pkgConfig,
-    ...inlineOption,
+    ...inlineConfig,
   };
+}
+
+export async function resolveGtsConfig(
+  filePath: string,
+  inlineConfig: GtsConfig,
+  options: ResolveGtsConfigAsyncOptions,
+): Promise<Required<GtsConfig>> {
+  const generator = resolveGtsConfigImpl(filePath, inlineConfig, options);
+  let result = generator.next();
+  while (!result.done) {
+    const toRead = result.value;
+    const content = await toRead;
+    result = generator.next(content);
+  }
+  return result.value;
+}
+
+export function resolveGtsConfigSync(
+  filePath: string,
+  inlineConfig: GtsConfig,
+  options: ResolveGtsConfigSyncOptions,
+): Required<GtsConfig> {
+  const generator = resolveGtsConfigImpl(filePath, inlineConfig, options);
+  let result = generator.next();
+  while (!result.done) {
+    const toRead = result.value;
+    if (toRead instanceof Promise) {
+      throw new Error(
+        "resolveGtsConfigSync received a Promise. Did you mean to use resolveGtsConfig instead?",
+      );
+    }
+    const content = toRead;
+    result = generator.next(content);
+  }
+  return result.value;
 }
 
 function normalizeStartDir(sourceFile: string, cwd?: string): string {
@@ -57,16 +99,15 @@ function normalizeStartDir(sourceFile: string, cwd?: string): string {
   return path.dirname(absolute);
 }
 
-function findNearestPackageConfig(
-  readFileFn: ReadFileFn,
+function* findNearestPackageConfig(
+  readFileFn: ReadFileFn | ReadFileAsyncFn,
   startDir: string,
   stopDir?: string,
-): GtsConfig {
+): Generator<string | Promise<string>, GtsConfig, string> {
   let currentDir = startDir;
-  const stopAt = stopDir ? path.resolve(stopDir) : undefined;
   while (true) {
     const pkgPath = path.join(currentDir, "package.json");
-    const config = readPackageConfig(readFileFn, pkgPath);
+    const config = yield* readPackageConfig(readFileFn, pkgPath);
     if (config) {
       return config;
     }
@@ -74,7 +115,7 @@ function findNearestPackageConfig(
     if (parentDir === currentDir) {
       break;
     }
-    if (stopAt && currentDir === stopAt) {
+    if (stopDir && currentDir === stopDir) {
       break;
     }
     currentDir = parentDir;
@@ -82,15 +123,15 @@ function findNearestPackageConfig(
   return {};
 }
 
-function readPackageConfig(
-  readFileFn: ReadFileFn,
+function* readPackageConfig(
+  readFileFn: ReadFileFn | ReadFileAsyncFn,
   pkgPath: string,
-): GtsConfig | undefined {
+): Generator<string | Promise<string>, GtsConfig | undefined, string> {
   try {
-    const content = readFileFn(pkgPath, "utf-8");
+    const content = yield readFileFn(pkgPath, "utf-8");
     const parsed = JSON.parse(content) as PackageJson;
     return parsed.gamingTs;
   } catch {
-    return undefined;
+    return;
   }
 }

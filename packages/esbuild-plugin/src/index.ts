@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
-  resolveGtsConfig,
+  resolveGtsConfigSync,
   type GtsConfig,
   transpile,
   type TranspileOption,
@@ -16,7 +16,7 @@ export function gts(option: TranspileOption = {}): Plugin {
       build.onLoad({ filter: /\.gts$/ }, async (args) => {
         try {
           const sourceCode = await fs.readFile(args.path, "utf8");
-          const resolvedOption = resolveGtsConfig(args.path, option, {
+          const resolvedOption = resolveGtsConfigSync(args.path, option, {
             cwd: process.cwd(),
             readFileFn: readFileSync,
           });
