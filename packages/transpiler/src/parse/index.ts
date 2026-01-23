@@ -1,5 +1,5 @@
 import { Parser } from "acorn";
-import type { Program } from "estree";
+import type { Position, Program } from "estree";
 import { tsPlugin } from "@sveltejs/acorn-typescript";
 import { gtsPlugin, type GtsPluginOption } from "./gts_plugin.js";
 import { loosePlugin } from "./loose_plugin.js";

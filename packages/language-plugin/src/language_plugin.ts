@@ -1,20 +1,15 @@
 import { type LanguagePlugin } from "@volar/language-core";
 import type * as ts from "typescript";
 import { URI } from "vscode-uri";
+import { resolveGtsConfig, type GtsConfig } from "@gi-tcg/gts-transpiler";
 import { GtsVirtualCode } from "./virtual_code";
 
 import type {} from "@volar/typescript";
+import type { ResolveGtsConfigOptions } from "../../transpiler/src/config";
 
-export interface GtsConfig {
-  // runtimeImportSource?: string;
-  providerImportSource?: string;
-}
-
-export function createGtsLanguagePlugin(commandLine?: ts.ParsedCommandLine): LanguagePlugin<URI | string> {
-  const gtsConfig: Required<GtsConfig> = {
-    providerImportSource: `@gi-tcg/core/gts`,
-    ...commandLine?.raw?.gamingTs as GtsConfig | undefined,
-  }
+export function createGtsLanguagePlugin(
+  ts: typeof import("typescript"),
+): LanguagePlugin<URI | string> {
   return {
     getLanguageId(uri) {
       const path = typeof uri === "string" ? uri : uri.path;
@@ -25,7 +20,16 @@ export function createGtsLanguagePlugin(commandLine?: ts.ParsedCommandLine): Lan
     createVirtualCode(uri, languageId, snapshot) {
       const filename = typeof uri === "string" ? uri : uri.path;
       if (languageId === "gaming-ts") {
-        return new GtsVirtualCode(filename, snapshot, gtsConfig);
+        const resolvedConfig = resolveGtsConfig(
+          filename,
+          {},
+          {
+            cwd: ts.sys.getCurrentDirectory(),
+            readFileFn: (path, encoding) =>
+              ts.sys.readFile(path, encoding) || "",
+          },
+        );
+        return new GtsVirtualCode(filename, snapshot, resolvedConfig);
       }
     },
     typescript: {

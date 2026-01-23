@@ -1,23 +1,19 @@
 {
-    "compilerOptions": {
-        "target": "esnext",
-        "module": "preserve",
-
-        "verbatimModuleSyntax": true,
-        "erasableSyntaxOnly": true,
-        "moduleDetection": "force",
-
-        "noEmit": true,
-
-        "strict": true,
-
-        "paths": {
-            "~provider/*": ["./provider/*"],
-            "~runtime": ["../packages/runtime/src/index"],
-        }
-    },
-    "gamingTs": {
-        "providerImportSource": "~provider",
-        "runtimeImportSource": "~runtime"
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "preserve",
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "paths": {
+      "~provider/*": [
+        "./provider/*"
+      ],
+      "~runtime": [
+        "../packages/runtime/src/index"
+      ]
     }
+  }
 }

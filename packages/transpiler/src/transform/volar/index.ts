@@ -39,6 +39,7 @@ function gtsToTypings(
       Meta: { type: "Identifier", name: "__gts_symbols_meta" },
       NamedDefinition: { type: "Identifier", name: "__gts_symbols_namedDef" },
     },
+    defineLeadingComments: [],
     vmDefTypeIdStack: [],
     metaTypeIdStack: [],
     finalMetaTypeIdStack: [],

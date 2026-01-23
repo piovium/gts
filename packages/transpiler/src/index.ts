@@ -11,7 +11,7 @@ export { GtsTranspilerError } from "./error";
 export function transpile(
   source: string,
   filename: string,
-  option: TranspileOption
+  option: TranspileOption,
 ): TranspileResult {
   const ast = parse(source);
   return transform(ast, option, {
@@ -23,7 +23,7 @@ export function transpile(
 export function transpileForVolar(
   source: string,
   filename: string,
-  option: TranspileOption
+  option: TranspileOption,
 ): VolarMappingResult {
   const ast = parseLoose(source);
   return transformForVolar(ast, option, {
@@ -33,3 +33,4 @@ export function transpileForVolar(
 }
 
 export type { TranspileOption, TranspileResult, VolarMappingResult };
+export { resolveGtsConfig, type GtsConfig } from "./config";

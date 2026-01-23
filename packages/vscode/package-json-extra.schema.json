@@ -1,12 +1,13 @@
 {
   "properties": {
     "gamingTs": {
-      "title": "GamingTS language server options",
+      "title": "GamingTS transpile options",
       "type": "object",
       "properties": {
         "runtimeImportSource": {
           "type": "string",
-          "default": "@gi-tcg/gts-runtime"
+          "default": "@gi-tcg/gts-runtime",
+          "description": "Where to import GamingTS runtime from."
         },
         "providerImportSource": {
           "type": "string",
@@ -19,7 +20,14 @@
             "type": "string"
           },
           "default": [
-            "cryo", "hydro", "pyro", "electro", "anemo", "geo", "dendro", "omni"
+            "cryo",
+            "hydro",
+            "pyro",
+            "electro",
+            "anemo",
+            "geo",
+            "dendro",
+            "omni"
           ],
           "description": "A list of identifier that will be declared inside shortcut function for direct use."
         },
@@ -29,7 +37,8 @@
             "type": "string"
           },
           "default": [
-            "my", "opp",
+            "my",
+            "opp"
           ],
           "description": "A list of identifier that will be declared inside `query` function for direct use."
         }

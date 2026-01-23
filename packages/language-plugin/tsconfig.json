@@ -4,6 +4,7 @@
     "lib": [
       "ES2021",
     ],
+    "types": [],
     "module": "preserve",
     "sourceMap": true,
     "composite": true,

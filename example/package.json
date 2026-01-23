@@ -1,0 +1,8 @@
+{
+  "name": "gts-example",
+  "private": true,
+  "gamingTs": {
+    "providerImportSource": "~provider",
+    "runtimeImportSource": "~runtime"
+  }
+}

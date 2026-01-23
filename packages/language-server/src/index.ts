@@ -5,6 +5,7 @@ import {
   Diagnostic,
   loadTsdkByPath,
 } from "@volar/language-server/node";
+import { readFileSync } from "node:fs";
 import { create as createTypeScriptServices } from "volar-service-typescript";
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import type ts from "typescript";
@@ -19,43 +20,26 @@ connection.listen();
 connection.onInitialize((params) => {
   const tsdk = loadTsdkByPath(
     params.initializationOptions.typescript.tsdk,
-    params.locale
+    params.locale,
   );
   return server.initialize(
     params,
     createTypeScriptProject(
       tsdk.typescript,
       tsdk.diagnosticMessages,
-      ({ configFileName }) => {
-        let commandLine: ts.ParsedCommandLine | undefined;
-        if (configFileName) {
-          const cwd = path.dirname(configFileName);
-          const configFile = tsdk.typescript.readJsonConfigFile(
-            configFileName,
-            tsdk.typescript.sys.readFile
-          );
-          commandLine = tsdk.typescript.parseJsonSourceFileConfigFileContent(
-            configFile,
-            tsdk.typescript.sys,
-            cwd
-          );
-        }
+      () => {
         return {
-          languagePlugins: [createGtsLanguagePlugin(commandLine)],
+          languagePlugins: [createGtsLanguagePlugin(tsdk.typescript)],
         };
-      }
+      },
     ),
-    [
-      ...createTypeScriptServices(tsdk.typescript),
-      createDiagnosticsPlugin(),
-    ]
+    [...createTypeScriptServices(tsdk.typescript), createDiagnosticsPlugin()],
   );
 });
 
 connection.onInitialized(server.initialized);
 
 connection.onShutdown(server.shutdown);
-
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught exception:", err);
