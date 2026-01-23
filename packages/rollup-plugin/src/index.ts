@@ -20,7 +20,6 @@ export function gts(option: TranspileOption = {}): Plugin {
 
       try {
         const sourceCode = await fs.readFile(id, "utf8");
-        this.fs.readFile;
         const resolvedOption = resolveGtsConfigSync(id, option, {
           readFileFn: readFileSync,
         });

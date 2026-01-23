@@ -16,10 +16,6 @@ export interface ResolveGtsConfigSyncOptions {
   stopDir?: string;
 }
 
-export type ResolveGtsConfigOptions =
-  | ResolveGtsConfigSyncOptions
-  | ResolveGtsConfigAsyncOptions;
-
 export interface ResolveGtsConfigAsyncOptions {
   readFileFn: ReadFileAsyncFn;
   cwd?: string;

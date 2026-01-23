@@ -19,10 +19,7 @@ test("resolveGtsConfigSync prefers package config", () => {
         return JSON.stringify({});
       }
       expect(encoding).toBe("utf-8");
-      if (path === "/repo/package.json") {
-        return PACKAGE_JSON;
-      }
-      return JSON.stringify({});
+      return PACKAGE_JSON;
     },
   });
   expect(resolved.runtimeImportSource).toBe("test-runtime");
@@ -32,11 +29,11 @@ test("resolveGtsConfig resolves async read file", async () => {
   const resolved = await resolveGtsConfig("src/file.gts", {}, {
     cwd: "/repo",
     readFileFn: async (path, encoding) => {
-      expect(encoding).toBe("utf-8");
-      if (path === "/repo/package.json") {
-        return PACKAGE_JSON;
+      if (path !== "/repo/package.json") {
+        return JSON.stringify({});
       }
-      return JSON.stringify({});
+      expect(encoding).toBe("utf-8");
+      return PACKAGE_JSON;
     },
   });
   expect(resolved.runtimeImportSource).toBe("test-runtime");

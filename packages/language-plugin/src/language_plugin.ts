@@ -4,8 +4,6 @@ import { URI } from "vscode-uri";
 import { resolveGtsConfigSync, type GtsConfig } from "@gi-tcg/gts-transpiler";
 import { GtsVirtualCode } from "./virtual_code";
 
-import type {} from "@volar/typescript";
-
 export function createGtsLanguagePlugin(
   ts: typeof import("typescript"),
 ): LanguagePlugin<URI | string> {
