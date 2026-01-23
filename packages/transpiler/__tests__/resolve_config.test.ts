@@ -22,7 +22,7 @@ test("resolveGtsConfigSync prefers package config", () => {
       if (p !== PACKAGE_PATH) {
         return JSON.stringify({});
       }
-      expect(encoding).toBe("utf-8");
+      expect(encoding).toBe("utf8");
       return PACKAGE_JSON;
     },
   });
@@ -36,7 +36,7 @@ test("resolveGtsConfig resolves async read file", async () => {
       if (p !== PACKAGE_PATH) {
         return JSON.stringify({});
       }
-      expect(encoding).toBe("utf-8");
+      expect(encoding).toBe("utf8");
       return PACKAGE_JSON;
     },
   });

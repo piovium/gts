@@ -7,8 +7,8 @@ export interface PackageJson {
   gamingTs?: GtsConfig;
 }
 
-type ReadFileFn = (path: string, encoding: "utf-8") => string;
-type ReadFileAsyncFn = (path: string, encoding: "utf-8") => Promise<string>;
+type ReadFileFn = (path: string, encoding: "utf8") => string;
+type ReadFileAsyncFn = (path: string, encoding: "utf8") => Promise<string>;
 
 export interface ResolveGtsConfigSyncOptions {
   readFileFn: ReadFileFn;
@@ -128,7 +128,7 @@ function* readPackageConfig(
   pkgPath: string,
 ): Generator<string | Promise<string>, GtsConfig | undefined, string> {
   try {
-    const content = yield readFileFn(pkgPath, "utf-8");
+    const content = yield readFileFn(pkgPath, "utf8");
     const parsed = JSON.parse(content) as PackageJson;
     return parsed.gamingTs;
   } catch {

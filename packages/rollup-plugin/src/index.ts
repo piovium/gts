@@ -1,13 +1,9 @@
-// @ts-check
-import fs from "node:fs/promises";
 import {
-  resolveGtsConfigSync,
-  type GtsConfig,
   transpile,
   type TranspileOption,
+  resolveGtsConfig,
 } from "@gi-tcg/gts-transpiler";
 import type { Plugin } from "rollup";
-import { readFileSync } from "node:fs";
 
 export function gts(option: TranspileOption = {}): Plugin {
   return {
@@ -17,11 +13,10 @@ export function gts(option: TranspileOption = {}): Plugin {
       if (!id.endsWith(".gts")) {
         return null;
       }
-
       try {
-        const sourceCode = await fs.readFile(id, "utf8");
-        const resolvedOption = resolveGtsConfigSync(id, option, {
-          readFileFn: readFileSync,
+        const sourceCode = await this.fs.readFile(id, { encoding: "utf8" });
+        const resolvedOption = await resolveGtsConfig(id, option, {
+          readFileFn: (path, encoding) => this.fs.readFile(path, { encoding }),
         });
         const { code, sourceMap } = transpile(sourceCode, id, resolvedOption);
         return {

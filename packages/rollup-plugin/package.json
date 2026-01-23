@@ -14,7 +14,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun build --outdir=dist --target=node --format=esm --conditions='bun' --packages=external src/index.ts",
+    "build": "bun build --outdir=dist --target=browser --format=esm --conditions='bun' --packages=external src/index.ts",
     "prepublishOnly": "bun run build"
   },
   "peerDependencies": {
