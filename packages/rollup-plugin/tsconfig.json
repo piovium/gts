@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": [
+      "esnext"
+    ],
+    "customConditions": ["bun"],
+    "module": "preserve",
+    "sourceMap": true,
+    "verbatimModuleSyntax": true,
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "strict": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+  },
+}
