@@ -13,7 +13,7 @@
       ],
       "outFiles": [
         "${workspaceRoot}/packages/vscode/dist/*.js"
-      ],
+      ]
     },
     {
       "name": "Attach to Server",

@@ -31,16 +31,20 @@ const CharacterVM = defineViewModel(
       (id: number): AR.Done;
       required(): true;
       as<TMeta extends BuilderMeta>(
-        this: AR.This<TMeta>
+        this: AR.This<TMeta>,
       ): CharacterHandle<TMeta["vars"]>;
-    }>((model, [id]) => {
-      // model.setId(id);
-    }, (_, [id]) => {
-      return id as CharacterHandle<any>;
-    }),
+    }>(
+      (model, pos) => {
+        // model.setId(id);
+      },
+      (_, pos) => {
+        const [id] = pos();
+        return id as CharacterHandle<any>;
+      },
+    ),
     since: helper.attribute<{
       (sinceVersion: "v3.3.0" | "v3.4.0"): AR.Done;
-    }>((model, [sinceVersion]) => {}),
+    }>((model, pos) => {}),
 
     tags: helper.attribute<{
       (...tags: Tag[]): AR.Done;
@@ -62,7 +66,7 @@ const CharacterVM = defineViewModel(
       <TMeta extends BuilderMeta, const TVarName extends string>(
         this: AR.This<TMeta>,
         variable: TVarName,
-        initialValue: number
+        initialValue: number,
       ): AR.WithRewriteMeta<
         typeof VariableVM,
         {
@@ -81,7 +85,7 @@ const CharacterVM = defineViewModel(
     //   model.addSkill(skill);
     // }),
   }),
-  {} as { vars: never }
+  {} as { vars: never },
 );
 
 class CharacterSkillBuilder {}
@@ -101,7 +105,7 @@ interface SkillContext<TMeta extends BuilderMeta> {
 }
 
 type SkillAction<TMeta extends BuilderMeta> = (
-  ctx: SkillContext<TMeta>
+  ctx: SkillContext<TMeta>,
 ) => void;
 
 const CharacterSkillVM = defineViewModel(
@@ -112,22 +116,25 @@ const CharacterSkillVM = defineViewModel(
       required(): true;
       as<TMeta extends BuilderMeta>(this: AR.This<TMeta>): CharacterSkillHandle;
     }>(
-      (model, [id]) => {
+      (model, pos) => {
         // model.setId(id);
       },
-      (_, [id]) => id as CharacterSkillHandle
+      (_, pos) => {
+        const [id] = pos();
+        return id as CharacterSkillHandle;
+      },
     ),
     cost: helper.attribute<{
       (element: string, amount: number): AR.Done;
-    }>((model, [element, amount]) => {}),
+    }>((model, pos) => {}),
     [Action]: helper.attribute<{
       <TMeta extends BuilderMeta>(
         this: AR.This<TMeta>,
-        action: SkillAction<TMeta>
+        action: SkillAction<TMeta>,
       ): AR.Done;
-    }>((model, [action]) => {}),
+    }>((model, pos) => {}),
   }),
-  {} as { vars: never }
+  {} as { vars: never },
 );
 
 class VariableBuilder {}
@@ -143,8 +150,8 @@ export default defineViewModel(RootBuilder, (helper) => ({
     const character = CharacterVM.parse(named);
     // model.addCharacter(character);
     return character;
-  }),
+  }, CharacterVM),
   skill: helper.attribute<{
     (): AR.With<typeof CharacterSkillVM>;
-  }>(() => {}),
+  }>(() => {}, CharacterSkillVM),
 }));
