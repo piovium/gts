@@ -33,4 +33,4 @@ export function transpileForVolar(
 }
 
 export type { TranspileOption, TranspileResult, VolarMappingResult };
-export { resolveGtsConfig, type GtsConfig } from "./config";
+export { resolveGtsConfig, resolveGtsConfigSync, type GtsConfig } from "./config";

@@ -1,11 +1,10 @@
 import { type LanguagePlugin } from "@volar/language-core";
 import type * as ts from "typescript";
 import { URI } from "vscode-uri";
-import { resolveGtsConfig, type GtsConfig } from "@gi-tcg/gts-transpiler";
+import { resolveGtsConfigSync, type GtsConfig } from "@gi-tcg/gts-transpiler";
 import { GtsVirtualCode } from "./virtual_code";
 
 import type {} from "@volar/typescript";
-import type { ResolveGtsConfigOptions } from "../../transpiler/src/config";
 
 export function createGtsLanguagePlugin(
   ts: typeof import("typescript"),
@@ -20,7 +19,7 @@ export function createGtsLanguagePlugin(
     createVirtualCode(uri, languageId, snapshot) {
       const filename = typeof uri === "string" ? uri : uri.path;
       if (languageId === "gaming-ts") {
-        const resolvedConfig = resolveGtsConfig(
+        const resolvedConfig = resolveGtsConfigSync(
           filename,
           {},
           {
