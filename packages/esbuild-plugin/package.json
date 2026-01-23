@@ -7,6 +7,9 @@
       "types": "./src/index.ts",
       "bun": "./src/index.ts",
       "import": "./dist/index.js"
+    },
+    "./bun-preload": {
+      "bun": "./src/bun_preload.ts"
     }
   },
   "files": [
@@ -24,6 +27,7 @@
     "@gi-tcg/gts-transpiler": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0"
+    "@types/node": "^24.3.0",
+    "@types/bun": "^1.3.6"
   }
 }
