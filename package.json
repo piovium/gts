@@ -3,7 +3,9 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@gi-tcg/gts-esbuild-plugin": "workspace:*",
+    "memfs": "^4.56.10",
     "typescript": "^5.9.3",
-    "@gi-tcg/gts-esbuild-plugin": "workspace:*"
+    "vitest": "^4.0.18"
   }
 }

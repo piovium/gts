@@ -1,0 +1,43 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`resolveGtsConfig > should return default config if no package.json is found 1`] = `
+{
+  "providerImportSource": "@gi-tcg/core/gts",
+  "queryBindings": [
+    "my",
+    "opp",
+  ],
+  "runtimeImportSource": "@gi-tcg/gts-runtime",
+  "shortcutFunctionPreludes": [
+    "cryo",
+    "hydro",
+    "pyro",
+    "electro",
+    "anemo",
+    "geo",
+    "dendro",
+    "omni",
+  ],
+}
+`;
+
+exports[`resolveGtsConfigAsync > should return default config if no package.json is found 1`] = `
+{
+  "providerImportSource": "@gi-tcg/core/gts",
+  "queryBindings": [
+    "my",
+    "opp",
+  ],
+  "runtimeImportSource": "@gi-tcg/gts-runtime",
+  "shortcutFunctionPreludes": [
+    "cryo",
+    "hydro",
+    "pyro",
+    "electro",
+    "anemo",
+    "geo",
+    "dendro",
+    "omni",
+  ],
+}
+`;

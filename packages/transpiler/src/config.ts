@@ -8,9 +8,19 @@ export interface PackageJson {
 }
 
 type ReadFileFn = (path: string, encoding: "utf-8") => string;
+type ReadFileFnAsync = (
+  path: string,
+  encoding: "utf-8",
+) => string | Promise<string>;
 
 export interface ResolveGtsConfigOptions {
   readFileFn: ReadFileFn;
+  cwd?: string;
+  stopDir?: string;
+}
+
+export interface ResolveGtsConfigOptionsAsync {
+  readFileFn: ReadFileFnAsync;
   cwd?: string;
   stopDir?: string;
 }
@@ -50,6 +60,25 @@ export function resolveGtsConfig(
   };
 }
 
+export async function resolveGtsConfigAsync(
+  filePath: string,
+  inlineOption: GtsConfig = {},
+  options: ResolveGtsConfigOptionsAsync,
+): Promise<Required<GtsConfig>> {
+  const startDir = normalizeStartDir(filePath, options.cwd);
+  const stopDir = options.stopDir ? path.resolve(options.stopDir) : undefined;
+  const pkgConfig = await findNearestPackageConfigAsync(
+    options.readFileFn,
+    startDir,
+    stopDir,
+  );
+  return {
+    ...DEFAULT_GTS_CONFIG,
+    ...pkgConfig,
+    ...inlineOption,
+  };
+}
+
 function normalizeStartDir(sourceFile: string, cwd?: string): string {
   const absolute = path.isAbsolute(sourceFile)
     ? sourceFile
@@ -57,19 +86,11 @@ function normalizeStartDir(sourceFile: string, cwd?: string): string {
   return path.dirname(absolute);
 }
 
-function findNearestPackageConfig(
-  readFileFn: ReadFileFn,
-  startDir: string,
-  stopDir?: string,
-): GtsConfig {
+function* iteratePackageJsonPaths(startDir: string, stopDir?: string) {
   let currentDir = startDir;
   const stopAt = stopDir ? path.resolve(stopDir) : undefined;
   while (true) {
-    const pkgPath = path.join(currentDir, "package.json");
-    const config = readPackageConfig(readFileFn, pkgPath);
-    if (config) {
-      return config;
-    }
+    yield path.join(currentDir, "package.json");
     const parentDir = path.dirname(currentDir);
     if (parentDir === currentDir) {
       break;
@@ -79,15 +100,48 @@ function findNearestPackageConfig(
     }
     currentDir = parentDir;
   }
+}
+
+function findNearestPackageConfig(
+  readFileFn: ReadFileFn,
+  startDir: string,
+  stopDir?: string,
+): GtsConfig {
+  for (const pkgPath of iteratePackageJsonPaths(startDir, stopDir)) {
+    try {
+      const content = readFileFn(pkgPath, "utf-8");
+      const config = parsePackageConfig(content);
+      if (config) {
+        return config;
+      }
+    } catch {
+      // ignore
+    }
+  }
   return {};
 }
 
-function readPackageConfig(
-  readFileFn: ReadFileFn,
-  pkgPath: string,
-): GtsConfig | undefined {
+async function findNearestPackageConfigAsync(
+  readFileFn: ReadFileFnAsync,
+  startDir: string,
+  stopDir?: string,
+): Promise<GtsConfig> {
+  for (const pkgPath of iteratePackageJsonPaths(startDir, stopDir)) {
+    try {
+      const content = await readFileFn(pkgPath, "utf-8");
+      const config = parsePackageConfig(content);
+      if (config) {
+        return config;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return {};
+}
+
+function parsePackageConfig(content: string): GtsConfig | undefined {
   try {
-    const content = readFileFn(pkgPath, "utf-8");
     const parsed = JSON.parse(content) as PackageJson;
     return parsed.gamingTs;
   } catch {
