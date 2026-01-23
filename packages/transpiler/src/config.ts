@@ -38,78 +38,58 @@ const DEFAULT_GTS_CONFIG: Required<GtsConfig> = {
   queryBindings: ["my", "opp"],
 };
 
-export function resolveGtsConfigSync(
+function* resolveGtsConfigImpl(
   filePath: string,
-  inlineOption: GtsConfig = {},
-  options: ResolveGtsConfigSyncOptions,
-): Required<GtsConfig> {
-  return resolveGtsConfigSyncWith(
-    filePath,
-    inlineOption,
-    options,
-    findNearestPackageConfig,
+  inlineConfig: GtsConfig = {},
+  options: ResolveGtsConfigAsyncOptions | ResolveGtsConfigSyncOptions,
+): Generator<string | Promise<string>, Required<GtsConfig>, string> {
+  const startDir = normalizeStartDir(filePath, options.cwd);
+  const stopDir = options.stopDir ? path.resolve(options.stopDir) : void 0;
+  const pkgConfig = yield* findNearestPackageConfig(
+    options.readFileFn,
+    startDir,
+    stopDir,
   );
+  return {
+    ...DEFAULT_GTS_CONFIG,
+    ...pkgConfig,
+    ...inlineConfig,
+  };
 }
 
 export async function resolveGtsConfig(
   filePath: string,
-  inlineOption: GtsConfig = {},
+  inlineConfig: GtsConfig,
   options: ResolveGtsConfigAsyncOptions,
 ): Promise<Required<GtsConfig>> {
-  return resolveGtsConfigAsyncWith(
-    filePath,
-    inlineOption,
-    options,
-    findNearestPackageConfigAsync,
-  );
+  const generator = resolveGtsConfigImpl(filePath, inlineConfig, options);
+  let result = generator.next();
+  while (!result.done) {
+    const toRead = result.value;
+    const content = await toRead;
+    result = generator.next(content);
+  }
+  return result.value;
 }
 
-function resolveGtsConfigSyncWith(
+export function resolveGtsConfigSync(
   filePath: string,
-  inlineOption: GtsConfig,
+  inlineConfig: GtsConfig,
   options: ResolveGtsConfigSyncOptions,
-  resolvePackageConfig: (
-    readFileFn: ReadFileFn,
-    startDir: string,
-    stopDir?: string,
-  ) => GtsConfig,
 ): Required<GtsConfig> {
-  const startDir = normalizeStartDir(filePath, options.cwd);
-  const stopDir = options.stopDir ? path.resolve(options.stopDir) : undefined;
-  const pkgConfig = resolvePackageConfig(
-    options.readFileFn,
-    startDir,
-    stopDir,
-  );
-  return {
-    ...DEFAULT_GTS_CONFIG,
-    ...pkgConfig,
-    ...inlineOption,
-  };
-}
-
-async function resolveGtsConfigAsyncWith(
-  filePath: string,
-  inlineOption: GtsConfig,
-  options: ResolveGtsConfigAsyncOptions,
-  resolvePackageConfig: (
-    readFileFn: ReadFileAsyncFn,
-    startDir: string,
-    stopDir?: string,
-  ) => Promise<GtsConfig>,
-): Promise<Required<GtsConfig>> {
-  const startDir = normalizeStartDir(filePath, options.cwd);
-  const stopDir = options.stopDir ? path.resolve(options.stopDir) : undefined;
-  const pkgConfig = await resolvePackageConfig(
-    options.readFileFn,
-    startDir,
-    stopDir,
-  );
-  return {
-    ...DEFAULT_GTS_CONFIG,
-    ...pkgConfig,
-    ...inlineOption,
-  };
+  const generator = resolveGtsConfigImpl(filePath, inlineConfig, options);
+  let result = generator.next();
+  while (!result.done) {
+    const toRead = result.value;
+    if (toRead instanceof Promise) {
+      throw new Error(
+        "resolveGtsConfigSync received a Promise. Did you mean to use resolveGtsConfig instead?",
+      );
+    }
+    const content = toRead;
+    result = generator.next(content);
+  }
+  return result.value;
 }
 
 function normalizeStartDir(sourceFile: string, cwd?: string): string {
@@ -119,16 +99,15 @@ function normalizeStartDir(sourceFile: string, cwd?: string): string {
   return path.dirname(absolute);
 }
 
-function findNearestPackageConfig(
-  readFileFn: ReadFileFn,
+function* findNearestPackageConfig(
+  readFileFn: ReadFileFn | ReadFileAsyncFn,
   startDir: string,
   stopDir?: string,
-): GtsConfig {
+): Generator<string | Promise<string>, GtsConfig, string> {
   let currentDir = startDir;
-  const stopAt = stopDir ? path.resolve(stopDir) : undefined;
   while (true) {
     const pkgPath = path.join(currentDir, "package.json");
-    const config = readPackageConfig(readFileFn, pkgPath);
+    const config = yield* readPackageConfig(readFileFn, pkgPath);
     if (config) {
       return config;
     }
@@ -136,7 +115,7 @@ function findNearestPackageConfig(
     if (parentDir === currentDir) {
       break;
     }
-    if (stopAt && currentDir === stopAt) {
+    if (stopDir && currentDir === stopDir) {
       break;
     }
     currentDir = parentDir;
@@ -144,53 +123,15 @@ function findNearestPackageConfig(
   return {};
 }
 
-async function findNearestPackageConfigAsync(
-  readFileFn: ReadFileAsyncFn,
-  startDir: string,
-  stopDir?: string,
-): Promise<GtsConfig> {
-  let currentDir = startDir;
-  const stopAt = stopDir ? path.resolve(stopDir) : undefined;
-  while (true) {
-    const pkgPath = path.join(currentDir, "package.json");
-    const config = await readPackageConfigAsync(readFileFn, pkgPath);
-    if (config) {
-      return config;
-    }
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      break;
-    }
-    if (stopAt && currentDir === stopAt) {
-      break;
-    }
-    currentDir = parentDir;
-  }
-  return {};
-}
-
-function readPackageConfig(
-  readFileFn: ReadFileFn,
+function* readPackageConfig(
+  readFileFn: ReadFileFn | ReadFileAsyncFn,
   pkgPath: string,
-): GtsConfig | undefined {
+): Generator<string | Promise<string>, GtsConfig | undefined, string> {
   try {
-    const content = readFileFn(pkgPath, "utf-8");
+    const content = yield readFileFn(pkgPath, "utf-8");
     const parsed = JSON.parse(content) as PackageJson;
     return parsed.gamingTs;
   } catch {
-    return undefined;
-  }
-}
-
-async function readPackageConfigAsync(
-  readFileFn: ReadFileAsyncFn,
-  pkgPath: string,
-): Promise<GtsConfig | undefined> {
-  try {
-    const content = await readFileFn(pkgPath, "utf-8");
-    const parsed = JSON.parse(content) as PackageJson;
-    return parsed.gamingTs;
-  } catch {
-    return undefined;
+    return;
   }
 }

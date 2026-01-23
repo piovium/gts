@@ -1,4 +1,5 @@
 import { test, expect } from "bun:test";
+import path from "node:path";
 import {
   resolveGtsConfig,
   resolveGtsConfigSync,
@@ -11,11 +12,14 @@ const PACKAGE_JSON = JSON.stringify({
   } satisfies GtsConfig,
 });
 
+const REPO_ROOT = path.resolve("/repo");
+const PACKAGE_PATH = path.join(REPO_ROOT, "package.json");
+
 test("resolveGtsConfigSync prefers package config", () => {
   const resolved = resolveGtsConfigSync("src/file.gts", {}, {
-    cwd: "/repo",
-    readFileFn: (path, encoding) => {
-      if (path !== "/repo/package.json") {
+    cwd: REPO_ROOT,
+    readFileFn: (p, encoding) => {
+      if (p !== PACKAGE_PATH) {
         return JSON.stringify({});
       }
       expect(encoding).toBe("utf-8");
@@ -27,9 +31,9 @@ test("resolveGtsConfigSync prefers package config", () => {
 
 test("resolveGtsConfig resolves async read file", async () => {
   const resolved = await resolveGtsConfig("src/file.gts", {}, {
-    cwd: "/repo",
-    readFileFn: async (path, encoding) => {
-      if (path !== "/repo/package.json") {
+    cwd: REPO_ROOT,
+    readFileFn: async (p, encoding) => {
+      if (p !== PACKAGE_PATH) {
         return JSON.stringify({});
       }
       expect(encoding).toBe("utf-8");
