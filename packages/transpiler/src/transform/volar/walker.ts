@@ -18,6 +18,7 @@ import type {
   SourceLocation,
   Statement,
   VariableDeclaration,
+  VariableDeclarator,
 } from "estree";
 import {
   commonGtsVisitor,
@@ -292,8 +293,37 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         body.push(visit(stmt) as Statement);
       }
     }
-    if (state.externalizedBindings.length > 0) {
-      // TODO
+    for (const extBinding of state.externalizedBindings) {
+      const varDecl: VariableDeclaration = {
+        type: "VariableDeclaration",
+        kind: "const",
+        declarations: [
+          {
+            type: "VariableDeclarator",
+            id: extBinding.bindingName,
+            init: ANY_INIT,
+            typeAnnotation: {
+              type: "TSTypeAnnotation",
+              typeAnnotation: {
+                type: "TSTypeReference",
+                typeName: extBinding.typingId,
+              },
+            },
+          } as VariableDeclarator,
+        ],
+        leadingComments: extBinding.leadingComments,
+      };
+      if (extBinding.export) {
+        body.unshift({
+          type: "ExportNamedDeclaration",
+          declaration: varDecl,
+          specifiers: [],
+          source: null,
+          attributes: [],
+        } as ExportNamedDeclaration);
+      } else {
+        body.unshift(varDecl);
+      }
     }
     if (state.prefaceInserted) {
       body.unshift({

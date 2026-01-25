@@ -58,10 +58,7 @@ export class ViewModel<
         insideBindingCtx ? this.#registeredBinders : this.#registeredActions
       ).get(name);
       if (!insideBindingCtx && !fn) {
-        // @ts-expect-error no console's typing for runtime
-        globalThis?.console.warn(
-          `No action registered for attribute: ${String(name)}`,
-        );
+        console?.warn(`No action registered for attribute: ${String(name)}`);
       }
       fn ??= () => {};
       named ??= { attributes: [] };
