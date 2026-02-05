@@ -87,11 +87,11 @@ export function applyReplacements(state: TypingTranspileState, code: string) {
       const lhs = `${payload.finalMetaType}_lhs`;
       const requiredAttrsNs = `${payload.finalMetaType}_rans`;
       const collectedAttrsExpr = `${payload.collectedAttrs.join(" | ")}`;
-      const needleString = `null! as ${requiredAttrsNs}.RequiredAttributes`;
+      const needleString = `"${requiredAttrsNs}_NeedleString" as any as "required attributes are missing"`;
       if (payload.errorLoc) {
         state.additionalMappings.set(payload.errorLoc, needleString);
       }
-      return `type ${payload.finalMetaType} = ${payload.metaType}; const ${lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = 0 as any; type ${lhs} = typeof ${lhs}; namespace ${requiredAttrsNs} { export type CollectedAttributes = ${collectedAttrsExpr}; export type RequiredAttributes = { [K in keyof ${payload.defType}]: ${lhs}[K] extends { required(this: ${lhs}): true } ? K : never }[keyof ${payload.defType}]; }; ((_: ${requiredAttrsNs}.CollectedAttributes) => 0)(${needleString});`;
+      return `type ${payload.finalMetaType} = ${payload.metaType}; const ${lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = 0 as any; type ${lhs} = typeof ${lhs}; namespace ${requiredAttrsNs} { export type Collected = ${collectedAttrsExpr}; export type Expected = { [K in keyof ${payload.defType}]: ${lhs}[K] extends { required(this: ${lhs}): true } ? K : never }[keyof ${payload.defType}]; }; ((_: ${requiredAttrsNs}.Expected extends ${requiredAttrsNs}.Collected ? string : ${requiredAttrsNs}.Expected) => 0)(${needleString});`;
     } else if (payload.type === "enterAttr") {
       return `const ${payload.lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = 0 as any;`;
     } else if (payload.type === "createBindingTyping") {
