@@ -58,7 +58,7 @@ export class ViewModel<
         insideBindingCtx ? this.#registeredBinders : this.#registeredActions
       ).get(name);
       if (!insideBindingCtx && !fn) {
-        console?.warn(`No action registered for attribute: ${String(name)}`);
+        throw new Error(`No action registered for attribute: ${String(name)}`);
       }
       fn ??= () => {};
       named ??= { attributes: [] };
@@ -165,6 +165,8 @@ export namespace AttributeReturn {
     [Meta]: TMeta;
   };
 
+  export type EnableIf<Condition, T = void> = Condition extends true ? T : never;
+
   export type Done = {
     namedDefinition: { [Meta]: void };
   };
@@ -181,6 +183,9 @@ export namespace AttributeReturn {
     rewriteMeta: Meta;
   };
 }
+
+import AR = AttributeReturn;
+export type { AR };
 
 export type AttributeAction<Model, T extends AttributeDefinition> = (
   model: Model,
