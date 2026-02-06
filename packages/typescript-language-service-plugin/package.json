@@ -1,11 +1,16 @@
 {
   "name": "@gi-tcg/gts-typescript-language-service-plugin",
-  "version": "0.1.1",
+  "version": "0.2.0",
+  "repository": "https://github.com/piovium/gts.git",
+  "license": "Apache-2.0",
   "type": "commonjs",
   "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
   },
-  "devDependencies": {
+  "dependencies": {
     "@volar/typescript": "~2.4.0",
     "@gi-tcg/gts-language-plugin": "workspace:*"
   }

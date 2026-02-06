@@ -64,6 +64,8 @@ export default defineWorkspace(
         target: "node",
         format: "cjs",
         dts: false,
+        packages: "bundle",
+        external: ["vscode"],
       },
     },
   ],

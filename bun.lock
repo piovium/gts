@@ -6,18 +6,18 @@
       "devDependencies": {
         "@gi-tcg/gts-esbuild-plugin": "workspace:*",
         "@gi-tcg/gtsc": "workspace:*",
+        "@types/bun": "^1.3.6",
         "bunup": "^0.16.22",
         "typescript": "^5.9.3",
       },
     },
     "packages/esbuild-plugin": {
       "name": "@gi-tcg/gts-esbuild-plugin",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
       },
       "devDependencies": {
-        "@types/bun": "^1.3.6",
         "@types/node": "^24.3.0",
       },
       "peerDependencies": {
@@ -26,7 +26,7 @@
     },
     "packages/language-plugin": {
       "name": "@gi-tcg/gts-language-plugin",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
         "@volar/language-core": "~2.4.0",
@@ -36,7 +36,7 @@
     },
     "packages/language-server": {
       "name": "@gi-tcg/gts-language-server",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "bin": {
         "gts-language-server": "./bin/gts-language-server.js",
       },
@@ -53,7 +53,7 @@
     },
     "packages/rollup-plugin": {
       "name": "@gi-tcg/gts-rollup-plugin",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
       },
@@ -66,11 +66,11 @@
     },
     "packages/runtime": {
       "name": "@gi-tcg/gts-runtime",
-      "version": "0.1.0",
+      "version": "0.2.0",
     },
     "packages/transpiler": {
       "name": "@gi-tcg/gts-transpiler",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "@jridgewell/sourcemap-codec": "^1.5.5",
         "@sveltejs/acorn-typescript": "^1.0.8",
@@ -87,7 +87,7 @@
     },
     "packages/tsc": {
       "name": "@gi-tcg/gtsc",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "bin": {
         "gtsc": "./bin/gtsc.js",
       },
@@ -101,8 +101,8 @@
     },
     "packages/typescript-language-service-plugin": {
       "name": "@gi-tcg/gts-typescript-language-service-plugin",
-      "version": "0.1.1",
-      "devDependencies": {
+      "version": "0.2.0",
+      "dependencies": {
         "@gi-tcg/gts-language-plugin": "workspace:*",
         "@volar/typescript": "~2.4.0",
       },
@@ -368,7 +368,7 @@
 
     "@tybys/wasm-util": ["@tybys/wasm-util@0.10.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg=="],
 
-    "@types/bun": ["@types/bun@1.3.6", "", { "dependencies": { "bun-types": "1.3.6" } }, "sha512-uWCv6FO/8LcpREhenN1d1b6fcspAB+cefwD7uti8C8VffIv0Um08TKMn98FynpTiU38+y2dUO55T11NgDt8VAA=="],
+    "@types/bun": ["@types/bun@1.3.8", "", { "dependencies": { "bun-types": "1.3.8" } }, "sha512-3LvWJ2q5GerAXYxO2mffLTqOzEu5qnhEAlh48Vnu8WQfnmSwbgagjGZV6BoHKJztENYEDn6QmVd949W4uESRJA=="],
 
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 
@@ -410,7 +410,7 @@
 
     "buffer-crc32": ["buffer-crc32@0.2.13", "", {}, "sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ=="],
 
-    "bun-types": ["bun-types@1.3.6", "", { "dependencies": { "@types/node": "*" } }, "sha512-OlFwHcnNV99r//9v5IIOgQ9Uk37gZqrNMCcqEaExdkVq3Avwqok1bJFmvGMCkCE0FqzdY8VMOZpfpR3lwI+CsQ=="],
+    "bun-types": ["bun-types@1.3.8", "", { "dependencies": { "@types/node": "*" } }, "sha512-fL99nxdOWvV4LqjmC+8Q9kW3M4QTtTR1eePs94v5ctGqU8OeceWrSUaRw3JYb7tU3FkMIAjkueehrHPPPGKi5Q=="],
 
     "bunup": ["bunup@0.16.22", "", { "dependencies": { "@bunup/dts": "^0.14.50", "@bunup/shared": "0.16.20", "chokidar": "^5.0.0", "coffi": "^0.1.37", "lightningcss": "^1.30.2", "picocolors": "^1.1.1", "tinyexec": "^1.0.2", "tree-kill": "^1.2.2", "zlye": "^0.4.4" }, "peerDependencies": { "typescript": "latest" }, "optionalPeers": ["typescript"], "bin": { "bunup": "dist/cli/index.js" } }, "sha512-R1ARiGA396bP/PYDA3dB6SwpB5zsypEt1KJtG34HvuoJBZJTP7NK2k9GUALXyhB/2V2v62GMh356IAJInCJ7vA=="],
 
@@ -729,8 +729,6 @@
     "zimmerframe": ["zimmerframe@1.1.4", "", {}, "sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ=="],
 
     "zlye": ["zlye@0.4.4", "", { "dependencies": { "picocolors": "^1.1.1" }, "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-fwpeC841X3ElOLYRMKXbwX29pitNrsm6nRNvEhDMrRXDl3BhR2i03Bkr0GNrpyYgZJuEzUsBylXAYzgGPXXOCQ=="],
-
-    "bun-types/@types/node": ["@types/node@25.0.1", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-czWPzKIAXucn9PtsttxmumiQ9N0ok9FrBwgRWrwmVLlp86BrMExzvXRLFYRJ+Ex3g6yqj+KuaxfX1JTgV2lpfg=="],
 
     "dom-serializer/entities": ["entities@4.5.0", "", {}, "sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw=="],
 
