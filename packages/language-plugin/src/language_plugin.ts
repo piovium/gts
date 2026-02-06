@@ -1,4 +1,5 @@
 import { type LanguagePlugin } from "@volar/language-core";
+import type {} from "@volar/typescript";
 import type * as ts from "typescript";
 import { URI } from "vscode-uri";
 import { resolveGtsConfigSync, type GtsConfig } from "@gi-tcg/gts-transpiler";
