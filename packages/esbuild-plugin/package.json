@@ -4,9 +4,9 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "bun": "./src/index.ts",
-      "import": "./dist/index.js"
+      "default": "./dist/index.js"
     },
     "./bun-preload": {
       "bun": "./src/bun_preload.ts"
@@ -17,8 +17,6 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun build --outdir=dist --target=node --format=esm --conditions='bun' --packages=external src/index.ts",
-    "prepublishOnly": "bun run build"
   },
   "peerDependencies": {
     "esbuild": "~0.27.2"

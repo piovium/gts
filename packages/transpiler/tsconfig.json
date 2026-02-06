@@ -12,8 +12,8 @@
     "composite": true,
     "declaration": true,
     "emitDeclarationOnly": true,
+    "isolatedDeclarations": true,
     "strict": true,
-    "allowJs": true,
     "skipLibCheck": true
   },
 }

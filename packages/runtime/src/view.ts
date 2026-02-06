@@ -20,7 +20,7 @@ export class View<BlockDef extends AttributeBlockDefinition> {
 
   constructor(
     public _node: NamedAttributesNode,
-    public _bindingCtx?: BindingContext,
+    public _bindingCtx?: BindingContext | undefined,
   ) {}
 }
 
@@ -36,7 +36,7 @@ export class BindingContext {
 
 export function createDefine(
   rootVM: ViewModel<any, any>,
-  node: SingleAttributeNode
+  node: SingleAttributeNode,
 ): void {
   const view = new View<any>({ attributes: [node] });
   rootVM.parse(view);
@@ -44,7 +44,7 @@ export function createDefine(
 
 export function createBinding(
   rootVM: ViewModel<any, any>,
-  node: SingleAttributeNode
+  node: SingleAttributeNode,
 ): unknown[] {
   const bindingCtx = new BindingContext();
   const view = new View<any>({ attributes: [node] }, bindingCtx);

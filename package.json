@@ -3,8 +3,9 @@
     "packages/*"
   ],
   "devDependencies": {
-    "typescript": "^5.9.3",
     "@gi-tcg/gts-esbuild-plugin": "workspace:*",
-    "@gi-tcg/gtsc": "workspace:*"
+    "@gi-tcg/gtsc": "workspace:*",
+    "bunup": "^0.16.22",
+    "typescript": "^5.9.3"
   }
 }

@@ -13,7 +13,7 @@
         "./provider/*"
       ],
       "~runtime": [
-        "../packages/runtime/src/index"
+        "../packages/runtime/dist/index.d.ts"
       ]
     }
   }

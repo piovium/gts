@@ -1,4 +1,4 @@
-import * as serverProtocol from "@volar/language-server/protocol";
+import * as serverProtocol from "@volar/language-server/protocol.js";
 import { activateAutoInsertion, createLabsInfo, getTsdk } from "@volar/vscode";
 import {
   BaseLanguageClient,

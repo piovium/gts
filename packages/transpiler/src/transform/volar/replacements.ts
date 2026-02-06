@@ -45,7 +45,7 @@ type ReplacementPayload =
 
 export const createReplacementHolder = (
   state: TypingTranspileState,
-  value: ReplacementPayload
+  value: ReplacementPayload,
 ): ExpressionStatement => {
   const rawValue = JSON.stringify(value);
   return {
@@ -68,10 +68,13 @@ export const createReplacementHolder = (
   };
 };
 
-export function applyReplacements(state: TypingTranspileState, code: string) {
+export function applyReplacements(
+  state: TypingTranspileState,
+  code: string,
+): string {
   const replacementRegex = new RegExp(
     "\\b" + state.replacementTag.name + "`(.*?)`",
-    "gm"
+    "gm",
   );
   const {
     symbolsId: { NamedDefinition, Meta },

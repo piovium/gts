@@ -39,8 +39,8 @@ type CodeToGeneratedMap = Map<string, CodePosition[]>;
  * @returns  */
 export const offset_to_line_col = (
   offset: number,
-  line_offsets: LineOffsets
-) => {
+  line_offsets: LineOffsets,
+): { line: number; column: number } => {
   // Binary search
   let left = 0;
   let right = line_offsets.length - 1;
@@ -71,13 +71,13 @@ export const offset_to_line_col = (
  * @param source_map - The source map object from esrap (v3 format)
  * @param line_offsets - Pre-computed line offsets array
  * @param generated_code - The final generated code (after post-processing)
- * @returns Tuple of [source-to-generated map, generated-to-source map]
+ * @returns source-to-generated map
  */
 export function buildSrcToGenMap(
   source_map: SourceMap,
   line_offsets: LineOffsets,
-  generated_code: string
-) {
+  generated_code: string,
+): CodeToGeneratedMap {
   const map: CodeToGeneratedMap = new Map();
 
   // Decode the VLQ-encoded mappings string
@@ -191,8 +191,8 @@ export function buildSrcToGenMap(
 export function getGeneratedPosition(
   src_line: number,
   src_column: number,
-  srcToGenMap: CodeToGeneratedMap
-) {
+  srcToGenMap: CodeToGeneratedMap,
+): CodePosition | undefined {
   const key = `${src_line}:${src_column}`;
   const positions = srcToGenMap.get(key);
 
@@ -230,7 +230,7 @@ function createLineOffsets(content: string): number[] {
 function locToOffset(
   line: number,
   column: number,
-  line_offsets: number[]
+  line_offsets: number[],
 ): number {
   if (line < 1 || line > line_offsets.length) {
     // throw new Error(
@@ -245,14 +245,14 @@ export function convertToVolarMappings(
   source: string,
   sourceMap: SourceMap,
   tokens: LeafToken[],
-  additionalMappings: Map<string, string>
+  additionalMappings: Map<string, string>,
 ): CodeMapping[] {
   const sourceLineOffsets = createLineOffsets(source);
   const generatedLineOffsets = createLineOffsets(generated);
   const srcToGenMap = buildSrcToGenMap(
     sourceMap,
     generatedLineOffsets,
-    generated
+    generated,
   );
 
   const mappings: CodeMapping[] = [];
@@ -261,18 +261,18 @@ export function convertToVolarMappings(
     let sourceStart = locToOffset(
       token.loc.start.line,
       token.loc.start.column,
-      sourceLineOffsets
+      sourceLineOffsets,
     );
     const sourceEnd = locToOffset(
       token.loc.end.line,
       token.loc.end.column,
-      sourceLineOffsets
+      sourceLineOffsets,
     );
     let sourceLength = token.sourceLength ?? sourceEnd - sourceStart;
     const genLineCol = getGeneratedPosition(
       token.loc.start.line,
       token.loc.start.column,
-      srcToGenMap
+      srcToGenMap,
     );
     if (!genLineCol) {
       // No mapping found for this token - skip it
@@ -281,7 +281,7 @@ export function convertToVolarMappings(
     let genStart = locToOffset(
       genLineCol.line,
       genLineCol.column,
-      generatedLineOffsets
+      generatedLineOffsets,
     );
     if (token.locationAdjustment) {
       // maps verification back to the start of source

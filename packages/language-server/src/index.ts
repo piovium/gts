@@ -4,12 +4,9 @@ import {
   createTypeScriptProject,
   Diagnostic,
   loadTsdkByPath,
-} from "@volar/language-server/node";
-import { readFileSync } from "node:fs";
+} from "@volar/language-server/node.js";
 import { create as createTypeScriptServices } from "volar-service-typescript";
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
-import type ts from "typescript";
-import path from "node:path";
 import { createDiagnosticsPlugin } from "./diagnostics";
 
 const connection = createConnection();

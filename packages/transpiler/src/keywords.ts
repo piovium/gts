@@ -1,4 +1,4 @@
-export const specialIdentifiers = [
+export const specialIdentifiers: string[] = [
   // Always Reserved Words
   "break",
   "case",

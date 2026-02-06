@@ -24,17 +24,19 @@ export interface IViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT;
 }
 
-export class ViewModel<
-  ModelT,
-  BlockDef extends AttributeBlockDefinition,
-> implements IViewModel<ModelT, BlockDef> {
+export interface ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
   /**
    * Helper for fetching symbol types
    * @internal
    */
-  declare _symbols: AllSymbols;
+  _symbols: AllSymbols;
+  [NamedDefinition]: BlockDef;
+}
 
-  declare [NamedDefinition]: BlockDef;
+export class ViewModel<
+  ModelT,
+  BlockDef extends AttributeBlockDefinition,
+> implements IViewModel<ModelT, BlockDef> {
   #registeredActions: Map<PropertyKey, AttributeAction<ModelT, any>> =
     new Map();
   #registeredBinders: Map<PropertyKey, AttributeBinder<ModelT, any>> =
@@ -42,10 +44,10 @@ export class ViewModel<
 
   constructor(private Ctor: new () => ModelT) {}
 
-  _setAction(name: PropertyKey, action: AttributeAction<ModelT, any>) {
+  _setAction(name: PropertyKey, action: AttributeAction<ModelT, any>): void {
     this.#registeredActions.set(name, action);
   }
-  _setBinder(name: PropertyKey, binder: AttributeBinder<ModelT, any>) {
+  _setBinder(name: PropertyKey, binder: AttributeBinder<ModelT, any>): void {
     this.#registeredBinders.set(name, binder);
   }
 
@@ -80,7 +82,7 @@ class AttributeDefHelper<ModelT> {
   static readonly #actionSlot: unique symbol = Symbol("actionSlot");
   static readonly #binderSlot: unique symbol = Symbol("binderSlot");
 
-  _assignActions(defResult: Record<string, unknown>) {
+  _assignActions(defResult: Record<string, unknown>): void {
     for (const [name, returnValue] of Object.entries(defResult)) {
       const actionDescriptor = Object.getOwnPropertyDescriptor(
         returnValue,
@@ -165,7 +167,9 @@ export namespace AttributeReturn {
     [Meta]: TMeta;
   };
 
-  export type EnableIf<Condition, T = void> = Condition extends true ? T : never;
+  export type EnableIf<Condition, T = void> = Condition extends true
+    ? T
+    : never;
 
   export type Done = {
     namedDefinition: { [Meta]: void };
@@ -184,8 +188,7 @@ export namespace AttributeReturn {
   };
 }
 
-import AR = AttributeReturn;
-export type { AR };
+export type { AttributeReturn as AR };
 
 export type AttributeAction<Model, T extends AttributeDefinition> = (
   model: Model,
