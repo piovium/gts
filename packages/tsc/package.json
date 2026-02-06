@@ -6,7 +6,7 @@
     "gtsc": "./bin/gtsc.js"
   },
   "scripts": {
-    "build": "bun build --outdir=dist --target=node --format=esm --conditions='bun' src/index.ts"
+    "build": "bun build --outdir=dist --target=node --format=esm --external=@volar/typescript --conditions='bun' src/index.ts"
   },
   "dependencies": {
     "@gi-tcg/gts-language-plugin": "workspace:*",
