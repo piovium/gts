@@ -6,6 +6,7 @@ import {
 } from "~runtime";
 
 class CharacterBuilder {
+  setVersion(version: "v3.3.0" | "v3.4.0") {}
   addSkill(skill: CharacterSkillBuilder) {}
 }
 
@@ -42,9 +43,9 @@ const CharacterVM = defineViewModel(
         return id as CharacterHandle<any>;
       },
     ),
-    since: helper.attribute<{
-      (sinceVersion: "v3.3.0" | "v3.4.0"): AR.Done;
-    }>((model, pos) => {}),
+    since: helper.simpleAttribute(function (sinceVersion: "v3.3.0" | "v3.4.0") {
+      this.setVersion(sinceVersion);
+    }),
 
     tags: helper.attribute<{
       (...tags: Tag[]): AR.Done;

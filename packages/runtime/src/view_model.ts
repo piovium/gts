@@ -133,6 +133,38 @@ class AttributeDefHelper<ModelT> {
     });
     return returnValue;
   }
+
+  simpleAttribute<Args extends any[]>(
+    action: (this: ModelT, ...args: Args) => void,
+  ): {
+    (...args: Args): AttributeReturn.Done;
+  };
+  simpleAttribute<Args extends any[], U>(
+    action: (this: ModelT, ...args: Args) => void,
+    binder: (this: ModelT, ...args: Args) => U,
+  ): {
+    (...args: Args): AttributeReturn.Done;
+    as?(): U;
+  };
+  simpleAttribute<Args extends any[], U>(
+    action: (this: ModelT, ...args: Args) => void,
+    binder?: (this: ModelT, ...args: Args) => U,
+  ) {
+    binder ??= (() => {}) as (this: ModelT, ...args: Args) => U;
+
+    const returnValue = {};
+    Object.defineProperty(returnValue, AttributeDefHelper.#actionSlot, {
+      value: (model: ModelT, positionals: Args) =>
+        action.apply(model, positionals),
+      enumerable: true,
+    });
+    Object.defineProperty(returnValue, AttributeDefHelper.#binderSlot, {
+      value: (model: ModelT, positionals: Args) =>
+        binder.apply(model, positionals),
+      enumerable: true,
+    });
+    return returnValue as any;
+  }
 }
 
 export function defineViewModel<
