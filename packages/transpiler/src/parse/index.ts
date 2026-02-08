@@ -2,10 +2,8 @@ import { Parser } from "acorn";
 import type { Position, Program } from "estree";
 import { tsPlugin } from "@sveltejs/acorn-typescript";
 import { gtsPlugin, type GtsPluginOption } from "./gts_plugin.js";
-import { loosePlugin } from "./loose_plugin.js";
 import { getCommentHandlers } from "./comment.js";
 import { GtsTranspilerError } from "../error.js";
-import { recordCallLParenPlugin } from "./record_call_lparen_plugin.js";
 
 const TsParser = Parser.extend(tsPlugin());
 
@@ -40,8 +38,6 @@ export function parseLoose(
 ): Program {
   try {
     const GtsParser = TsParser.extend(
-      loosePlugin(),
-      ...(options?.recordCallLParens ? [recordCallLParenPlugin()] : []),
       gtsPlugin({
         allowEmptyShortcutMember:
           options?.allowEmptyPositionalAttribute || true,
@@ -55,6 +51,9 @@ export function parseLoose(
       sourceType: "module",
       locations: true,
       onComment,
+      // Use acorn patch options instead of plugins
+      allowEmptyMemberAccess: true,
+      recordLParenOfCall: options?.recordCallLParens || false,
     }) as Program;
     addComments(ast);
     return ast;

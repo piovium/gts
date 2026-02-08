@@ -3,8 +3,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "bunx bunup",
-    "postinstall": "bash scripts/apply-patches.sh || true"
+    "build": "bunx bunup"
+  },
+  "patchedDependencies": {
+    "acorn@8.15.0": "patches/acorn@8.15.0.patch",
+    "esrap@2.2.1": "patches/esrap@2.2.1.patch"
   },
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",

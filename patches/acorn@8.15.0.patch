@@ -1,0 +1,64 @@
+diff --git a/dist/acorn.mjs b/dist/acorn.mjs
+index 74d5fc431be2b5062245e72937ef2032164b51cd..a71f86a90670e387726175124146ddaa43174774 100644
+--- a/dist/acorn.mjs
++++ b/dist/acorn.mjs
+@@ -2912,6 +2912,11 @@ pp$5.parseSubscript = function(base, startPos, startLoc, noCalls, maybeAsyncArro
+     }
+     base = this.finishNode(node, "MemberExpression");
+   } else if (!noCalls && this.eat(types$1.parenL)) {
++    // GTS patch: Record lparen location for call expressions
++    var lParenLoc = this.options.recordLParenOfCall ? {
++      start: this.lastTokStartLoc,
++      end: this.lastTokEndLoc
++    } : null;
+     var refDestructuringErrors = new DestructuringErrors, oldYieldPos = this.yieldPos, oldAwaitPos = this.awaitPos, oldAwaitIdentPos = this.awaitIdentPos;
+     this.yieldPos = 0;
+     this.awaitPos = 0;
+@@ -2937,6 +2942,10 @@ pp$5.parseSubscript = function(base, startPos, startLoc, noCalls, maybeAsyncArro
+     if (optionalSupported) {
+       node$1.optional = optional;
+     }
++    // GTS patch: Add lparen location to node
++    if (lParenLoc) {
++      node$1.lParenLoc = lParenLoc;
++    }
+     base = this.finishNode(node$1, "CallExpression");
+   } else if (this.type === types$1.backQuote) {
+     if (optional || optionalChained) {
+@@ -3269,8 +3278,23 @@ pp$5.parseNew = function() {
+   }
+   var startPos = this.start, startLoc = this.startLoc;
+   node.callee = this.parseSubscripts(this.parseExprAtom(null, false, true), startPos, startLoc, true, false);
+-  if (this.eat(types$1.parenL)) { node.arguments = this.parseExprList(types$1.parenR, this.options.ecmaVersion >= 8, false); }
+-  else { node.arguments = empty; }
++  // GTS patch: Record lparen location for new expressions
++  var lParenLoc = null;
++  if (this.eat(types$1.parenL)) {
++    if (this.options.recordLParenOfCall) {
++      lParenLoc = {
++        start: this.lastTokStartLoc,
++        end: this.lastTokEndLoc
++      };
++    }
++    node.arguments = this.parseExprList(types$1.parenR, this.options.ecmaVersion >= 8, false);
++  } else { 
++    node.arguments = empty; 
++  }
++  // GTS patch: Add lparen location to node
++  if (lParenLoc) {
++    node.lParenLoc = lParenLoc;
++  }
+   return this.finishNode(node, "NewExpression")
+ };
+ 
+@@ -3660,6 +3684,10 @@ pp$5.parseIdentNode = function() {
+       this.context.pop();
+     }
+     this.type = types$1.name;
++  } else if (this.options.allowEmptyMemberAccess) {
++    // GTS patch: Allow empty identifiers for incomplete code (language tooling)
++    node.name = '\u2716'; // '✖' character
++    node.isDummy = true;
+   } else {
+     this.unexpected();
+   }
