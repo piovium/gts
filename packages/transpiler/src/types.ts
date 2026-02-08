@@ -25,6 +25,13 @@ declare module "estree" {
     GTSQueryExpression: GTSQueryExpression;
   }
 
+  interface SimpleCallExpression {
+    lParenLoc?: AST.SourceLocation;
+  }
+  interface NewExpression {
+    lParenLoc?: AST.SourceLocation;
+  }
+
   interface GTSDefineStatement extends BaseStatement {
     type: "GTSDefineStatement";
     body: GTSNamedAttributeDefinition;

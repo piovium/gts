@@ -101,8 +101,8 @@ const emitPreface = (state: TypingTranspileState) => {
       symbolName === "Action"
         ? state.ActionId
         : symbolName === "Prelude"
-        ? state.preludeSymbolId
-        : state.symbolsId[symbolName];
+          ? state.preludeSymbolId
+          : state.symbolsId[symbolName];
     state.typingPendingStatements.push(
       {
         type: "TSTypeAliasDeclaration",
@@ -128,7 +128,7 @@ const emitPreface = (state: TypingTranspileState) => {
             init: ANY_INIT,
           },
         ],
-      } as VariableDeclaration
+      } as VariableDeclaration,
     );
   }
   state.prefaceInserted = true;
@@ -154,7 +154,7 @@ const enterVMFromRoot = (state: TypingTranspileState) => {
       vm: state.rootVmId.name,
       defType: defTypeId.name,
       metaType: metaTypeId.name,
-    })
+    }),
   );
   state.vmDefTypeIdStack.push(defTypeId);
   state.metaTypeIdStack.push(metaTypeId);
@@ -163,7 +163,7 @@ const enterVMFromRoot = (state: TypingTranspileState) => {
 };
 const enterVMFromAttr = (
   state: TypingTranspileState,
-  returningId: Identifier
+  returningId: Identifier,
 ) => {
   const defTypeId: Identifier = {
     type: "Identifier",
@@ -183,7 +183,7 @@ const enterVMFromAttr = (
       returnType: returningId.name,
       defType: defTypeId.name,
       metaType: metaTypeId.name,
-    })
+    }),
   );
   state.vmDefTypeIdStack.push(defTypeId);
   state.metaTypeIdStack.push(metaTypeId);
@@ -204,13 +204,13 @@ const exitVM = (state: TypingTranspileState, errorLoc?: string) => {
       finalMetaType: finalMetaId.name,
       collectedAttrs: collectedAttrNames,
       errorLoc,
-    })
+    }),
   );
 };
 
 const enterAttr = (
   state: TypingTranspileState,
-  attrName: string
+  attrName: string,
 ): { lhsId: Identifier } => {
   const defTypeId = state.vmDefTypeIdStack.at(-1);
   const metaTypeId = state.metaTypeIdStack.at(-1);
@@ -229,7 +229,7 @@ const enterAttr = (
       defType: defTypeId.name,
       metaType: metaTypeId.name,
       lhs: lhsId.name,
-    })
+    }),
   );
   return { lhsId: lhsId };
 };
@@ -239,7 +239,7 @@ const genBindingTyping = (
   info: {
     attrName: string;
     typingId: Identifier;
-  }
+  },
 ) => {
   const finalMetaId = state.finalMetaTypeIdStack.at(-1);
   const defTypeId = state.vmDefTypeIdStack.at(-1);
@@ -253,7 +253,7 @@ const genBindingTyping = (
       defType: defTypeId.name,
       attrName: info.attrName,
       typingId: info.typingId.name,
-    })
+    }),
   );
 };
 
@@ -274,7 +274,7 @@ const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
       oldMetaType: oldMetaTypeId.name,
       newMetaType: newMetaTypeId.name,
       returnType: returningId.name,
-    })
+    }),
   );
 };
 
@@ -371,8 +371,14 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
   GTSNamedAttributeDefinition(node, { visit, state }) {
     const { name, body, bindingName } = node;
     const attrName = JSON.stringify(
-      name.type === "Literal" ? String(name.value) : name.name
+      name.type === "Literal" ? String(name.value) : name.name,
     );
+    const attributeNameToken = state.leafTokens.find((t) => t.loc === name.loc);
+    if (attributeNameToken) {
+      attributeNameToken.locationAdjustment = {
+        sourceLengthOffset: 1,
+      };
+    }
     const { lhsId } = enterAttr(state, attrName);
     const positionals = body.positionalAttributes.attributes.map(
       (attr): Expression => {
@@ -392,7 +398,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         } else {
           return visit(attr) as Expression;
         }
-      }
+      },
     );
     const returnValue: Identifier = {
       type: "Identifier",
@@ -425,7 +431,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       visit(body.namedAttributes);
       exitVM(
         state,
-        `${body.namedAttributes.loc?.start.line}:${body.namedAttributes.loc?.start.column}`
+        `${body.namedAttributes.loc?.start.line}:${body.namedAttributes.loc?.start.column}`,
       );
     }
     if (bindingName) {

@@ -15,7 +15,7 @@ export function loosePlugin() {
           return super.parseIdent(liberal);
         }
       };
-      private _proxiedThis = new Proxy(this, {
+      private readonly _proxiedThis = new Proxy(this, {
         get: (target, prop) => {
           if (prop === "parseIdent") {
             return this._patchedParseIdent;

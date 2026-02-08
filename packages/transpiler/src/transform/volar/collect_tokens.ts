@@ -32,18 +32,18 @@ export interface LocationAdjustment {
   /**
    * Adjust the start position of generated code
    */
-  startOffset: number;
+  startOffset?: number;
+  sourceLengthOffset?: number;
   /**
    * The original length of generated code, used for mapping diagnostics
    */
-  generatedLength: number;
+  generatedLength?: number;
 }
 
 export interface LeafToken {
   loc: SourceLocation;
   isDummy?: boolean;
   sourceLength?: number;
-  generatedLength?: number;
   locationAdjustment?: LocationAdjustment;
 }
 
@@ -53,15 +53,31 @@ export function collectLeafTokens(ast: any): LeafToken[] {
     _(node, { state, next }) {
       if (isLeafNode(node) && node.loc) {
         const token: LeafToken = {
-          loc: node.loc
+          loc: node.loc,
         };
         if (node.isDummy) {
           token.isDummy = true;
           token.sourceLength = 0;
-          // include next character for diagnostic
-          token.generatedLength = 1;
         }
         state.push(token);
+      }
+      next();
+    },
+    NewExpression(node, { state, next }) {
+      const lParenLoc = node.lParenLoc;
+      if (lParenLoc) {
+        state.push({
+          loc: lParenLoc,
+        });
+      }
+      next();
+    },
+    CallExpression(node, { state, next }) {
+      const lParenLoc = node.lParenLoc;
+      if (lParenLoc) {
+        state.push({
+          loc: lParenLoc,
+        });
       }
       next();
     },

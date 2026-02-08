@@ -61,4 +61,6 @@ export const obj = {
   foo: "bar",
   sub: (name: string) => {}
 };
-obj.foo;
+// obj.sub("test");
+// (0, obj).sub("test");
+// obj.sub ()

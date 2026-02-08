@@ -5,6 +5,7 @@ import { gtsPlugin, type GtsPluginOption } from "./gts_plugin.js";
 import { loosePlugin } from "./loose_plugin.js";
 import { getCommentHandlers } from "./comment.js";
 import { GtsTranspilerError } from "../error.js";
+import { recordCallLParenPlugin } from "./record_call_lparen_plugin.js";
 
 const TsParser = Parser.extend(tsPlugin());
 
@@ -29,15 +30,24 @@ export function parse(input: string, options?: GtsPluginOption): Program {
   }
 }
 
-export function parseLoose(input: string, options?: GtsPluginOption): Program {
+export interface ParseLooseOptions extends GtsPluginOption {
+  recordCallLParens?: boolean;
+}
+
+export function parseLoose(
+  input: string,
+  options?: ParseLooseOptions,
+): Program {
   try {
     const GtsParser = TsParser.extend(
       loosePlugin(),
+      ...(options?.recordCallLParens ? [recordCallLParenPlugin()] : []),
       gtsPlugin({
-        ...options,
-        allowEmptyShortcutMember: true,
-        allowEmptyPositionalAttribute: true,
-      })
+        allowEmptyShortcutMember:
+          options?.allowEmptyPositionalAttribute || true,
+        allowEmptyPositionalAttribute:
+          options?.allowEmptyPositionalAttribute || true,
+      }),
     );
     const { onComment, addComments } = getCommentHandlers(input, []);
     const ast = GtsParser.parse(input, {

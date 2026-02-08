@@ -31,7 +31,6 @@ export function gts(option: TranspileOption = {}): EsBuildPlugin & BunPlugin {
             resolveDir: path.dirname(args.path), // Helps resolve imports inside the new JS
           };
         } catch (error) {
-          console.log(error);
           return {
             contents: "",
             errors: [{ text: (error as Error).message }],

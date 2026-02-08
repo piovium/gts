@@ -25,7 +25,9 @@ export function transpileForVolar(
   filename: string,
   option: TranspileOption,
 ): VolarMappingResult {
-  const ast = parseLoose(source);
+  const ast = parseLoose(source, {
+    recordCallLParens: true,
+  });
   return transformForVolar(ast, option, {
     content: source,
     filename,

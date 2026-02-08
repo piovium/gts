@@ -268,7 +268,10 @@ export function convertToVolarMappings(
       token.loc.end.column,
       sourceLineOffsets,
     );
+
     let sourceLength = token.sourceLength ?? sourceEnd - sourceStart;
+
+    sourceLength += token.locationAdjustment?.sourceLengthOffset ?? 0;
     const genLineCol = getGeneratedPosition(
       token.loc.start.line,
       token.loc.start.column,
@@ -283,19 +286,6 @@ export function convertToVolarMappings(
       genLineCol.column,
       generatedLineOffsets,
     );
-    if (token.locationAdjustment) {
-      // maps verification back to the start of source
-      mappings.push({
-        sourceOffsets: [sourceStart],
-        generatedOffsets: [genStart],
-        lengths: [0],
-        generatedLengths: [token.locationAdjustment.generatedLength],
-        data: {
-          verification: true,
-        },
-      });
-      genStart += token.locationAdjustment.startOffset;
-    }
     if (token.isDummy) {
       // A dummy token might be generated for a missing property / argument.
       // Notice that when facing this scenario, the parser tries to 'defer' and step through
@@ -308,8 +298,8 @@ export function convertToVolarMappings(
         sourceLength++;
       }
     }
-
-    const generatedLength = token.generatedLength ?? sourceLength;
+    const generatedLength =
+      token.locationAdjustment?.generatedLength ?? sourceLength;
 
     mappings.push({
       sourceOffsets: [sourceStart],
@@ -318,6 +308,20 @@ export function convertToVolarMappings(
       generatedLengths: [generatedLength],
       data: DEFAULT_VOLAR_MAPPING_DATA,
     });
+
+    if (typeof token.locationAdjustment?.startOffset === "number") {
+      // maps verification back to the start of source
+      mappings.push({
+        sourceOffsets: [sourceStart],
+        generatedOffsets: [genStart],
+        lengths: [0],
+        generatedLengths: [generatedLength],
+        data: {
+          verification: true,
+        },
+      });
+      genStart += token.locationAdjustment.startOffset;
+    }
   }
 
   for (const [loc, codeSnippet] of additionalMappings) {

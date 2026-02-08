@@ -17,9 +17,7 @@ export const createDiagnosticsPlugin = (): LanguageServicePlugin => {
       return {
         provideDiagnostics: (document) => {
           try {
-            console.log(document.uri);
             const [virtualCode] = getVirtualCode(document, context);
-            console.log(document.uri, virtualCode);
             if (!virtualCode) {
               return;
             }
@@ -35,7 +33,6 @@ export const createDiagnosticsPlugin = (): LanguageServicePlugin => {
                 },
                 end: { line: loc.end.line - 1, character: loc.end.column },
               };
-              console.log(range);
               return {
                 severity: DiagnosticSeverity.Error,
                 range,
