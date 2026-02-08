@@ -1,0 +1,35 @@
+diff --git a/src/languages/ts/index.js b/src/languages/ts/index.js
+index 34df1e0b87ef06a33f249621299102b605f8774d..0d2c58c31f5c0da8d03a83a986997bc98c54b092 100644
+--- a/src/languages/ts/index.js
++++ b/src/languages/ts/index.js
+@@ -471,7 +471,13 @@ export default (options = {}) => {
+ 			const open = context.new();
+ 			const join = context.new();
+ 
+-			context.write('(');
++			// GTS patch: support custom lParenLoc for source mapping
++			if (node.lParenLoc) {
++				const lParenFakeNode = { loc: node.lParenLoc };
++				context.write('(', lParenFakeNode);
++			} else {
++				context.write('(');
++			}
+ 			context.append(open);
+ 
+ 			// if the final argument is multiline, it doesn't need to force all the
+@@ -1099,8 +1105,13 @@ export default (options = {}) => {
+ 		FunctionExpression: shared['FunctionDeclaration|FunctionExpression'],
+ 
+ 		Identifier(node, context) {
+-			let name = node.name;
+-			context.write(name, node);
++			// GTS patch: handle dummy identifiers
++			if (node.isDummy) {
++				context.write('', node);
++			} else {
++				let name = node.name;
++				context.write(name, node);
++			}
+ 
+ 			if (node.typeAnnotation) context.visit(node.typeAnnotation);
+ 		},
