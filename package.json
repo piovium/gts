@@ -4,7 +4,7 @@
   ],
   "scripts": {
     "build": "bunx bunup",
-    "postinstall": "[ -f patches/esrap@2.2.1.patch ] && patch -p1 -d node_modules/.bun/esrap@2.2.1/node_modules/esrap < patches/esrap@2.2.1.patch || true"
+    "postinstall": "bash scripts/apply-patches.sh || true"
   },
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",

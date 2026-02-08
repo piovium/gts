@@ -1,6 +1,8 @@
 import type { AST } from "../../types";
 import { walk } from "zimmerframe";
 import type { SourceInfo, TranspileResult } from "..";
+// Note: Context import removed - no longer needed after refactoring runtime
+// patching to use bun patch. Previously used for Proxy-based interception.
 import { print } from "esrap";
 import tsPrinter from "esrap/languages/ts";
 import {
