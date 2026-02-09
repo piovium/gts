@@ -28,23 +28,25 @@ function isLeafNode(node: any): boolean {
   return true;
 }
 
-export interface LocationAdjustment {
+export interface LeafToken {
+  loc: SourceLocation;
+  isDummy?: boolean;
+  /**
+   * Override source length (instead of loc.end - loc.start)
+   */
+  sourceLength?: number;
   /**
    * Adjust the start position of generated code
    */
   startOffset?: number;
+  /**
+   * Make the source length longer
+   */
   sourceLengthOffset?: number;
   /**
    * The original length of generated code, used for mapping diagnostics
    */
   generatedLength?: number;
-}
-
-export interface LeafToken {
-  loc: SourceLocation;
-  isDummy?: boolean;
-  sourceLength?: number;
-  locationAdjustment?: LocationAdjustment;
 }
 
 export function collectLeafTokens(ast: any): LeafToken[] {
@@ -58,6 +60,8 @@ export function collectLeafTokens(ast: any): LeafToken[] {
         if (node.isDummy) {
           token.isDummy = true;
           token.sourceLength = 0;
+          // add 1 for squiggle on next character
+          token.generatedLength = 1;
         }
         state.push(token);
       }

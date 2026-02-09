@@ -63,4 +63,5 @@ export const obj = {
 };
 // obj.sub("test");
 // (0, obj).sub("test");
-// obj.sub ()
+obj.foo;
+new Date()

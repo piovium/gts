@@ -4,7 +4,7 @@ import type {
 } from "@volar/language-server";
 import { getVirtualCode, getWordFromPosition } from "./utils";
 
-export function createDocumentHighlightPlugin(): LanguageServicePlugin {
+export function createDocumentHighlightService(): LanguageServicePlugin {
   return {
     name: "gts-document-highlight",
     capabilities: {

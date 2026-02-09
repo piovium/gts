@@ -5,9 +5,9 @@ import {
   Diagnostic,
   loadTsdkByPath,
 } from "@volar/language-server/node.js";
-import { create as createTypeScriptServices } from "volar-service-typescript";
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import { createDiagnosticsPlugin } from "./diagnostics";
+import { createTypeScriptServices } from "./typescript";
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -21,16 +21,15 @@ connection.onInitialize((params) => {
   );
   return server.initialize(
     params,
-    createTypeScriptProject(
-      tsdk.typescript,
-      tsdk.diagnosticMessages,
-      () => {
-        return {
-          languagePlugins: [createGtsLanguagePlugin(tsdk.typescript)],
-        };
-      },
-    ),
-    [...createTypeScriptServices(tsdk.typescript), createDiagnosticsPlugin()],
+    createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => {
+      return {
+        languagePlugins: [createGtsLanguagePlugin(tsdk.typescript)],
+      };
+    }),
+    [
+      ...createTypeScriptServices(tsdk.typescript),
+      createDiagnosticsPlugin(),
+    ],
   );
 });
 

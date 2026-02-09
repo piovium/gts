@@ -375,9 +375,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     );
     const attributeNameToken = state.leafTokens.find((t) => t.loc === name.loc);
     if (attributeNameToken) {
-      attributeNameToken.locationAdjustment = {
-        sourceLengthOffset: 1,
-      };
+      attributeNameToken.sourceLengthOffset = 1;
     }
     const { lhsId } = enterAttr(state, attrName);
     const positionals = body.positionalAttributes.attributes.map(
@@ -385,10 +383,8 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
           const token = state.leafTokens.find((t) => t.loc === attr.loc);
           if (token) {
-            token.locationAdjustment = {
-              startOffset: 1,
-              generatedLength: attr.name.length + 2, // quotation mark
-            };
+            token.startOffset = 1;  
+            token.generatedLength = attr.name.length + 2; // quotation mark
           }
           return {
             type: "Literal",

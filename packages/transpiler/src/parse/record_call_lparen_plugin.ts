@@ -49,7 +49,7 @@ export function recordCallLParenPlugin() {
         return this.eat(type);
       };
 
-      private readonly _proxiedThis = new Proxy(this, {
+      readonly #proxiedThis = new Proxy(this, {
         get: (target, prop) => {
           if (prop === "eat") {
             return this._patchedEat;
@@ -63,7 +63,7 @@ export function recordCallLParenPlugin() {
       });
 
       override parseNew() {
-        const result = super.parseNew.apply(this._proxiedThis);
+        const result = super.parseNew.apply(this.#proxiedThis);
         if (this._capturedLParenLocFromNew && result.type === "NewExpression") {
           result.lParenLoc = this._capturedLParenLocFromNew;
           this._capturedLParenLocFromNew = null;

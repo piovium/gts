@@ -271,7 +271,7 @@ export function convertToVolarMappings(
 
     let sourceLength = token.sourceLength ?? sourceEnd - sourceStart;
 
-    sourceLength += token.locationAdjustment?.sourceLengthOffset ?? 0;
+    sourceLength += token.sourceLengthOffset ?? 0;
     const genLineCol = getGeneratedPosition(
       token.loc.start.line,
       token.loc.start.column,
@@ -298,8 +298,7 @@ export function convertToVolarMappings(
         sourceLength++;
       }
     }
-    const generatedLength =
-      token.locationAdjustment?.generatedLength ?? sourceLength;
+    const generatedLength = token.generatedLength ?? sourceLength;
 
     mappings.push({
       sourceOffsets: [sourceStart],
@@ -309,7 +308,7 @@ export function convertToVolarMappings(
       data: DEFAULT_VOLAR_MAPPING_DATA,
     });
 
-    if (typeof token.locationAdjustment?.startOffset === "number") {
+    if (typeof token.startOffset === "number") {
       // maps verification back to the start of source
       mappings.push({
         sourceOffsets: [sourceStart],
@@ -320,7 +319,7 @@ export function convertToVolarMappings(
           verification: true,
         },
       });
-      genStart += token.locationAdjustment.startOffset;
+      genStart += token.startOffset;
     }
   }
 

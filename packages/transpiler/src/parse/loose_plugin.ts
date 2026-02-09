@@ -15,8 +15,9 @@ export function loosePlugin() {
           return super.parseIdent(liberal);
         }
       };
-      private readonly _proxiedThis = new Proxy(this, {
+      readonly #proxiedThis = new Proxy(this, {
         get: (target, prop) => {
+          console.log(prop)
           if (prop === "parseIdent") {
             return this._patchedParseIdent;
           }
@@ -45,7 +46,7 @@ export function loosePlugin() {
         forInit?: boolean | "await",
       ): AST.Expression {
         return super.parseSubscript.call(
-          this._proxiedThis,
+          this.#proxiedThis,
           base,
           startPos,
           startLoc,
