@@ -79,9 +79,15 @@ const emitPreface = (state: TypingTranspileState) => {
     return;
   }
   const symbolsLhs = {
-    type: "TSQualifiedName",
-    left: { type: "Identifier", name: state.rootVmId.name },
-    right: { type: "Identifier", name: "_symbols" },
+    type: "TSIndexedAccessType",
+    objectType: {
+      type: "TSTypeQuery",
+      exprName: { type: "Identifier", name: state.rootVmId.name },
+    },
+    indexType: {
+      type: "TSLiteralType",
+      literal: { type: "Literal", value: "~symbols" },
+    }
   };
   for (const symbolName of [
     "Meta",
@@ -90,11 +96,11 @@ const emitPreface = (state: TypingTranspileState) => {
     "Prelude",
   ] as const) {
     const init = {
-      type: "TSTypeQuery",
-      exprName: {
-        type: "TSQualifiedName",
-        left: symbolsLhs,
-        right: { type: "Identifier", name: symbolName },
+      type: "TSIndexedAccessType",
+      objectType: symbolsLhs,
+      indexType: {
+        type: "TSLiteralType",
+        literal: { type: "Literal", value: symbolName },
       },
     };
     const symbolId =

@@ -29,7 +29,7 @@ export interface ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
    * Helper for fetching symbol types
    * @internal
    */
-  _symbols: AllSymbols;
+  "~symbols": AllSymbols;
   [NamedDefinition]: BlockDef;
 }
 
@@ -44,10 +44,10 @@ export class ViewModel<
 
   constructor(private Ctor: new () => ModelT) {}
 
-  _setAction(name: PropertyKey, action: AttributeAction<ModelT, any>): void {
+  "~setAction"(name: PropertyKey, action: AttributeAction<ModelT, any>): void {
     this.#registeredActions.set(name, action);
   }
-  _setBinder(name: PropertyKey, binder: AttributeBinder<ModelT, any>): void {
+  "~setBinder"(name: PropertyKey, binder: AttributeBinder<ModelT, any>): void {
     this.#registeredBinders.set(name, binder);
   }
 
@@ -82,21 +82,21 @@ class AttributeDefHelper<ModelT> {
   static readonly #actionSlot: unique symbol = Symbol("actionSlot");
   static readonly #binderSlot: unique symbol = Symbol("binderSlot");
 
-  _assignActions(defResult: Record<string, unknown>): void {
+  "~assignActions"(defResult: Record<string, unknown>): void {
     for (const [name, returnValue] of Object.entries(defResult)) {
       const actionDescriptor = Object.getOwnPropertyDescriptor(
         returnValue,
         AttributeDefHelper.#actionSlot,
       );
       if (actionDescriptor) {
-        this.#viewModel._setAction(name, actionDescriptor.value);
+        this.#viewModel["~setAction"](name, actionDescriptor.value);
       }
       const binderDescriptor = Object.getOwnPropertyDescriptor(
         returnValue,
         AttributeDefHelper.#binderSlot,
       );
       if (binderDescriptor) {
-        this.#viewModel._setBinder(name, binderDescriptor.value);
+        this.#viewModel["~setBinder"](name, binderDescriptor.value);
       }
     }
   }
@@ -179,7 +179,7 @@ export function defineViewModel<
   const vm = new ViewModel<T, BlockDef & { [Meta]: InitMeta }>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult = modelDefFn(helper);
-  helper._assignActions(defResult);
+  helper["~assignActions"](defResult);
   return vm;
 }
 
