@@ -34,10 +34,22 @@ export default defineWorkspace(
     {
       name: "language-server",
       root: "packages/language-server",
-      config: {
-        target: "node",
-        dts: false,
-      },
+      config: [
+        {
+          name: "node",
+          entry: "src/node.ts",
+          target: "node",
+          outDir: "dist/node",
+          dts: false,
+        },
+        {
+          name: "browser",
+          entry: "src/browser.ts",
+          target: "browser",
+          outDir: "dist/browser",
+          dts: false,
+        },
+      ]
     },
     {
       name: "tsc",

@@ -1,1 +1,1 @@
-import "@gi-tcg/gts-language-server";
+import "@gi-tcg/gts-language-server/node";

@@ -4,11 +4,14 @@
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "dist/index.js",
   "exports": {
-    ".": {
-      "bun": "./src/index.ts",
-      "default": "./dist/index.js"
+    "./node": {
+      "bun": "./src/node.ts",
+      "default": "./dist/node/node.js"
+    },
+    "./browser": {
+      "bun": "./src/browser.ts",
+      "default": "./dist/browser/browser.js"
     }
   },
   "bin": {
