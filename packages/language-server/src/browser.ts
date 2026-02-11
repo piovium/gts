@@ -15,9 +15,9 @@ const server = createServer(connection);
 connection.listen();
 
 connection.onInitialize(async (params) => {
-  const { typescript = "https://cdn.jsdelivr.net/npm/typescript@latest/lib" } =
+  const { tsdkUrl = "https://cdn.jsdelivr.net/npm/typescript@latest/lib" } =
     params.initializationOptions;
-  const tsdk = await loadTsdkByUrl(typescript.tsdkUrl, params.locale);
+  const tsdk = await loadTsdkByUrl(tsdkUrl, params.locale);
   return server.initialize(
     params,
     createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => {
