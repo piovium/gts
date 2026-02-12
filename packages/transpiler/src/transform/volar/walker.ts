@@ -87,7 +87,7 @@ const emitPreface = (state: TypingTranspileState) => {
     indexType: {
       type: "TSLiteralType",
       literal: { type: "Literal", value: "~symbols" },
-    }
+    },
   };
   for (const symbolName of [
     "Meta",
@@ -317,7 +317,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
             },
           } as VariableDeclarator,
         ],
-        leadingComments: extBinding.leadingComments,
       };
       if (extBinding.export) {
         body.unshift({
@@ -326,8 +325,10 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           specifiers: [],
           source: null,
           attributes: [],
+          leadingComments: extBinding.leadingComments,
         } as ExportNamedDeclaration);
       } else {
+        varDecl.leadingComments = extBinding.leadingComments;
         body.unshift(varDecl);
       }
     }
@@ -389,7 +390,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
           const token = state.leafTokens.find((t) => t.loc === attr.loc);
           if (token) {
-            token.startOffset = 1;  
+            token.startOffset = 1;
             token.generatedLength = attr.name.length + 2; // quotation mark
           }
           return {

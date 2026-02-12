@@ -299,15 +299,7 @@ export function convertToVolarMappings(
       }
     }
     const generatedLength = token.generatedLength ?? sourceLength;
-
-    mappings.push({
-      sourceOffsets: [sourceStart],
-      generatedOffsets: [genStart],
-      lengths: [sourceLength],
-      generatedLengths: [generatedLength],
-      data: DEFAULT_VOLAR_MAPPING_DATA,
-    });
-
+    
     if (typeof token.startOffset === "number") {
       // maps verification back to the start of source
       mappings.push({
@@ -321,6 +313,14 @@ export function convertToVolarMappings(
       });
       genStart += token.startOffset;
     }
+
+    mappings.push({
+      sourceOffsets: [sourceStart],
+      generatedOffsets: [genStart],
+      lengths: [sourceLength],
+      generatedLengths: [generatedLength],
+      data: DEFAULT_VOLAR_MAPPING_DATA,
+    });
   }
 
   for (const [loc, codeSnippet] of additionalMappings) {
