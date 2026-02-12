@@ -16,7 +16,9 @@ import { patchedPrinter } from "./printer";
 
 interface TypingTranspileOption extends TranspileOption {
   leafTokens: LeafToken[];
-  // "row:col" -> "replacement string"
+  /**
+   * "row:col" -> "replacement string"
+   */
   additionalMappings: Map<string, string>;
 }
 

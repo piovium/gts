@@ -471,7 +471,18 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       visit(attr);
     }
     if (node.directAction) {
-      const { lhsId } = enterAttr(state, state.ActionId.name);
+      const attrName = state.ActionId.name;
+      const { lhsId } = enterAttr(state, attrName);
+      const actionNotExistsReplacementStr = `${lhsId.name}[${attrName}]`;
+      const actionNotExistsErrorLoc = `${node.directAction.loc?.start.line}:${node.directAction.loc?.start.column}`;
+      state.additionalMappings.set(
+        actionNotExistsErrorLoc,
+        actionNotExistsReplacementStr,
+      );
+      console.log(
+        actionNotExistsErrorLoc,
+        actionNotExistsReplacementStr,
+      );
       const fn: ArrowFunctionExpression = {
         type: "ArrowFunctionExpression",
         params: state.shortcutFunctionParameters,

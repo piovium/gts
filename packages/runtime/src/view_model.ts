@@ -2,8 +2,8 @@ import { Action, AllSymbols, Meta, NamedDefinition } from "./symbols";
 import { View } from "./view";
 
 export interface AttributeBlockDefinition {
-  [name: string]: AttributeDefinition;
-  [Action]?: AttributeDefinition;
+  [name: string]: AttributeDefinition | undefined;
+  [Action]?: AttributeDefinition | undefined;
   [Meta]: any;
 }
 
@@ -96,13 +96,16 @@ class AttributeDefHelper<ModelT> {
   static readonly #lazyActionSlot: unique symbol = Symbol("actionSlot");
   static readonly #lazyBinderSlot: unique symbol = Symbol("binderSlot");
 
-  "~assignActions"(defResult: Record<string | Action, unknown>): void {
+  "~assignActions"(defResult: Partial<Record<string | Action, unknown>>): void {
     const keys: (string | Action)[] = Object.keys(defResult);
     if (defResult[Action]) {
       keys.push(Action);
     }
     for (const name of keys) {
-      const value = defResult[name]!;
+      const value = defResult[name];
+      if (!value) {
+        continue;
+      }
       const actionDescriptor = Object.getOwnPropertyDescriptor(
         value,
         AttributeDefHelper.#lazyActionSlot,
@@ -200,7 +203,7 @@ class AttributeDefHelper<ModelT> {
 
 export function defineViewModel<
   T,
-  const BlockDef extends Record<string | Action, AttributeDefinition>,
+  const BlockDef extends Partial<Record<string | Action, AttributeDefinition>>,
   InitMeta = void,
 >(
   Ctor: new () => T,

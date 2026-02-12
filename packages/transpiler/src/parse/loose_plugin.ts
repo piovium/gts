@@ -17,7 +17,6 @@ export function loosePlugin() {
       };
       readonly #proxiedThis = new Proxy(this, {
         get: (target, prop) => {
-          console.log(prop)
           if (prop === "parseIdent") {
             return this._patchedParseIdent;
           }
