@@ -1,1 +1,15 @@
-export default function query(queryFn: (querier: any) => any, option: any) {}
+export interface QueryBuilder {
+  my: QueryBuilder;
+  opp: QueryBuilder;
+  character: QueryBuilder;
+  active: QueryBuilder;
+}
+
+export type Query = { readonly _query: unique symbol };
+
+export default function query(
+  queryFn: (querier: QueryBuilder) => unknown,
+  option: { star: boolean },
+): Query {
+  return {} as Query;
+}

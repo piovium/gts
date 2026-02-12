@@ -1,4 +1,4 @@
-// import { A } from "./test2.gts";
+import { A } from "./test2.gts";
 
 export const add = (a: number, b: number) => {
   return a + b;
@@ -18,6 +18,8 @@ define character {
   energy 3;
   skills WhisperOfWater;
   // variable "foo", 3;
+  // TODO: error squiggle for no [Action] defined
+  :get
 }
 
 /**
@@ -29,7 +31,8 @@ define character {
 define skill {
   id 12011 as private WhisperOfWater;
   cost hydro, 3;
-  :getVariable()
+  variable foo, 42;
+  const a = :getVariable("foo")
   :damage(hydro, 1);
   :summon(MelodyLoop);
 }
@@ -43,11 +46,12 @@ define skill {
  */
 define summon {
   id 112011 as MelodyLoop;
+  usage 2;
   on endPhase {
     when :( true )
-    usage 2;
     hint heal, 1;
     :heal(1, query* my.character);
+    const currentUsage = :getVariable("usage");
     :apply(hydro, query my.active);
   }
 }

@@ -1,3 +1,4 @@
+import type { Query } from "./query";
 import {
   Action,
   Prelude,
@@ -7,7 +8,7 @@ import {
 
 class CharacterBuilder {
   setVersion(version: "v3.3.0" | "v3.4.0") {}
-  addSkill(skill: CharacterSkillBuilder) {}
+  addSkill(skill: SkillBuilder) {}
 }
 
 type CharacterHandle<VarNames extends string> = number & {
@@ -16,7 +17,7 @@ type CharacterHandle<VarNames extends string> = number & {
 };
 
 type BuilderMeta = {
-  vars: string;
+  varNames: string;
 };
 
 type Tag = "hydro" | "catalyst" | "mondstadt" | "liyue" | "pole" | "pyro";
@@ -33,7 +34,7 @@ const CharacterVM = defineViewModel(
       required(): true;
       as<TMeta extends BuilderMeta>(
         this: AR.This<TMeta>,
-      ): CharacterHandle<TMeta["vars"]>;
+      ): CharacterHandle<TMeta["varNames"]>;
     }>(
       (model, pos) => {
         // model.setId(id);
@@ -47,33 +48,14 @@ const CharacterVM = defineViewModel(
       this.setVersion(sinceVersion);
     }),
 
-    tags: helper.attribute<{
-      (...tags: Tag[]): AR.Done;
-    }>(() => {}),
+    tags: helper.simpleAttribute(function (...tags: Tag[]) {}),
 
-    health: helper.attribute<{
-      (value: number): AR.Done;
-    }>(() => {}),
+    health: helper.simpleAttribute(function (value: number) {}),
 
-    energy: helper.attribute<{
-      (value: number): AR.Done;
-    }>(() => {}),
+    energy: helper.simpleAttribute(function (value: number) {}),
 
     skills: helper.attribute<{
       (...skillHandles: CharacterSkillHandle[]): AR.Done;
-    }>(() => {}),
-
-    variable: helper.attribute<{
-      <TMeta extends BuilderMeta, const TVarName extends string>(
-        this: AR.This<TMeta>,
-        variable: TVarName,
-        initialValue: number,
-      ): AR.WithRewriteMeta<
-        typeof VariableVM,
-        {
-          vars: TMeta["vars"] | TVarName;
-        }
-      >;
     }>(() => {}),
 
     // skill: helper.attribute<{
@@ -86,10 +68,10 @@ const CharacterVM = defineViewModel(
     //   model.addSkill(skill);
     // }),
   }),
-  {} as { vars: never },
+  {} as { varNames: never } satisfies BuilderMeta,
 );
 
-class CharacterSkillBuilder {}
+class SkillBuilder {}
 
 interface SkillContext<TMeta extends BuilderMeta> {
   [Prelude]: {
@@ -102,19 +84,22 @@ interface SkillContext<TMeta extends BuilderMeta> {
     dendro: number;
     omni: number;
   };
-  getVariable<TVarName extends TMeta["vars"]>(name: TVarName): number;
+  getVariable<TVarName extends TMeta["varNames"]>(name: TVarName): number;
+  damage(type: number, count: number): void;
+  summon(type: SummonHandle<any>): void;
+  heal(count: number, query: Query): void;
+  apply(type: number, query: Query): void;
 }
 
 type SkillAction<TMeta extends BuilderMeta> = (
   ctx: SkillContext<TMeta>,
 ) => void;
 
-const CharacterSkillVM = defineViewModel(
-  CharacterSkillBuilder,
+const SkillVM = defineViewModel(
+  SkillBuilder,
   (helper) => ({
     id: helper.attribute<{
       (id: number): AR.Done;
-      required(): true;
       as<TMeta extends BuilderMeta>(this: AR.This<TMeta>): CharacterSkillHandle;
     }>(
       (model, pos) => {
@@ -125,9 +110,25 @@ const CharacterSkillVM = defineViewModel(
         return id as CharacterSkillHandle;
       },
     ),
-    cost: helper.attribute<{
-      (element: string, amount: number): AR.Done;
-    }>((model, pos) => {}),
+    cost: helper.simpleAttribute(function (element: string, amount: number) {}),
+
+    when: helper.simpleAttribute(function (condition: (ctx: SkillContext<any>) => boolean) {}),
+
+    hint: helper.simpleAttribute(function (icon: "heal", text: string | number) {}),
+
+    variable: helper.attribute<{
+      <TMeta extends BuilderMeta, const TVarName extends string>(
+        this: AR.This<TMeta>,
+        variable: TVarName,
+        initialValue: number,
+      ): AR.WithRewriteMeta<
+        typeof VariableVM,
+        {
+          varNames: TMeta["varNames"] | TVarName;
+        }
+      >;
+    }>(() => {}),
+
     [Action]: helper.attribute<{
       <TMeta extends BuilderMeta>(
         this: AR.This<TMeta>,
@@ -135,24 +136,82 @@ const CharacterSkillVM = defineViewModel(
       ): AR.Done;
     }>((model, pos) => {}),
   }),
-  {} as { vars: never },
+  {} as { varNames: never } satisfies BuilderMeta,
 );
 
 class VariableBuilder {}
 
 const VariableVM = defineViewModel(VariableBuilder, (helper) => ({}));
 
+class SummonBuilder {}
+
+type SummonHandle<VarNames extends string> = number & {
+  readonly _summon: unique symbol;
+  readonly varNames: VarNames;
+};
+
+const SummonVM = defineViewModel(
+  SummonBuilder,
+  (helper) => ({
+    id: helper.attribute<{
+      (id: number): AR.Done;
+      required(): true;
+      as<TMeta extends BuilderMeta>(
+        this: AR.This<TMeta>,
+      ): SummonHandle<TMeta["varNames"]>;
+    }>(
+      (model, pos) => {
+        // model.setId(id);
+      },
+      (_, pos) => {
+        const [id] = pos();
+        return id as SummonHandle<any>;
+      },
+    ),
+
+    usage: helper.attribute<{
+      <TMeta extends BuilderMeta>(
+        this: AR.This<TMeta>,
+        count: number,
+      ): AR.WithRewriteMeta<
+        typeof VariableVM,
+        {
+          varNames: TMeta["varNames"] | "usage";
+        }
+      >;
+    }>(() => {}),
+
+    on: helper.attribute<{
+      <Meta extends BuilderMeta>(
+        this: AR.This<Meta>,
+        eventName: "endPhase" | "actionPhase",
+      ): AR.With<typeof SkillVM, { varNames: Meta["varNames"] }>;
+    }>((model, pos) => {}),
+  }),
+  {} as { varNames: never } satisfies BuilderMeta,
+);
+
 class RootBuilder {}
+
+export const registered: any[] = [];
 
 export default defineViewModel(RootBuilder, (helper) => ({
   character: helper.attribute<{
-    (): AR.With<typeof CharacterVM, { vars: never }>;
+    (): AR.With<typeof CharacterVM, { varNames: never }>;
   }>((model, _, named) => {
     const character = CharacterVM.parse(named);
-    // model.addCharacter(character);
-    return character;
+    registered.push(character);
   }, CharacterVM),
   skill: helper.attribute<{
-    (): AR.With<typeof CharacterSkillVM>;
-  }>(() => {}, CharacterSkillVM),
+    (): AR.With<typeof SkillVM, { varNames: never }>;
+  }>((model, _, named) => {
+    const skill = SkillVM.parse(named);
+    registered.push(skill);
+  }, SkillVM),
+  summon: helper.attribute<{
+    (): AR.With<typeof SummonVM, { varNames: never }>;
+  }>((model, _, named) => {
+    const summon = SummonVM.parse(named);
+    registered.push(summon);
+  }, SummonVM),
 }));

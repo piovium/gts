@@ -1,3 +1,7 @@
-import { obj } from "./test.gts";
+import { MelodyLoop, obj,  } from "./test.gts";
 
-console.log(obj);
+declare global {
+    var console: any;
+}
+
+console.log(MelodyLoop);
