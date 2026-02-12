@@ -385,6 +385,10 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       attributeNameToken.sourceLengthOffset = 1;
     }
     const { lhsId } = enterAttr(state, attrName);
+    state.additionalMappings.set(
+      `${name.loc?.start.line}:${name.loc?.start.column}`,
+      `${lhsId.name}${name.type === "Literal" ? `[` : `.`}`,
+    );
     const positionals = body.positionalAttributes.attributes.map(
       (attr): Expression => {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {

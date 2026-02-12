@@ -217,10 +217,10 @@ export function defineViewModel<
   return vm;
 }
 
-interface AttributeDefinition {
+export interface AttributeDefinition {
   (...args: any[]): AttributePositionalReturnBase;
   as?(): any;
-  // required?(): boolean;
+  required?(): boolean;
 }
 
 interface AttributePositionalReturnBase {
@@ -229,7 +229,7 @@ interface AttributePositionalReturnBase {
 }
 
 export namespace AttributeReturn {
-  export type This<TMeta = any> = {
+  export type This<TMeta> = {
     [Meta]: TMeta;
   };
 
@@ -246,6 +246,11 @@ export namespace AttributeReturn {
     TMeta = VM[NamedDefinition][Meta],
   > = {
     namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], TMeta>;
+  };
+
+  export type DoneRewriteMeta<NewMeta> = {
+    namedDefinition: { [Meta]: void };
+    rewriteMeta: NewMeta;
   };
 
   export type WithRewriteMeta<VM extends ViewModel<any, any>, NewMeta> = {
