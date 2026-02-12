@@ -19,7 +19,7 @@ define character {
   skills WhisperOfWater;
   // variable "foo", 3;
   // TODO: error squiggle for no [Action] defined
-  :get
+  //:get
 }
 
 /**

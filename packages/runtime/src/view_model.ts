@@ -33,22 +33,33 @@ export interface ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
   [NamedDefinition]: BlockDef;
 }
 
+type LazyAttributeActionOrBinder<ModelT> = (
+  model: ModelT,
+  positionals: () => unknown[],
+  named: View<any>,
+) => unknown;
+
 export class ViewModel<
   ModelT,
   BlockDef extends AttributeBlockDefinition,
 > implements IViewModel<ModelT, BlockDef> {
-  #registeredActions: Map<PropertyKey, AttributeAction<ModelT, any>> =
+  #registeredActions: Map<PropertyKey, LazyAttributeActionOrBinder<ModelT>> =
     new Map();
-  #registeredBinders: Map<PropertyKey, AttributeBinder<ModelT, any>> =
+  #registeredBinders: Map<PropertyKey, LazyAttributeActionOrBinder<ModelT>> =
     new Map();
 
   constructor(private Ctor: new () => ModelT) {}
 
-  "~setAction"(name: PropertyKey, action: AttributeAction<ModelT, any>): void {
-    this.#registeredActions.set(name, action);
-  }
-  "~setBinder"(name: PropertyKey, binder: AttributeBinder<ModelT, any>): void {
-    this.#registeredBinders.set(name, binder);
+  "~setActionOrBinder"(
+    context: "action" | "binder",
+    name: PropertyKey,
+    action: LazyAttributeActionOrBinder<ModelT>,
+  ): void {
+    if (context === "action") {
+      this.#registeredActions.set(name, action);
+    } else {
+      this.#registeredBinders.set(name, action);
+    }
   }
 
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT {
@@ -60,7 +71,10 @@ export class ViewModel<
         insideBindingCtx ? this.#registeredBinders : this.#registeredActions
       ).get(name);
       if (!insideBindingCtx && !fn) {
-        throw new Error(`No action registered for attribute: ${String(name)}`);
+        const modelName = this.Ctor.name;
+        throw new Error(
+          `No action registered for attribute "${String(name)}" on model "${modelName}"`,
+        );
       }
       fn ??= () => {};
       named ??= { attributes: [] };
@@ -79,24 +93,37 @@ class AttributeDefHelper<ModelT> {
     this.#viewModel = viewModel;
   }
 
-  static readonly #actionSlot: unique symbol = Symbol("actionSlot");
-  static readonly #binderSlot: unique symbol = Symbol("binderSlot");
+  static readonly #lazyActionSlot: unique symbol = Symbol("actionSlot");
+  static readonly #lazyBinderSlot: unique symbol = Symbol("binderSlot");
 
-  "~assignActions"(defResult: Record<string, unknown>): void {
-    for (const [name, returnValue] of Object.entries(defResult)) {
+  "~assignActions"(defResult: Record<string | Action, unknown>): void {
+    const keys: (string | Action)[] = Object.keys(defResult);
+    if (defResult[Action]) {
+      keys.push(Action);
+    }
+    for (const name of keys) {
+      const value = defResult[name]!;
       const actionDescriptor = Object.getOwnPropertyDescriptor(
-        returnValue,
-        AttributeDefHelper.#actionSlot,
+        value,
+        AttributeDefHelper.#lazyActionSlot,
       );
       if (actionDescriptor) {
-        this.#viewModel["~setAction"](name, actionDescriptor.value);
+        this.#viewModel["~setActionOrBinder"](
+          "action",
+          name,
+          actionDescriptor.value,
+        );
       }
       const binderDescriptor = Object.getOwnPropertyDescriptor(
-        returnValue,
-        AttributeDefHelper.#binderSlot,
+        value,
+        AttributeDefHelper.#lazyBinderSlot,
       );
       if (binderDescriptor) {
-        this.#viewModel["~setBinder"](name, binderDescriptor.value);
+        this.#viewModel["~setActionOrBinder"](
+          "binder",
+          name,
+          binderDescriptor.value,
+        );
       }
     }
   }
@@ -115,20 +142,30 @@ class AttributeDefHelper<ModelT> {
     action: any,
     binder?: AttributeBinder<any, any> | ViewModel<any, any>,
   ) {
-    if (binder instanceof ViewModel) {
-      const vm = binder;
-      binder = (model, positionals, named) => {
-        return vm.parse(named);
-      };
-    }
-    binder ??= () => {};
     const returnValue = {};
-    Object.defineProperty(returnValue, AttributeDefHelper.#actionSlot, {
-      value: action,
+    const lazyAction: LazyAttributeActionOrBinder<ModelT> = (
+      model,
+      positionals,
+      named,
+    ) => action(model, positionals, named);
+    Object.defineProperty(returnValue, AttributeDefHelper.#lazyActionSlot, {
+      value: lazyAction,
       enumerable: true,
     });
-    Object.defineProperty(returnValue, AttributeDefHelper.#binderSlot, {
-      value: binder,
+    let lazyBinder: LazyAttributeActionOrBinder<ModelT>;
+    if (binder instanceof ViewModel) {
+      const vm = binder;
+      lazyBinder = (model, positionals, named) => {
+        return vm.parse(named);
+      };
+    } else if (binder) {
+      lazyBinder = (model, positionals, named) =>
+        binder(model, positionals(), named);
+    } else {
+      lazyBinder = () => {};
+    }
+    Object.defineProperty(returnValue, AttributeDefHelper.#lazyBinderSlot, {
+      value: lazyBinder,
       enumerable: true,
     });
     return returnValue;
@@ -150,26 +187,20 @@ class AttributeDefHelper<ModelT> {
     action: (this: ModelT, ...args: Args) => void,
     binder?: (this: ModelT, ...args: Args) => U,
   ) {
-    binder ??= (() => {}) as (this: ModelT, ...args: Args) => U;
-
-    const returnValue = {};
-    Object.defineProperty(returnValue, AttributeDefHelper.#actionSlot, {
-      value: (model: ModelT, positionals: Args) =>
-        action.apply(model, positionals),
-      enumerable: true,
-    });
-    Object.defineProperty(returnValue, AttributeDefHelper.#binderSlot, {
-      value: (model: ModelT, positionals: Args) =>
-        binder.apply(model, positionals),
-      enumerable: true,
-    });
-    return returnValue as any;
+    const action2: AttributeAction<ModelT, any> = (model, positionals) =>
+      action.apply(model, positionals as Args);
+    let binder2: AttributeBinder<ModelT, any> | undefined;
+    if (binder) {
+      binder2 = (model, positionals) =>
+        binder.apply(model, positionals as Args);
+    }
+    return this.attribute<any>(action2, binder2);
   }
 }
 
 export function defineViewModel<
   T,
-  const BlockDef extends Record<string, AttributeDefinition>,
+  const BlockDef extends Record<string | Action, AttributeDefinition>,
   InitMeta = void,
 >(
   Ctor: new () => T,
@@ -214,9 +245,9 @@ export namespace AttributeReturn {
     namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], TMeta>;
   };
 
-  export type WithRewriteMeta<VM extends ViewModel<any, any>, Meta> = {
+  export type WithRewriteMeta<VM extends ViewModel<any, any>, NewMeta> = {
     namedDefinition: VM[NamedDefinition];
-    rewriteMeta: Meta;
+    rewriteMeta: NewMeta;
   };
 }
 
@@ -224,7 +255,7 @@ export type { AttributeReturn as AR };
 
 export type AttributeAction<Model, T extends AttributeDefinition> = (
   model: Model,
-  positional: () => Parameters<T>,
+  positional: Parameters<T>,
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]
@@ -234,7 +265,7 @@ export type AttributeAction<Model, T extends AttributeDefinition> = (
 
 export type AttributeBinder<Model, T extends AttributeDefinition> = (
   model: Model,
-  positional: () => Parameters<T>,
+  positional: Parameters<T>,
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]

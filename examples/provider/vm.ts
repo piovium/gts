@@ -39,8 +39,7 @@ const CharacterVM = defineViewModel(
       (model, pos) => {
         // model.setId(id);
       },
-      (_, pos) => {
-        const [id] = pos();
+      (_, [id]) => {
         return id as CharacterHandle<any>;
       },
     ),
@@ -105,16 +104,20 @@ const SkillVM = defineViewModel(
       (model, pos) => {
         // model.setId(id);
       },
-      (_, pos) => {
-        const [id] = pos();
+      (_, [id]) => {
         return id as CharacterSkillHandle;
       },
     ),
     cost: helper.simpleAttribute(function (element: string, amount: number) {}),
 
-    when: helper.simpleAttribute(function (condition: (ctx: SkillContext<any>) => boolean) {}),
+    when: helper.simpleAttribute(function (
+      condition: (ctx: SkillContext<any>) => boolean,
+    ) {}),
 
-    hint: helper.simpleAttribute(function (icon: "heal", text: string | number) {}),
+    hint: helper.simpleAttribute(function (
+      icon: "heal",
+      text: string | number,
+    ) {}),
 
     variable: helper.attribute<{
       <TMeta extends BuilderMeta, const TVarName extends string>(
@@ -163,8 +166,7 @@ const SummonVM = defineViewModel(
       (model, pos) => {
         // model.setId(id);
       },
-      (_, pos) => {
-        const [id] = pos();
+      (_, [id]) => {
         return id as SummonHandle<any>;
       },
     ),
