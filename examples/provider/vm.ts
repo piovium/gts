@@ -3,7 +3,7 @@ import {
   Prelude,
   defineViewModel,
   type AttributeReturn as AR,
-} from "~runtime";
+} from "./runtime";
 
 class CharacterBuilder {
   setVersion(version: "v3.3.0" | "v3.4.0") {}

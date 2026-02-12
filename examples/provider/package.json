@@ -1,0 +1,13 @@
+{
+  "name": "@example/provider",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./vm": "./vm.ts",
+    "./query": "./query.ts",
+    "./runtime": "./runtime.ts"
+  },
+  "dependencies": {
+    "@gi-tcg/gts-runtime": "workspace:*"
+  }
+}

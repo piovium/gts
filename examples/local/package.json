@@ -1,0 +1,11 @@
+{
+  "name": "@example/local",
+  "private": true,
+  "dependencies": {
+    "@example/provider": "workspace:*"
+  },
+  "gamingTs": {
+    "providerImportSource": "@example/provider",
+    "runtimeImportSource": "@example/provider/runtime"
+  }
+}

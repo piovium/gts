@@ -8,13 +8,5 @@
     "noEmit": true,
     "strict": true,
     "skipLibCheck": true,
-    "paths": {
-      "~provider/*": [
-        "./provider/*"
-      ],
-      "~runtime": [
-        "../packages/runtime/dist/index.d.ts"
-      ]
-    }
   }
 }
