@@ -1,7 +1,17 @@
 import { tokTypes, type Parser } from "acorn";
 import type { AST, Parse } from "../types.js";
 
-
+/**
+ * A plugin that records the location of the left parenthesis in CallExpression and 
+ * NewExpression.
+ * 
+ * This is useful for Language tooling, that we can maps the '(' token from its location, 
+ * to provide  * a signature help for user when they press `(` after a function name.
+ *
+ * The recorded location will be stored in `lParenLoc` property of the 
+ * CallExpression/NewExpression node.
+ * @returns
+ */
 export function recordCallLParenPlugin() {
   return function recordCallLParenPluginTransformer(
     parser: typeof Parser,
