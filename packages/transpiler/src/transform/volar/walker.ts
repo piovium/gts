@@ -485,10 +485,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         actionNotExistsErrorLoc,
         actionNotExistsReplacementStr,
       );
-      console.log(
-        actionNotExistsErrorLoc,
-        actionNotExistsReplacementStr,
-      );
       const fn: ArrowFunctionExpression = {
         type: "ArrowFunctionExpression",
         params: state.shortcutFunctionParameters,

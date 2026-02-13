@@ -65,5 +65,5 @@ export const obj = {
 };
 // obj.sub("test");
 // (0, obj).sub("test");
-obj.foo;
+obj.foo ? 'a' : 'b';
 new Date()
