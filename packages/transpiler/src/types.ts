@@ -31,10 +31,10 @@ declare module "estree" {
   }
 
   interface SimpleCallExpression {
-    lParenLoc?: AST.SourceLocation;
+    lParenLoc?: SourceLocation;
   }
   interface NewExpression {
-    lParenLoc?: AST.SourceLocation;
+    lParenLoc?: SourceLocation;
   }
 
   interface GTSDefineStatement extends BaseStatement {
@@ -44,10 +44,10 @@ declare module "estree" {
 
   interface GTSNamedAttributeDefinition extends BaseNode {
     type: "GTSNamedAttributeDefinition";
-    name: AST.Identifier | AST.Literal;
+    name: Identifier | Literal;
     body: GTSAttributeBody;
     bindingAccessModifier?: "public" | "protected" | "private";
-    bindingName?: AST.Identifier;
+    bindingName?: Identifier;
   }
 
   interface GTSAttributeBody extends BaseNode {
@@ -58,7 +58,7 @@ declare module "estree" {
 
   interface GTSPositionalAttributeList extends BaseNode {
     type: "GTSPositionalAttributeList";
-    attributes: AST.Expression[];
+    attributes: Expression[];
   }
 
   interface GTSNamedAttributeBlock extends BaseNode {
@@ -79,7 +79,7 @@ declare module "estree" {
 
   interface GTSShortcutFunctionExpression extends BaseExpression {
     type: "GTSShortcutFunctionExpression";
-    body: AST.BlockStatement | AST.Expression;
+    body: BlockStatement | Expression;
     expression: boolean;
   }
 

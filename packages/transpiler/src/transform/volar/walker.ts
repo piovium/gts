@@ -396,7 +396,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
           const token = state.leafTokens.find((t) => t.loc === attr.loc);
           if (token) {
-            token.startOffset = 1;
+            token.generatedStartOffset = 1;
             token.generatedLength = attr.name.length + 2; // quotation mark
           }
           return {

@@ -256,6 +256,8 @@ export function convertToVolarMappings(
       token.loc.start.column,
       sourceLineOffsets,
     );
+    sourceStart += token.sourceStartOffset ?? 0;
+
     const sourceEnd = locToOffset(
       token.loc.end.line,
       token.loc.end.column,
@@ -292,8 +294,11 @@ export function convertToVolarMappings(
       }
     }
     const generatedLength = token.generatedLength ?? sourceLength;
-    
-    if (typeof token.startOffset === "number") {
+
+    if (
+      typeof token.generatedStartOffset === "number" &&
+      token.generatedStartOffset > 0
+    ) {
       // maps verification back to the start of source
       mappings.push({
         sourceOffsets: [sourceStart],
@@ -304,7 +309,7 @@ export function convertToVolarMappings(
           verification: true,
         },
       });
-      genStart += token.startOffset;
+      genStart += token.generatedStartOffset;
     }
 
     mappings.push({
@@ -316,7 +321,7 @@ export function convertToVolarMappings(
     });
   }
 
-  // Handle extra mappings that purely generated and wants a diagnostic 
+  // Handle extra mappings that purely generated and wants a diagnostic
   // that appears on the top of file.
   // We'd add these mappings at walker that they will have a `loc` to `1:0`
   // so find them by looking up a source position of `1:0` will work

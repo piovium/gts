@@ -36,9 +36,13 @@ export interface LeafToken {
    */
   sourceLength?: number;
   /**
+   * Adjust the start position of source code
+   */
+  sourceStartOffset?: number;
+  /**
    * Adjust the start position of generated code
    */
-  startOffset?: number;
+  generatedStartOffset?: number;
   /**
    * Make the source length longer
    */

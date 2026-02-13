@@ -98,8 +98,8 @@ const newCallNewExpression: typeof prevCallNewExpression = function (
 printer.CallExpression = newCallNewExpression;
 printer.NewExpression = newCallNewExpression;
 
-// Handle node with `diagnosticsOnTop`. These nodes and their children will be 
-// printed with an extra `loc` that point to the beginning of the source file, 
+// Handle node with `diagnosticsOnTop`. These nodes and their children will be
+// printed with an extra `loc` that point to the beginning of the source file,
 // so the source-mapping will include them with a 0:1 -> generated position entry.
 
 const prevWildcard = printer._!;
