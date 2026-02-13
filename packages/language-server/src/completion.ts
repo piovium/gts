@@ -3,14 +3,13 @@ import {
   type LanguageServicePluginInstance,
 } from "@volar/language-server";
 
-// Lets override TS's completion provider to support `:`-auto-completion
+// Lets extend TS's completion provider to support `:`-auto-completion
 
 export const createCompletionPlugin = (): LanguageServicePlugin => {
   return {
     name: "gts-completion",
     capabilities: {
       completionProvider: {
-        resolveProvider: true,
         triggerCharacters: [":"],
       },
     },
@@ -37,7 +36,6 @@ export const createCompletionPlugin = (): LanguageServicePlugin => {
               context,
               token,
             );
-            console.log(context, response);
             return response;
           }
           return null;

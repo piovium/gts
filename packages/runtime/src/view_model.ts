@@ -221,6 +221,7 @@ export interface AttributeDefinition {
   (...args: any[]): AttributePositionalReturnBase;
   as?(): any;
   required?(): boolean;
+  uniqueKey?(): string;
 }
 
 interface AttributePositionalReturnBase {
