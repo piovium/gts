@@ -8,6 +8,7 @@ import {
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import { createDiagnosticsPlugin } from "./diagnostics";
 import { createTypeScriptServices } from "./typescript";
+import { createCompletionPlugin } from "./completion";
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -29,6 +30,7 @@ connection.onInitialize((params) => {
     [
       ...createTypeScriptServices(tsdk.typescript),
       createDiagnosticsPlugin(),
+      createCompletionPlugin(),
     ],
   );
 });

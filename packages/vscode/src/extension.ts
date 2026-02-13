@@ -62,6 +62,12 @@ export async function activate(context: vscode.ExtensionContext) {
   };
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ language: "gaming-ts" }],
+    middleware: {
+      provideCompletionItem: (doc, pos, ctx, tok, next) => {
+        console.log(doc, pos, ctx);
+        return next(doc, pos, ctx, tok);
+      }
+    },
     initializationOptions: {
       typescript: {
         tsdk: (await getTsdk(context))!.tsdk,

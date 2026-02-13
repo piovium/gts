@@ -16,9 +16,5 @@ export function createTypeScriptServices(
       " ",
     );
   }
-  if (semanticService?.capabilities.completionProvider?.triggerCharacters) {
-    console.log(semanticService.capabilities.completionProvider.triggerCharacters);
-    semanticService.capabilities.completionProvider.triggerCharacters.push(":");
-  }
   return services;
 }
