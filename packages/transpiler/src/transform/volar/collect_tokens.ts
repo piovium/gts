@@ -1,4 +1,4 @@
-import type { SourceLocation } from "estree";
+import type { Node, SourceLocation } from "estree";
 import { walk } from "zimmerframe";
 
 function isLeafNode(node: any): boolean {
@@ -50,27 +50,29 @@ export interface LeafToken {
 }
 
 export function collectLeafTokens(ast: any): LeafToken[] {
-  const tokens: LeafToken[] = [];
-  walk(ast, tokens, {
+  const state = {
+    tokens: [] as LeafToken[],
+  };
+  walk(ast as Node, state, {
     _(node, { state, next }) {
       if (isLeafNode(node) && node.loc) {
         const token: LeafToken = {
           loc: node.loc,
         };
-        if (node.isDummy) {
+        if ("isDummy" in node && node.isDummy) {
           token.isDummy = true;
           token.sourceLength = 0;
           // add 1 for squiggle on next character
           token.generatedLength = 1;
         }
-        state.push(token);
+        state.tokens.push(token);
       }
       next();
     },
     NewExpression(node, { state, next }) {
       const lParenLoc = node.lParenLoc;
       if (lParenLoc) {
-        state.push({
+        state.tokens.push({
           loc: lParenLoc,
         });
       }
@@ -79,12 +81,12 @@ export function collectLeafTokens(ast: any): LeafToken[] {
     CallExpression(node, { state, next }) {
       const lParenLoc = node.lParenLoc;
       if (lParenLoc) {
-        state.push({
+        state.tokens.push({
           loc: lParenLoc,
         });
       }
       next();
     },
   });
-  return tokens;
+  return state.tokens;
 }

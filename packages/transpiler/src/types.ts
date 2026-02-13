@@ -25,6 +25,11 @@ declare module "estree" {
     GTSQueryExpression: GTSQueryExpression;
   }
 
+  interface ImportDeclaration {
+    /** Emit inner diagnostics to the top-of-file */
+    diagnosticsOnTop?: boolean;
+  }
+
   interface SimpleCallExpression {
     lParenLoc?: AST.SourceLocation;
   }

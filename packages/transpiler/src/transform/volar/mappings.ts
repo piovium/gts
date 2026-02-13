@@ -192,19 +192,12 @@ export function getGeneratedPosition(
   src_line: number,
   src_column: number,
   srcToGenMap: CodeToGeneratedMap,
-): CodePosition | undefined {
+): CodePosition[] {
   const key = `${src_line}:${src_column}`;
   const positions = srcToGenMap.get(key);
 
-  if (!positions || positions.length === 0) {
-    // No mapping found in source map - this shouldn't happen since all tokens should have mappings
-    // throw new Error(
-    //   `No source map entry for position "${src_line}:${src_column}"`
-    // );
-  }
-
   // If multiple generated positions map to same source, return the first
-  return positions?.[0];
+  return positions || [];
 }
 // Helper to create a line-to-offset lookup table
 function createLineOffsets(content: string): number[] {
@@ -245,7 +238,7 @@ export function convertToVolarMappings(
   source: string,
   sourceMap: SourceMap,
   tokens: LeafToken[],
-  additionalMappings: Map<string, string>,
+  extraMappings: Map<string, string>,
 ): CodeMapping[] {
   const sourceLineOffsets = createLineOffsets(source);
   const generatedLineOffsets = createLineOffsets(generated);
@@ -272,7 +265,7 @@ export function convertToVolarMappings(
     let sourceLength = token.sourceLength ?? sourceEnd - sourceStart;
 
     sourceLength += token.sourceLengthOffset ?? 0;
-    const genLineCol = getGeneratedPosition(
+    const [genLineCol] = getGeneratedPosition(
       token.loc.start.line,
       token.loc.start.column,
       srcToGenMap,
@@ -323,7 +316,25 @@ export function convertToVolarMappings(
     });
   }
 
-  for (const [loc, codeSnippet] of additionalMappings) {
+  // Handle extra mappings that purely generated and wants a diagnostic 
+  // that appears on the top of file.
+  // We'd add these mappings at walker that they will have a `loc` to `1:0`
+  // so find them by looking up a source position of `1:0` will work
+  const locMapsToTop = getGeneratedPosition(1, 0, srcToGenMap);
+  for (const loc of locMapsToTop) {
+    const offset = locToOffset(loc.line, loc.column, generatedLineOffsets);
+    mappings.push({
+      sourceOffsets: [0],
+      generatedOffsets: [offset],
+      lengths: [0],
+      generatedLengths: [0],
+      data: {
+        verification: true,
+      },
+    });
+  }
+
+  for (const [loc, codeSnippet] of extraMappings) {
     const generatedStart = generated.indexOf(codeSnippet);
     if (generatedStart === -1) {
       continue;

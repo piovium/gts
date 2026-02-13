@@ -1,7 +1,7 @@
 import tsPrinter from "esrap/languages/ts";
 import type { AST } from "../../types";
 import type { Context, Visitors } from "esrap";
-import type { SimpleCallExpression } from "estree";
+import type { Node, SimpleCallExpression } from "estree";
 
 const printer = tsPrinter({
   getLeadingComments: (node) => (node as AST.Node).leadingComments,
@@ -97,5 +97,27 @@ const newCallNewExpression: typeof prevCallNewExpression = function (
 };
 printer.CallExpression = newCallNewExpression;
 printer.NewExpression = newCallNewExpression;
+
+// Handle node with `diagnosticsOnTop`. These nodes and their children will be 
+// printed with an extra `loc` that point to the beginning of the source file, 
+// so the source-mapping will include them with a 0:1 -> generated position entry.
+
+const prevWildcard = printer._!;
+printer._ = (node: Node, context, visit) => {
+  const contextProto = Object.getPrototypeOf(context);
+  const prevContextWrite: typeof context.write = contextProto.write;
+  if ("diagnosticsOnTop" in node && node.diagnosticsOnTop) {
+    contextProto.write = function (text: string, node?: AST.Node) {
+      node ??= {} as AST.Node;
+      node.loc ??= {
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 0 },
+      };
+      return prevContextWrite.call(this, text, node);
+    };
+  }
+  prevWildcard(node, context, visit);
+  contextProto.write = prevContextWrite;
+};
 
 export const patchedPrinter: Visitors<AST.Node> = printer;

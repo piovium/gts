@@ -57,7 +57,7 @@ export interface TypingTranspileState extends TranspileState {
   /** Pending statements to be inserted to the top-level */
   typingPendingStatements: Statement[];
   replacementTag: Identifier;
-  additionalMappings: Map<string, string>;
+  extraMappings: Map<string, string>;
 }
 
 const EMPTY: EmptyStatement = { type: "EmptyStatement" };
@@ -335,6 +335,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     if (state.prefaceInserted) {
       body.unshift({
         type: "ImportDeclaration",
+        diagnosticsOnTop: true,
         specifiers: [
           {
             type: "ImportDefaultSpecifier",
@@ -351,6 +352,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     if (state.hasQueryExpressions) {
       body.unshift({
         type: "ImportDeclaration",
+        diagnosticsOnTop: true,
         specifiers: [
           {
             type: "ImportDefaultSpecifier",
@@ -385,7 +387,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       attributeNameToken.sourceLengthOffset = 1;
     }
     const { lhsId } = enterAttr(state, attrName);
-    state.additionalMappings.set(
+    state.extraMappings.set(
       `${name.loc?.start.line}:${name.loc?.start.column}`,
       `${lhsId.name}${name.type === "Literal" ? `[` : `.`}`,
     );
@@ -479,7 +481,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       const { lhsId } = enterAttr(state, attrName);
       const actionNotExistsReplacementStr = `${lhsId.name}[${attrName}]`;
       const actionNotExistsErrorLoc = `${node.directAction.loc?.start.line}:${node.directAction.loc?.start.column}`;
-      state.additionalMappings.set(
+      state.extraMappings.set(
         actionNotExistsErrorLoc,
         actionNotExistsReplacementStr,
       );

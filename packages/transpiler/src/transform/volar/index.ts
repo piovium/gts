@@ -19,7 +19,7 @@ interface TypingTranspileOption extends TranspileOption {
   /**
    * "row:col" -> "replacement string"
    */
-  additionalMappings: Map<string, string>;
+  extraMappings: Map<string, string>;
 }
 
 function gtsToTypings(
@@ -46,7 +46,7 @@ function gtsToTypings(
     metaTypeIdStack: [],
     finalMetaTypeIdStack: [],
     attrsOfCurrentVm: [],
-    additionalMappings: option.additionalMappings,
+    extraMappings: option.extraMappings,
   };
   const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
   const { code, map } = print(newAst, patchedPrinter, {
@@ -64,18 +64,18 @@ export function transformForVolar(
   sourceInfo: Required<SourceInfo>,
 ): VolarMappingResult {
   const tokens = collectLeafTokens(ast);
-  const additionalMappings = new Map<string, string>();
+  const extraMappings = new Map<string, string>();
   const { code, sourceMap } = gtsToTypings(ast, {
     ...option,
     leafTokens: tokens,
-    additionalMappings,
+    extraMappings,
   });
   const volarMappings = convertToVolarMappings(
     code,
     sourceInfo.content,
     sourceMap,
     tokens,
-    additionalMappings,
+    extraMappings,
   );
   return {
     code,
