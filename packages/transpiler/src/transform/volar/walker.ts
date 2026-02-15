@@ -236,6 +236,7 @@ const enterAttr = (
       defType: defTypeId.name,
       metaType: metaTypeId.name,
       lhs: lhsId.name,
+      attrName,
     }),
   );
   return { lhsId: lhsId };

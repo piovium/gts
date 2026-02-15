@@ -3,8 +3,8 @@ import type { TypingTranspileState } from "./walker";
 
 type ReplacementPayload =
   | {
-    type: "preface";
-  }
+      type: "preface";
+    }
   | {
       type: "enterVMFromRoot";
       vm: string;
@@ -30,6 +30,7 @@ type ReplacementPayload =
       defType: string;
       metaType: string;
       lhs: string;
+      attrName: string;
     }
   | {
       type: "createBindingTyping";
@@ -86,7 +87,12 @@ export function applyReplacements(
     strings: TemplateStringsArray,
     ...values: Array<string | number | boolean>
   ): string =>
-    String.raw(strings, ...values)
+    strings
+      .reduce(
+        (result, chunk, index) =>
+          result + chunk + (index < values.length ? values[index] : ""),
+        "",
+      )
       .replace(/\n[ \t]*/g, " ")
       .trim();
   // All replacement should be written in one line to avoid messing up source map
@@ -95,8 +101,8 @@ export function applyReplacements(
     if (payload.type === "preface") {
       return oneLine`
         namespace ${state.utilNsId.name} {
-          type UniqueKeyProbSegment = "__gts_unique_prob_seg__";
-          type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
+          export type UniqueKeyProbSegment = "__gts_unique_prob_seg__";
+          export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
         }
       `;
     } else if (payload.type === "enterVMFromRoot") {
@@ -119,7 +125,7 @@ export function applyReplacements(
       }
       return oneLine`
         type ${payload.finalMetaType} = ${payload.metaType};
-        const ${lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = null!;
+        let ${lhs}!: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}>;
         type ${lhs} = typeof ${lhs};
         namespace ${requiredAttrsNs} {
           export type Collected = ${collectedAttrsExpr};
@@ -128,8 +134,35 @@ export function applyReplacements(
         ((_: ${requiredAttrsNs}.Expected extends ${requiredAttrsNs}.Collected ? string : ${requiredAttrsNs}.Expected) => 0)(${needleString});
       `;
     } else if (payload.type === "enterAttr") {
+      const uniqueKeyLhs = `${payload.lhs}_uniqueKey_lhs`;
+      const uniqueKey = `${payload.lhs}_uniqueKey`;
+      const uniqueKeyForThis = `${payload.lhs}_uniqueKeyFor_${payload.lhs}`;
+      const uniqueKeyHelperIntf = `${payload.defType}_uniqueKeyProbeHelper`;
+      const omittedKeys = `${payload.lhs}_omittedKeys`;
       return oneLine`
-        const ${payload.lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = null!;
+        type ${uniqueKeyLhs} = {
+          [${Meta.name}]: ${payload.metaType}; 
+          uniqueKey: ${payload.defType}[${payload.attrName}] extends { uniqueKey: infer UniqueKey } ? UniqueKey : () => 0;
+        };
+        let ${uniqueKeyLhs}!: ${uniqueKeyLhs};
+        let ${uniqueKey} = ${uniqueKeyLhs}.uniqueKey();
+        type ${uniqueKey} = typeof ${uniqueKey};
+        let ${uniqueKeyForThis}!: \`\${${uniqueKey}}\${${state.utilNsId.name}.UniqueKeyProbSegment}${payload.lhs}\`;
+        interface ${uniqueKeyHelperIntf} {
+          [${uniqueKeyForThis}]: 1;
+        }
+        type ${omittedKeys} = ${Meta.name} | (
+          ${uniqueKey} extends 0
+          ? never                                                 /* no unique requirement */
+            : string extends keyof ${uniqueKeyHelperIntf}
+              ? keyof ${payload.defType}                          /* too loose, disable all */
+              : ${state.utilNsId.name}.UnionToIntersection<
+                keyof ${uniqueKeyHelperIntf} & \`\${${uniqueKey}}\${${state.utilNsId.name}.UniqueKeyProbSegment}\${string}\`
+              > extends never
+                ? ${payload.attrName}                             /* have duplicate, disable this */
+                : never
+        );
+        let ${payload.lhs}!: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${omittedKeys}>;
       `;
     } else if (payload.type === "createBindingTyping") {
       const typingIdLhs = `${payload.typingId}_lhs`;

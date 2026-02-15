@@ -32,6 +32,7 @@ const CharacterVM = defineViewModel(
     id: helper.attribute<{
       (id: number): AR.Done;
       required(): true;
+      uniqueKey(): "id";
       as<TMeta extends BuilderMeta>(
         this: AR.This<TMeta>,
       ): CharacterHandle<TMeta["varNames"]>;
