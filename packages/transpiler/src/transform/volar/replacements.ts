@@ -3,6 +3,9 @@ import type { TypingTranspileState } from "./walker";
 
 type ReplacementPayload =
   | {
+    type: "preface";
+  }
+  | {
       type: "enterVMFromRoot";
       vm: string;
       defType: string;
@@ -79,13 +82,33 @@ export function applyReplacements(
   const {
     symbolsId: { NamedDefinition, Meta },
   } = state;
+  const oneLine = (
+    strings: TemplateStringsArray,
+    ...values: Array<string | number | boolean>
+  ): string =>
+    String.raw(strings, ...values)
+      .replace(/\n[ \t]*/g, " ")
+      .trim();
   // All replacement should be written in one line to avoid messing up source map
   return code.replace(replacementRegex, (_, rawPayload) => {
     const payload: ReplacementPayload = JSON.parse(rawPayload);
-    if (payload.type === "enterVMFromRoot") {
-      return `type ${payload.defType} = (typeof ${payload.vm})[${NamedDefinition.name}]; type ${payload.metaType} = ${payload.defType}[${Meta.name}];`;
+    if (payload.type === "preface") {
+      return oneLine`
+        namespace ${state.utilNsId.name} {
+          type UniqueKeyProbSegment = "__gts_unique_prob_seg__";
+          type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
+        }
+      `;
+    } else if (payload.type === "enterVMFromRoot") {
+      return oneLine`
+        type ${payload.defType} = (typeof ${payload.vm})[${NamedDefinition.name}];
+        type ${payload.metaType} = ${payload.defType}[${Meta.name}];
+      `;
     } else if (payload.type === "enterVMFromAttr") {
-      return `type ${payload.defType} = ${payload.returnType} extends { namedDefinition: infer Def } ? Def : { [${Meta.name}]: unknown }; type ${payload.metaType} = ${payload.defType}[${Meta.name}];`;
+      return oneLine`
+        type ${payload.defType} = ${payload.returnType} extends { namedDefinition: infer Def } ? Def : { [${Meta.name}]: unknown };
+        type ${payload.metaType} = ${payload.defType}[${Meta.name}];
+      `;
     } else if (payload.type === "exitVM") {
       const lhs = `${payload.finalMetaType}_lhs`;
       const requiredAttrsNs = `${payload.finalMetaType}_rans`;
@@ -94,14 +117,33 @@ export function applyReplacements(
       if (payload.errorLoc) {
         state.extraMappings.set(payload.errorLoc, needleString);
       }
-      return `type ${payload.finalMetaType} = ${payload.metaType}; const ${lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = 0 as any; type ${lhs} = typeof ${lhs}; namespace ${requiredAttrsNs} { export type Collected = ${collectedAttrsExpr}; export type Expected = { [K in keyof ${payload.defType}]: ${lhs}[K] extends { required(this: ${lhs}): true } ? K : never }[keyof ${payload.defType}]; }; ((_: ${requiredAttrsNs}.Expected extends ${requiredAttrsNs}.Collected ? string : ${requiredAttrsNs}.Expected) => 0)(${needleString});`;
+      return oneLine`
+        type ${payload.finalMetaType} = ${payload.metaType};
+        const ${lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = null!;
+        type ${lhs} = typeof ${lhs};
+        namespace ${requiredAttrsNs} {
+          export type Collected = ${collectedAttrsExpr};
+          export type Expected = { [K in keyof ${payload.defType}]: ${lhs}[K] extends { required(this: ${lhs}): true } ? K : never }[keyof ${payload.defType}];
+        };
+        ((_: ${requiredAttrsNs}.Expected extends ${requiredAttrsNs}.Collected ? string : ${requiredAttrsNs}.Expected) => 0)(${needleString});
+      `;
     } else if (payload.type === "enterAttr") {
-      return `const ${payload.lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = 0 as any;`;
+      return oneLine`
+        const ${payload.lhs}: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}> = null!;
+      `;
     } else if (payload.type === "createBindingTyping") {
       const typingIdLhs = `${payload.typingId}_lhs`;
-      return `type ${typingIdLhs} = { [${Meta.name}]: ${payload.finalMetaType}; as: ${payload.defType}[${payload.attrName}] extends { as: infer As } ? As : unknown }; let ${typingIdLhs}!: ${typingIdLhs}; let ${payload.typingId} = ${typingIdLhs}.as(); type ${payload.typingId} = typeof ${payload.typingId};`;
+      return oneLine`
+        type ${typingIdLhs} = { [${Meta.name}]: ${payload.finalMetaType}; as: ${payload.defType}[${payload.attrName}] extends { as: infer As } ? As : unknown };
+        let ${typingIdLhs}!: ${typingIdLhs};
+        let ${payload.typingId} = ${typingIdLhs}.as();
+        type ${payload.typingId} = typeof ${payload.typingId};
+      `;
     } else if (payload.type === "exitAttr") {
-      return `type ${payload.returnType} = typeof ${payload.returnType}; type ${payload.newMetaType} = ${payload.returnType} extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : ${payload.oldMetaType}`;
+      return oneLine`
+        type ${payload.returnType} = typeof ${payload.returnType};
+        type ${payload.newMetaType} = ${payload.returnType} extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : ${payload.oldMetaType}
+      `;
     } else {
       return "";
     }

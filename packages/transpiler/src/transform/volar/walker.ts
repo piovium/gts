@@ -38,6 +38,7 @@ export interface TypingTranspileState extends TranspileState {
   externalizedBindings: ExternalizedTypedBinding[];
   idCounter: number;
   rootVmId: Identifier;
+  utilNsId: Identifier;
   symbolsId: {
     Meta: Identifier;
     NamedDefinition: Identifier;
@@ -333,21 +334,26 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       }
     }
     if (state.prefaceInserted) {
-      body.unshift({
-        type: "ImportDeclaration",
-        diagnosticsOnTop: true,
-        specifiers: [
-          {
-            type: "ImportDefaultSpecifier",
-            local: state.rootVmId,
+      body.unshift(
+        {
+          type: "ImportDeclaration",
+          diagnosticsOnTop: true,
+          specifiers: [
+            {
+              type: "ImportDefaultSpecifier",
+              local: state.rootVmId,
+            },
+          ],
+          source: {
+            type: "Literal",
+            value: `${state.providerImportSource}/vm`,
           },
-        ],
-        source: {
-          type: "Literal",
-          value: `${state.providerImportSource}/vm`,
+          attributes: [],
         },
-        attributes: [],
-      });
+        createReplacementHolder(state, {
+          type: "preface",
+        }),
+      );
     }
     if (state.hasQueryExpressions) {
       body.unshift({

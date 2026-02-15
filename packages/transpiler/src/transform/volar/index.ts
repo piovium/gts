@@ -35,7 +35,8 @@ function gtsToTypings(
     idCounter: 0,
     typingPendingStatements: [],
     prefaceInserted: false,
-    rootVmId: { type: "Identifier", name: "__root_vm" },
+    rootVmId: { type: "Identifier", name: "__gts_root_vm" },
+    utilNsId: { type: "Identifier", name: "__gts_util" },
     replacementTag: { type: "Identifier", name: "__gts_replacement_tag" },
     symbolsId: {
       Meta: { type: "Identifier", name: "__gts_symbols_meta" },
