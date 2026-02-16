@@ -7,4 +7,10 @@ export {
 } from "./view_model";
 export { Action, Prelude, Meta, NamedDefinition } from "./symbols";
 
-export { createBinding, createDefine } from "./view";
+export {
+  createBinding,
+  createDefine,
+  type SingleAttributeNode,
+  type NamedAttributesNode,
+  type View,
+} from "./view";

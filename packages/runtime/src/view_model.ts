@@ -50,7 +50,11 @@ export class ViewModel<
   #registeredBinders: Map<PropertyKey, LazyAttributeActionOrBinder<ModelT>> =
     new Map();
 
-  constructor(private Ctor: new () => ModelT) {}
+  #Ctor: new () => ModelT;
+
+  constructor(Ctor: new () => ModelT) {
+    this.#Ctor = Ctor;
+  }
 
   "~setActionOrBinder"(
     context: "action" | "binder",
@@ -65,7 +69,7 @@ export class ViewModel<
   }
 
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT {
-    const model = new this.Ctor();
+    const model = new this.#Ctor();
     for (const attrNode of view._node.attributes) {
       let { name, positionals, named, binding } = attrNode;
       const insideBindingCtx = !!view._bindingCtx;
@@ -73,7 +77,7 @@ export class ViewModel<
         insideBindingCtx ? this.#registeredBinders : this.#registeredActions
       ).get(name);
       if (!insideBindingCtx && !fn) {
-        const modelName = this.Ctor.name;
+        const modelName = this.#Ctor.name;
         throw new Error(
           `No action registered for attribute "${String(name)}" on model "${modelName}"`,
         );

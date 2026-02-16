@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "types": [],
+    "target": "esnext",
+    "module": "preserve",
+    "verbatimModuleSyntax": true,
+    
+    "moduleDetection": "force",
+
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    
+    "strict": true,
+    "skipLibCheck": true,
+  },
+}
