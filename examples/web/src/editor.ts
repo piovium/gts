@@ -37,9 +37,10 @@ const loadGtsLanguageServerWorker = () => {
   return worker;
 };
 
-const setupVscodeApiConfig = (
-  container: HTMLElement,
-): MonacoVscodeApiConfig => {
+const setupVscodeApiConfig = (): MonacoVscodeApiConfig => {
+  // const fileSystemProvider = new RegisteredFileSystemProvider(false);
+  //   fileSystemProvider.registerFile(new RegisteredMemoryFile(EXAMPLE_FILE_URI, EXAMPLE_CODE));
+  //   registerFileSystemOverlay(1, fileSystemProvider);
   const extensionFilesOrContents = new Map<string, string | URL>();
   extensionFilesOrContents.set(
     "/workspace/language-configuration.json",
@@ -54,7 +55,6 @@ const setupVscodeApiConfig = (
     $type: "extended",
     viewsConfig: {
       $type: "EditorService",
-      htmlContainer: container,
     },
     logLevel: vscode.LogLevel.Debug,
     serviceOverrides: {
@@ -62,9 +62,8 @@ const setupVscodeApiConfig = (
     },
     userConfiguration: {
       json: JSON.stringify({
-        "workbench.colorTheme": "Default Light Modern",
+        "workbench.colorTheme": "Default Dark Modern",
         "editor.guides.bracketPairsHorizontal": "active",
-        "editor.lightbulb.enabled": "On",
         "editor.wordBasedSuggestions": "off",
         "editor.experimental.asyncTokenization": true,
       }),
@@ -129,7 +128,7 @@ const setupLanguageClientConfig = (): LanguageClientConfig => {
 };
 
 export async function setupEditor(container: HTMLElement) {
-  const vscodeApiConfig = setupVscodeApiConfig(container);
+  const vscodeApiConfig = setupVscodeApiConfig();
   const apiWrapper = new MonacoVscodeApiWrapper(vscodeApiConfig);
   await apiWrapper.start();
 
@@ -146,12 +145,14 @@ export async function setupEditor(container: HTMLElement) {
       },
     },
   };
-  const editorApp = new EditorApp(editorAppConfig);
-  await editorApp.start(container);
 
   const languageClientConfig = setupLanguageClientConfig();
   const lcWrapper = new LanguageClientWrapper(languageClientConfig);
   await lcWrapper.start();
 
+  const editorApp = new EditorApp(editorAppConfig);
+  await editorApp.start(container);
+
   await vscode.workspace.openTextDocument(EXAMPLE_FILE_URI);
+  await vscode.window.showTextDocument(EXAMPLE_FILE_URI);
 }

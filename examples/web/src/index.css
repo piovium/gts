@@ -8,6 +8,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-.editor-container {
+#editorContainer {
   flex: 1;
 }
