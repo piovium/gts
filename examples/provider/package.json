@@ -7,6 +7,10 @@
     "./query": "./query.ts",
     "./runtime": "./runtime.ts"
   },
+  "scripts": {
+    "build": "node build-dts.mjs",
+    "test": "node test-dts.mjs"
+  },
   "dependencies": {
     "@gi-tcg/gts-runtime": "workspace:*",
     "arktype": "^2.1.29"
