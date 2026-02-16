@@ -11,7 +11,8 @@
     "./dist/runtime": "./dist/runtime.d.ts"
   },
   "scripts": {
-    "build": "node scripts/build-dts.mjs"
+    "build": "node scripts/build-dts.mjs",
+    "test": "node scripts/test-dts.mjs"
   },
   "dependencies": {
     "@gi-tcg/gts-runtime": "workspace:*",
