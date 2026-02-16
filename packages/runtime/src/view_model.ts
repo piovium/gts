@@ -1,5 +1,7 @@
 import { Action, AllSymbols, Meta, NamedDefinition } from "./symbols";
 import { View } from "./view";
+import { StandardJSONSchemaV1 } from "@standard-schema/spec";
+import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 
 export interface AttributeBlockDefinition {
   [name: string]: AttributeDefinition | undefined;
@@ -213,6 +215,36 @@ export function defineViewModel<
   const vm = new ViewModel<T, BlockDef & { [Meta]: InitMeta }>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult = modelDefFn(helper);
+  helper["~assignActions"](defResult);
+  return vm;
+}
+
+type SimpleViewModel<T> = ViewModel<
+  T,
+  {
+    [K in keyof T]-?: {
+      (value: T[K]): AttributeReturn.Done;
+      uniqueKey(): K;
+      required(): {} extends Pick<T, K> ? false : true;
+    };
+  } & { [Meta]: void }
+>;
+
+export function defineSimpleViewModel<const T extends StandardJSONSchemaV1>(
+  schema: T,
+): SimpleViewModel<StandardJSONSchemaV1.InferInput<T>> {
+  const jsonSchema = schema["~standard"].jsonSchema.input({
+    target: "draft-2020-12",
+  });
+  const Ctor = class SimpleViewModel {};
+  const vm = new ViewModel<any, any>(Ctor);
+  const helper = new AttributeDefHelper(vm);
+  const defResult: Record<string, any> = {};
+  for (const key of Object.keys(jsonSchema.properties ?? {})) {
+    defResult[key] = helper.simpleAttribute(function (this: any, value) {
+      this[key] = value;
+    });
+  }
   helper["~assignActions"](defResult);
   return vm;
 }

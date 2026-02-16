@@ -8,6 +8,7 @@
     "./runtime": "./runtime.ts"
   },
   "dependencies": {
-    "@gi-tcg/gts-runtime": "workspace:*"
+    "@gi-tcg/gts-runtime": "workspace:*",
+    "arktype": "^2.1.29"
   }
 }

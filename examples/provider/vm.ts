@@ -2,9 +2,11 @@ import type { Query } from "./query";
 import {
   Action,
   Prelude,
+  defineSimpleViewModel,
   defineViewModel,
   type AttributeReturn as AR,
 } from "./runtime";
+import { type } from "arktype";
 
 class CharacterBuilder {
   setVersion(version: "v3.3.0" | "v3.4.0") {}
@@ -44,8 +46,17 @@ const CharacterVM = defineViewModel(
         return id as CharacterHandle<any>;
       },
     ),
-    since: helper.simpleAttribute(function (sinceVersion: "v3.3.0" | "v3.4.0") {
-      this.setVersion(sinceVersion);
+    since: helper.attribute<{
+      (sinceVersion: "v3.3.0" | "v3.4.0"): AR.Done;
+      uniqueKey: () => "version";
+    }>((model, [sinceVersion]) => {
+      model.setVersion(sinceVersion);
+    }),
+    until: helper.attribute<{
+      (untilVersion: "v3.3.0" | "v3.4.0"): AR.Done;
+      uniqueKey: () => "version";
+    }>((model, [untilVersion]) => {
+      // model.setUntilVersion(untilVersion);
     }),
 
     tags: helper.simpleAttribute(function (...tags: Tag[]) {}),
@@ -143,9 +154,11 @@ const SkillVM = defineViewModel(
   {} as { varNames: never } satisfies BuilderMeta,
 );
 
-class VariableBuilder {}
 
-const VariableVM = defineViewModel(VariableBuilder, (helper) => ({}));
+const VariableVM = defineSimpleViewModel(type({
+  appendLimit: "number?",
+  appendCount: "number?",
+}));
 
 class SummonBuilder {}
 

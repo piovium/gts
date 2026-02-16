@@ -1,5 +1,6 @@
 export {
   defineViewModel,
+  defineSimpleViewModel,
   type AttributeDefinition,
   type IViewModel,
   type AttributeReturn,

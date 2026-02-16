@@ -142,7 +142,7 @@ export function applyReplacements(
       return oneLine`
         type ${uniqueKeyLhs} = {
           [${Meta.name}]: ${payload.metaType}; 
-          uniqueKey: ${payload.defType}[${payload.attrName}] extends { uniqueKey: infer UniqueKey } ? UniqueKey : () => 0;
+          uniqueKey: ${payload.defType} extends { [${payload.attrName}]: { uniqueKey: infer UniqueKey } } ? UniqueKey : () => 0;
         };
         let ${uniqueKeyLhs}!: ${uniqueKeyLhs};
         let ${uniqueKey} = ${uniqueKeyLhs}.uniqueKey();
@@ -167,7 +167,10 @@ export function applyReplacements(
     } else if (payload.type === "createBindingTyping") {
       const typingIdLhs = `${payload.typingId}_lhs`;
       return oneLine`
-        type ${typingIdLhs} = { [${Meta.name}]: ${payload.finalMetaType}; as: ${payload.defType}[${payload.attrName}] extends { as: infer As } ? As : unknown };
+        type ${typingIdLhs} = {
+          [${Meta.name}]: ${payload.finalMetaType};
+          as: ${payload.defType} extends { [${payload.attrName}]: { as: infer As } } ? As : unknown;
+        };
         let ${typingIdLhs}!: ${typingIdLhs};
         let ${payload.typingId} = ${typingIdLhs}.as();
         type ${payload.typingId} = typeof ${payload.typingId};

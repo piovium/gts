@@ -13,6 +13,7 @@ export const add = (a: number, b: number) => {
 define character {
   id 1201 as Barbara;
   since "v3.3.0";
+  // until "v3.4.0";
   tags hydro, catalyst, mondstadt;
   health 10;
   energy 3;
@@ -44,7 +45,10 @@ define skill {
  */
 define summon {
   id 112011 as MelodyLoop;
-  usage 2;
+  usage 2 {
+    appendLimit 6;
+    appendCount 1;
+  };
   on endPhase {
     when :( true )
     hint heal, 1;
