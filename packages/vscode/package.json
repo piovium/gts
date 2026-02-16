@@ -23,6 +23,11 @@
     "onLanguage:gaming-ts"
   ],
   "main": "./dist/extension.js",
+  "exports": {
+    ".": "./dist/extension.js",
+    "./syntaxes": "./syntaxes/GamingTS.tmLanguage.json",
+    "./language-configuration": "./language-configuration.json"
+  },
   "contributes": {
     "languages": [
       {

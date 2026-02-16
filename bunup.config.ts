@@ -5,6 +5,7 @@ export default defineWorkspace(
     {
       name: "transpiler",
       root: "packages/transpiler",
+      
     },
     {
       name: "runtime",
@@ -20,16 +21,10 @@ export default defineWorkspace(
     {
       name: "rollup-plugin",
       root: "packages/rollup-plugin",
-      config: {
-        target: "browser",
-      },
     },
     {
       name: "language-plugin",
       root: "packages/language-plugin",
-      config: {
-        target: "browser",
-      },
     },
     {
       name: "language-server",

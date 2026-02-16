@@ -22,9 +22,9 @@ export function createGtsLanguagePlugin(
           filename,
           {},
           {
-            cwd: ts.sys.getCurrentDirectory(),
+            cwd: ts.sys?.getCurrentDirectory?.(),
             readFileFn: (path, encoding) =>
-              ts.sys.readFile(path, encoding) || "",
+              ts.sys?.readFile?.(path, encoding) || "",
           },
         );
         return new GtsVirtualCode(filename, snapshot, resolvedConfig);

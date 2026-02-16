@@ -4,19 +4,31 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "bunx --bun vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "solid-js": "^1.9.10",
-    "monaco-editor": "^0.55.1"
+    "monaco-languageclient": "~10.7.0",
+    "@codingame/monaco-vscode-theme-defaults-default-extension": "~25.1.2",
+    "@codingame/monaco-vscode-files-service-override": "~25.1.2",
+    "@codingame/monaco-vscode-keybindings-service-override": "~25.1.2",
+    "@codingame/monaco-vscode-textmate-service-override": "~25.1.2",
+    "vscode": "npm:@codingame/monaco-vscode-extension-api@~25.1.2",
+    "vscode-languageclient": "~9.0.1",
+    "@gi-tcg/gts-language-server": "workspace:*"
+  },
+  "overrides": {
+    "vscode": "npm:@codingame/monaco-vscode-extension-api@~25.1.2",
+    "monaco-editor": "npm:@codingame/codingame/monaco-vscode-editor-api@~25.1.2"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "typescript": "~5.9.3",
     "vite": "^7.3.1",
     "vite-plugin-solid": "^2.11.10",
-    "@example/provider": "workspace:*"
+    "@example/provider": "workspace:*",
+    "gts-vscode": "workspace:*"
   }
 }

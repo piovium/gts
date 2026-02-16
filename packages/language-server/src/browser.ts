@@ -1,3 +1,4 @@
+/// <reference lib="webworker" />
 import {
   createConnection,
   createServer,
@@ -16,7 +17,7 @@ connection.listen();
 
 connection.onInitialize(async (params) => {
   const { tsdkUrl = "https://cdn.jsdelivr.net/npm/typescript@latest/lib" } =
-    params.initializationOptions;
+    params.initializationOptions ?? {};
   const tsdk = await loadTsdkByUrl(tsdkUrl, params.locale);
   return server.initialize(
     params,
@@ -33,10 +34,15 @@ connection.onInitialized(server.initialized);
 
 connection.onShutdown(server.shutdown);
 
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught exception:", err);
+self.addEventListener("error", (event) => {
+  console.error("Uncaught exception:", event.error);
 });
 
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled rejection at:", promise, "reason:", reason);
+self.addEventListener("unhandledrejection", (event) => {
+  console.error(
+    "Unhandled rejection at:",
+    event.promise,
+    "reason:",
+    event.reason,
+  );
 });
