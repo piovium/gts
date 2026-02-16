@@ -5,7 +5,10 @@
   "exports": {
     "./vm": "./vm.ts",
     "./query": "./query.ts",
-    "./runtime": "./runtime.ts"
+    "./runtime": "./runtime.ts",
+    "./dist/vm": "./dist/vm.d.ts",
+    "./dist/query": "./dist/query.d.ts",
+    "./dist/runtime": "./dist/runtime.d.ts"
   },
   "scripts": {
     "build": "node build-dts.mjs",
