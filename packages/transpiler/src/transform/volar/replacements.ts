@@ -80,9 +80,7 @@ export function applyReplacements(
     "\\b" + state.replacementTag.name + "`(.*?)`",
     "gm",
   );
-  const {
-    symbolsId: { NamedDefinition, Meta },
-  } = state;
+  const { NamedDefinitionId, MetaId } = state;
   const oneLine = (
     strings: TemplateStringsArray,
     ...values: Array<string | number | boolean>
@@ -107,13 +105,13 @@ export function applyReplacements(
       `;
     } else if (payload.type === "enterVMFromRoot") {
       return oneLine`
-        type ${payload.defType} = (typeof ${payload.vm})[${NamedDefinition.name}];
-        type ${payload.metaType} = ${payload.defType}[${Meta.name}];
+        type ${payload.defType} = (typeof ${payload.vm})[${NamedDefinitionId.name}];
+        type ${payload.metaType} = ${payload.defType}[${MetaId.name}];
       `;
     } else if (payload.type === "enterVMFromAttr") {
       return oneLine`
-        type ${payload.defType} = ${payload.returnType} extends { namedDefinition: infer Def } ? Def : { [${Meta.name}]: unknown };
-        type ${payload.metaType} = ${payload.defType}[${Meta.name}];
+        type ${payload.defType} = ${payload.returnType} extends { namedDefinition: infer Def } ? Def : { [${MetaId.name}]: unknown };
+        type ${payload.metaType} = ${payload.defType}[${MetaId.name}];
       `;
     } else if (payload.type === "exitVM") {
       const lhs = `${payload.finalMetaType}_lhs`;
@@ -125,7 +123,7 @@ export function applyReplacements(
       }
       return oneLine`
         type ${payload.finalMetaType} = ${payload.metaType};
-        let ${lhs}!: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${Meta.name}>;
+        let ${lhs}!: { [${MetaId.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${MetaId.name}>;
         type ${lhs} = typeof ${lhs};
         namespace ${requiredAttrsNs} {
           export type Collected = ${collectedAttrsExpr};
@@ -141,7 +139,7 @@ export function applyReplacements(
       const omittedKeys = `${payload.lhs}_omittedKeys`;
       return oneLine`
         type ${uniqueKeyLhs} = {
-          [${Meta.name}]: ${payload.metaType}; 
+          [${MetaId.name}]: ${payload.metaType}; 
           uniqueKey: ${payload.defType} extends { [${payload.attrName}]: { uniqueKey: infer UniqueKey } } ? UniqueKey : () => 0;
         };
         let ${uniqueKeyLhs}!: ${uniqueKeyLhs};
@@ -151,7 +149,7 @@ export function applyReplacements(
         interface ${uniqueKeyHelperIntf} {
           [${uniqueKeyForThis}]: 1;
         }
-        type ${omittedKeys} = ${Meta.name} | (
+        type ${omittedKeys} = ${MetaId.name} | (
           ${uniqueKey} extends 0
           ? never                                                 /* no unique requirement */
             : string extends keyof ${uniqueKeyHelperIntf}
@@ -162,13 +160,13 @@ export function applyReplacements(
                 ? ${payload.attrName}                             /* have duplicate, disable this */
                 : never
         );
-        let ${payload.lhs}!: { [${Meta.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${omittedKeys}>;
+        let ${payload.lhs}!: { [${MetaId.name}]: ${payload.metaType} } & Omit<${payload.defType}, ${omittedKeys}>;
       `;
     } else if (payload.type === "createBindingTyping") {
       const typingIdLhs = `${payload.typingId}_lhs`;
       return oneLine`
         type ${typingIdLhs} = {
-          [${Meta.name}]: ${payload.finalMetaType};
+          [${MetaId.name}]: ${payload.finalMetaType};
           as: ${payload.defType} extends { [${payload.attrName}]: { as: infer As } } ? As : unknown;
         };
         let ${typingIdLhs}!: ${typingIdLhs};

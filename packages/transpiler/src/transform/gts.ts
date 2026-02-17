@@ -31,7 +31,7 @@ export interface TranspileState {
   readonly createDefineFnId: Identifier;
   readonly createBindingFnId: Identifier;
   readonly ActionId: Identifier;
-  readonly preludeSymbolId: Identifier;
+  readonly PreludeId: Identifier;
   readonly fnArgId: Identifier;
   readonly shortcutFunctionParameters: Pattern[];
   readonly rootVmId: Identifier;
@@ -230,7 +230,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
           {
             type: "ImportSpecifier",
             imported: { type: "Identifier", name: "Prelude" },
-            local: state.preludeSymbolId,
+            local: state.PreludeId,
           },
         ],
         source: { type: "Literal", value: state.runtimeImportSource },
@@ -503,7 +503,7 @@ export const initialTranspileState = (
     option.shortcutFunctionPreludes ?? DEFAULT_SHORTCUT_FUNCTION_PRELUDES;
   const queryBindings = option.queryBindings ?? DEFAULT_QUERY_BINDINGS;
   const fnArgId: Identifier = { type: "Identifier", name: "__gts_fnArg" };
-  const preludeSymbolId: Identifier = {
+  const PreludeId: Identifier = {
     type: "Identifier",
     name: "__gts_Prelude",
   };
@@ -526,7 +526,7 @@ export const initialTranspileState = (
       right: {
         type: "MemberExpression",
         object: fnArgId,
-        property: preludeSymbolId,
+        property: PreludeId,
         computed: true,
         optional: false,
       },
@@ -550,7 +550,7 @@ export const initialTranspileState = (
     createDefineFnId: { type: "Identifier", name: "__gts_createDefine" },
     createBindingFnId: { type: "Identifier", name: "__gts_createBinding" },
     ActionId: { type: "Identifier", name: "__gts_Action" },
-    preludeSymbolId,
+    PreludeId,
     fnArgId,
     shortcutFunctionParameters,
     rootVmId: { type: "Identifier", name: "__gts_rootVm" },

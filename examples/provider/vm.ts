@@ -1,9 +1,5 @@
 import type { Query } from "./query";
 import {
-  Action,
-  Prelude,
-  Meta,
-  NamedDefinition,
   defineSimpleViewModel,
   defineViewModel,
   type AttributeReturn as AR,
@@ -87,7 +83,7 @@ const CharacterVM = defineViewModel(
 class SkillBuilder {}
 
 interface SkillContext<TMeta extends BuilderMeta> {
-  [Prelude]: {
+  "~prelude": {
     cryo: number;
     hydro: number;
     pyro: number;
@@ -146,7 +142,7 @@ const SkillVM = defineViewModel(
       >;
     }>(() => {}),
 
-    [Action]: helper.attribute<{
+    "~action": helper.attribute<{
       <TMeta extends BuilderMeta>(
         this: AR.This<TMeta>,
         action: SkillAction<TMeta>,

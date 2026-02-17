@@ -1,12 +1,10 @@
-import { Action, AllSymbols, Meta, NamedDefinition } from "./symbols";
+import { Action, Meta, NamedDefinition } from "./symbols";
 import { View } from "./view";
 import { StandardJSONSchemaV1 } from "@standard-schema/spec";
-import type { JSONSchema } from "json-schema-typed/draft-2020-12";
 
 export interface AttributeBlockDefinition {
-  [name: string]: AttributeDefinition | undefined;
-  [Action]?: AttributeDefinition | undefined;
-  [Meta]: any;
+  "~action"?: AttributeDefinition | undefined;
+  "~meta": any;
 }
 
 type Computed<T> = T extends infer U extends { [K in keyof T]: unknown }
@@ -17,22 +15,14 @@ type BlockDefinitionRewriteMeta<
   BlockDef extends AttributeBlockDefinition,
   NewMeta,
 > =
-  Computed<Omit<BlockDef, Meta> & { [Meta]: NewMeta }> extends infer R extends
+  Computed<Omit<BlockDef, Meta> & { "~meta": NewMeta }> extends infer R extends
     AttributeBlockDefinition
     ? R
     : never;
 
 export interface IViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
   parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT;
-}
-
-export interface ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
-  /**
-   * Helper for fetching symbol types
-   * @internal
-   */
-  "~symbols": AllSymbols;
-  [NamedDefinition]: BlockDef;
+  "~namedDefinition": BlockDef;
 }
 
 type LazyAttributeActionOrBinder<ModelT> = (
@@ -45,6 +35,8 @@ export class ViewModel<
   ModelT,
   BlockDef extends AttributeBlockDefinition,
 > implements IViewModel<ModelT, BlockDef> {
+  declare "~namedDefinition": BlockDef;
+
   #registeredActions: Map<PropertyKey, LazyAttributeActionOrBinder<ModelT>> =
     new Map();
   #registeredBinders: Map<PropertyKey, LazyAttributeActionOrBinder<ModelT>> =
@@ -102,16 +94,8 @@ class AttributeDefHelper<ModelT> {
   static readonly #lazyActionSlot: unique symbol = Symbol("actionSlot");
   static readonly #lazyBinderSlot: unique symbol = Symbol("binderSlot");
 
-  "~assignActions"(defResult: Partial<Record<string | Action, unknown>>): void {
-    const keys: (string | Action)[] = Object.keys(defResult);
-    if (defResult[Action]) {
-      keys.push(Action);
-    }
-    for (const name of keys) {
-      const value = defResult[name];
-      if (!value) {
-        continue;
-      }
+  "~assignActions"(defResult: Partial<Record<string, unknown>>): void {
+    for (const [name, value] of Object.entries(defResult)) {
       const actionDescriptor = Object.getOwnPropertyDescriptor(
         value,
         AttributeDefHelper.#lazyActionSlot,
@@ -215,8 +199,8 @@ export function defineViewModel<
   Ctor: new () => T,
   modelDefFn: (helper: AttributeDefHelper<T>) => BlockDef,
   initMeta?: InitMeta,
-): ViewModel<T, BlockDef & { [Meta]: InitMeta }> {
-  const vm = new ViewModel<T, BlockDef & { [Meta]: InitMeta }>(Ctor);
+): ViewModel<T, BlockDef & { "~meta": InitMeta }> {
+  const vm = new ViewModel<T, BlockDef & { "~meta": InitMeta }>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult = modelDefFn(helper);
   helper["~assignActions"](defResult);
@@ -231,7 +215,7 @@ type SimpleViewModel<T> = ViewModel<
       uniqueKey(): K;
       required(): {} extends Pick<T, K> ? false : true;
     };
-  } & { [Meta]: void }
+  } & { "~meta": undefined }
 >;
 
 export function defineSimpleViewModel<const T extends StandardJSONSchemaV1>(
@@ -267,7 +251,7 @@ interface AttributePositionalReturnBase {
 
 export namespace AttributeReturn {
   export type This<TMeta> = {
-    [Meta]: TMeta;
+    "~meta": TMeta;
   };
 
   export type EnableIf<Condition, T = void> = Condition extends true
@@ -275,18 +259,18 @@ export namespace AttributeReturn {
     : never;
 
   export type Done = {
-    namedDefinition: { [Meta]: void };
+    namedDefinition: { "~meta": void };
   };
 
   export type With<
     VM extends ViewModel<any, any>,
-    TMeta = VM[NamedDefinition][Meta],
+    TMeta = VM[NamedDefinition]["~meta"],
   > = {
     namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], TMeta>;
   };
 
   export type DoneRewriteMeta<NewMeta> = {
-    namedDefinition: { [Meta]: void };
+    namedDefinition: { "~meta": void };
     rewriteMeta: NewMeta;
   };
 
@@ -304,7 +288,7 @@ export type AttributeAction<Model, T extends AttributeDefinition> = (
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]
-      : { [Meta]: void }
+      : { "~meta": void }
   >,
 ) => void;
 
@@ -314,6 +298,6 @@ export type AttributeBinder<Model, T extends AttributeDefinition> = (
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]
-      : { [Meta]: void }
+      : { "~meta": void }
   >,
 ) => T["as"] extends () => infer U ? U : void;

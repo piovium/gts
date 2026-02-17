@@ -38,10 +38,8 @@ function gtsToTypings(
     rootVmId: { type: "Identifier", name: "__gts_root_vm" },
     utilNsId: { type: "Identifier", name: "__gts_util" },
     replacementTag: { type: "Identifier", name: "__gts_replacement_tag" },
-    symbolsId: {
-      Meta: { type: "Identifier", name: "__gts_symbols_meta" },
-      NamedDefinition: { type: "Identifier", name: "__gts_symbols_namedDef" },
-    },
+    MetaId: { type: "Identifier", name: "__gts_meta" },
+    NamedDefinitionId: { type: "Identifier", name: "__gts_namedDef" },
     defineLeadingComments: [],
     vmDefTypeIdStack: [],
     metaTypeIdStack: [],

@@ -39,10 +39,8 @@ export interface TypingTranspileState extends TranspileState {
   idCounter: number;
   rootVmId: Identifier;
   utilNsId: Identifier;
-  symbolsId: {
-    Meta: Identifier;
-    NamedDefinition: Identifier;
-  };
+  MetaId: Identifier;
+  NamedDefinitionId: Identifier;
   defineLeadingComments: Comment[] | undefined;
   // type of current VM's definition
   vmDefTypeIdStack: Identifier[];
@@ -79,42 +77,31 @@ const emitPreface = (state: TypingTranspileState) => {
   if (state.prefaceInserted) {
     return;
   }
-  const symbolsLhs = {
-    type: "TSIndexedAccessType",
-    objectType: {
-      type: "TSTypeQuery",
-      exprName: { type: "Identifier", name: state.rootVmId.name },
-    },
-    indexType: {
-      type: "TSLiteralType",
-      literal: { type: "Literal", value: "~symbols" },
-    },
-  };
   for (const symbolName of [
-    "Meta",
-    "Action",
-    "NamedDefinition",
-    "Prelude",
+    "meta",
+    "action",
+    "namedDefinition",
+    "prelude",
   ] as const) {
-    const init = {
-      type: "TSIndexedAccessType",
-      objectType: symbolsLhs,
-      indexType: {
-        type: "TSLiteralType",
-        literal: { type: "Literal", value: symbolName },
-      },
-    };
     const symbolId =
-      symbolName === "Action"
+      symbolName === "action"
         ? state.ActionId
-        : symbolName === "Prelude"
-          ? state.preludeSymbolId
-          : state.symbolsId[symbolName];
+        : symbolName === "prelude"
+          ? state.PreludeId
+          : symbolName === "meta"
+            ? state.MetaId
+            : state.NamedDefinitionId;
     state.typingPendingStatements.push(
       {
         type: "TSTypeAliasDeclaration",
         id: symbolId,
-        typeAnnotation: init,
+        typeAnnotation: {
+          type: "TSLiteralType",
+          literal: {
+            type: "Literal",
+            value: "~" + symbolName,
+          },
+        },
       } as {} as VariableDeclaration,
       {
         type: "VariableDeclaration",
