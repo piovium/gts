@@ -5,10 +5,19 @@
   "exports": {
     "./vm": "./vm.ts",
     "./query": "./query.ts",
-    "./runtime": "./runtime.ts"
+    "./runtime": "./runtime.ts",
+    
+    "./types/vm": "./dist/vm.d.ts",
+    "./types/query": "./dist/query.d.ts",
+    "./types/runtime": "./dist/runtime.d.ts"
   },
   "dependencies": {
     "@gi-tcg/gts-runtime": "workspace:*",
     "arktype": "^2.1.29"
+  },
+  "devDependencies": {
+    "rolldown": "^1.0.0-rc.4",
+    "rolldown-plugin-dts": "^0.22.1",
+    "typescript": "^5.9.3"
   }
 }

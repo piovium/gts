@@ -35,14 +35,12 @@ export default defineWorkspace(
           entry: "src/node.ts",
           target: "node",
           outDir: "dist/node",
-          dts: false,
         },
         {
           name: "browser",
           entry: "src/browser.ts",
           target: "browser",
           outDir: "dist/browser",
-          dts: false,
         },
       ]
     },

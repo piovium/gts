@@ -2,10 +2,12 @@ import type { Query } from "./query";
 import {
   Action,
   Prelude,
+  Meta,
+  NamedDefinition,
   defineSimpleViewModel,
   defineViewModel,
   type AttributeReturn as AR,
-} from "./runtime";
+} from "@gi-tcg/gts-runtime";
 import { type } from "arktype";
 
 class CharacterBuilder {
@@ -154,11 +156,12 @@ const SkillVM = defineViewModel(
   {} as { varNames: never } satisfies BuilderMeta,
 );
 
-
-const VariableVM = defineSimpleViewModel(type({
-  appendLimit: "number?",
-  appendCount: "number?",
-}));
+const VariableVM = defineSimpleViewModel(
+  type({
+    appendLimit: "number?",
+    appendCount: "number?",
+  }),
+);
 
 class SummonBuilder {}
 

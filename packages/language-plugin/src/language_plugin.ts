@@ -7,6 +7,7 @@ import { GtsVirtualCode } from "./virtual_code";
 
 export function createGtsLanguagePlugin(
   ts: typeof import("typescript"),
+  inlineConfig: GtsConfig = {},
 ): LanguagePlugin<URI | string> {
   return {
     getLanguageId(uri) {
@@ -18,15 +19,11 @@ export function createGtsLanguagePlugin(
     createVirtualCode(uri, languageId, snapshot) {
       const filename = typeof uri === "string" ? uri : uri.path;
       if (languageId === "gaming-ts") {
-        const resolvedConfig = resolveGtsConfigSync(
-          filename,
-          {},
-          {
-            cwd: ts.sys?.getCurrentDirectory?.(),
-            readFileFn: (path, encoding) =>
-              ts.sys?.readFile?.(path, encoding) || "",
-          },
-        );
+        const resolvedConfig = resolveGtsConfigSync(filename, inlineConfig, {
+          cwd: ts.sys?.getCurrentDirectory?.(),
+          readFileFn: (path, encoding) =>
+            ts.sys?.readFile?.(path, encoding) || "",
+        });
         return new GtsVirtualCode(filename, snapshot, resolvedConfig);
       }
     },

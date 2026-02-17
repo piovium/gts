@@ -1,12 +1,18 @@
 import type { TranspileOption } from "./transform/gts";
 
-const path = globalThis.require
+export interface PathPolyfill {
+  isAbsolute(filePath: string): boolean;
+  dirname(filePath: string): string;
+  resolve(...segments: string[]): string;
+}
+
+export const path: PathPolyfill = globalThis.require
   ? (globalThis.require("node:path") as typeof import("node:path"))
   : {
-      isAbsolute(filePath: string): boolean {
+      isAbsolute(filePath) {
         return filePath.startsWith("/");
       },
-      dirname(filePath: string): string {
+      dirname(filePath) {
         if (!filePath) {
           return ".";
         }
@@ -27,7 +33,7 @@ const path = globalThis.require
         }
         return trimmed.slice(0, idx);
       },
-      resolve(...segments: string[]): string {
+      resolve(...segments) {
         if (segments.length === 0) {
           return ".";
         }

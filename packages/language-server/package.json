@@ -22,12 +22,12 @@
     "dist",
     "bin"
   ],
-  "scripts": {
-  },
+  "scripts": {},
   "dependencies": {
-    "@gi-tcg/gts-transpiler": "workspace:*",
     "@gi-tcg/gts-language-plugin": "workspace:*",
+    "@gi-tcg/gts-transpiler": "workspace:*",
     "@volar/language-server": "~2.4.0",
+    "@zenfs/core": "^2.5.0",
     "volar-service-typescript": "volar-2.4",
     "vscode-uri": "^3.0.8"
   },
