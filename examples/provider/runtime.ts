@@ -1,1 +1,1 @@
-export * from "../../bad";
+export * from "@gi-tcg/gts-runtime";
