@@ -31,7 +31,7 @@ type LazyAttributeActionOrBinder<ModelT> = (
   named: View<any>,
 ) => unknown;
 
-export class ViewModel<
+class ViewModel<
   ModelT,
   BlockDef extends AttributeBlockDefinition,
 > implements IViewModel<ModelT, BlockDef> {
@@ -125,7 +125,7 @@ class AttributeDefHelper<ModelT> {
     action: AttributeAction<ModelT, T>,
     binder?:
       | AttributeBinder<ModelT, T>
-      | ViewModel<any, ReturnType<T>["namedDefinition"]>,
+      | IViewModel<any, ReturnType<T>["namedDefinition"]>,
   ): T;
   attribute<T extends AttributeDefinition>(
     action: AttributeAction<ModelT, T>,
@@ -133,7 +133,7 @@ class AttributeDefHelper<ModelT> {
   ): T;
   attribute(
     action: any,
-    binder?: AttributeBinder<any, any> | ViewModel<any, any>,
+    binder?: AttributeBinder<any, any> | IViewModel<any, any>,
   ) {
     const returnValue = {};
     const lazyAction: LazyAttributeActionOrBinder<ModelT> = (
@@ -146,14 +146,14 @@ class AttributeDefHelper<ModelT> {
       enumerable: true,
     });
     let lazyBinder: LazyAttributeActionOrBinder<ModelT>;
-    if (binder instanceof ViewModel) {
+    if (typeof binder === "function") {
+      lazyBinder = (model, positionals, named) =>
+        binder(model, positionals(), named);
+    } else if (binder) {
       const vm = binder;
       lazyBinder = (model, positionals, named) => {
         return vm.parse(named);
       };
-    } else if (binder) {
-      lazyBinder = (model, positionals, named) =>
-        binder(model, positionals(), named);
     } else {
       lazyBinder = () => {};
     }
@@ -199,7 +199,7 @@ export function defineViewModel<
   Ctor: new () => T,
   modelDefFn: (helper: AttributeDefHelper<T>) => BlockDef,
   initMeta?: InitMeta,
-): ViewModel<T, BlockDef & { "~meta": InitMeta }> {
+): IViewModel<T, BlockDef & { "~meta": InitMeta }> {
   const vm = new ViewModel<T, BlockDef & { "~meta": InitMeta }>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult = modelDefFn(helper);
@@ -207,7 +207,7 @@ export function defineViewModel<
   return vm;
 }
 
-type SimpleViewModel<T> = ViewModel<
+export type SimpleViewModel<T> = IViewModel<
   T,
   {
     [K in keyof T]-?: {
@@ -263,7 +263,7 @@ export namespace AttributeReturn {
   };
 
   export type With<
-    VM extends ViewModel<any, any>,
+    VM extends IViewModel<any, any>,
     TMeta = VM[NamedDefinition]["~meta"],
   > = {
     namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], TMeta>;
@@ -274,7 +274,7 @@ export namespace AttributeReturn {
     rewriteMeta: NewMeta;
   };
 
-  export type WithRewriteMeta<VM extends ViewModel<any, any>, NewMeta> = {
+  export type WithRewriteMeta<VM extends IViewModel<any, any>, NewMeta> = {
     namedDefinition: VM[NamedDefinition];
     rewriteMeta: NewMeta;
   };

@@ -1,4 +1,4 @@
-import type { AttributeBlockDefinition, ViewModel } from "./view_model";
+import type { AttributeBlockDefinition, IViewModel } from "./view_model";
 
 export type AttributeName = string | symbol;
 
@@ -35,7 +35,7 @@ export class BindingContext {
 }
 
 export function createDefine(
-  rootVM: ViewModel<any, any>,
+  rootVM: IViewModel<any, any>,
   node: SingleAttributeNode,
 ): void {
   const view = new View<any>({ attributes: [node] });
@@ -43,7 +43,7 @@ export function createDefine(
 }
 
 export function createBinding(
-  rootVM: ViewModel<any, any>,
+  rootVM: IViewModel<any, any>,
   node: SingleAttributeNode,
 ): unknown[] {
   const bindingCtx = new BindingContext();
