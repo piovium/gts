@@ -1,3 +1,4 @@
+import { AttributeReturn } from "./attribute_return";
 import { Action, Meta, NamedDefinition } from "./symbols";
 import { View } from "./view";
 import { StandardJSONSchemaV1 } from "@standard-schema/spec";
@@ -11,7 +12,7 @@ type Computed<T> = T extends infer U extends { [K in keyof T]: unknown }
   ? U
   : never;
 
-type BlockDefinitionRewriteMeta<
+export type BlockDefinitionRewriteMeta<
   BlockDef extends AttributeBlockDefinition,
   NewMeta,
 > =
@@ -248,39 +249,6 @@ interface AttributePositionalReturnBase {
   rewriteMeta?: any;
   namedDefinition: AttributeBlockDefinition;
 }
-
-export namespace AttributeReturn {
-  export type This<TMeta> = {
-    "~meta": TMeta;
-  };
-
-  export type EnableIf<Condition, T = void> = Condition extends true
-    ? T
-    : never;
-
-  export type Done = {
-    namedDefinition: { "~meta": void };
-  };
-
-  export type With<
-    VM extends IViewModel<any, any>,
-    TMeta = VM[NamedDefinition]["~meta"],
-  > = {
-    namedDefinition: BlockDefinitionRewriteMeta<VM[NamedDefinition], TMeta>;
-  };
-
-  export type DoneRewriteMeta<NewMeta> = {
-    namedDefinition: { "~meta": void };
-    rewriteMeta: NewMeta;
-  };
-
-  export type WithRewriteMeta<VM extends IViewModel<any, any>, NewMeta> = {
-    namedDefinition: VM[NamedDefinition];
-    rewriteMeta: NewMeta;
-  };
-}
-
-export type { AttributeReturn as AR };
 
 export type AttributeAction<Model, T extends AttributeDefinition> = (
   model: Model,

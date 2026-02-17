@@ -3,8 +3,9 @@ export {
   defineSimpleViewModel,
   type AttributeDefinition,
   type IViewModel,
-  type AttributeReturn,
+  type SimpleViewModel,
 } from "./view_model";
+export type { AttributeReturn, AR } from "./attribute_return";
 export type { Action, Prelude, Meta, NamedDefinition } from "./symbols";
 
 export {

@@ -2,7 +2,7 @@ import type { Query } from "./query";
 import {
   defineSimpleViewModel,
   defineViewModel,
-  type AttributeReturn as AR,
+  type AR,
 } from "@gi-tcg/gts-runtime";
 import { type } from "arktype";
 
