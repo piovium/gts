@@ -39,8 +39,8 @@ export interface TypingTranspileState extends TranspileState {
   idCounter: number;
   rootVmId: Identifier;
   utilNsId: Identifier;
-  MetaId: Identifier;
-  NamedDefinitionId: Identifier;
+  MetaLit: Literal;
+  NamedDefinitionLit: Literal;
   defineLeadingComments: Comment[] | undefined;
   // type of current VM's definition
   vmDefTypeIdStack: Identifier[];
@@ -52,7 +52,6 @@ export interface TypingTranspileState extends TranspileState {
   finalMetaTypeIdStack: Identifier[];
   // `obj` of `obj.attr(...)`
   // attrLhsIdStack: Identifier[];
-  prefaceInserted: boolean;
   /** Pending statements to be inserted to the top-level */
   typingPendingStatements: Statement[];
   replacementTag: Identifier;
@@ -73,63 +72,7 @@ const ANY_INIT = {
   typeAnnotation: ANY,
 } as {} as Expression;
 
-const emitPreface = (state: TypingTranspileState) => {
-  if (state.prefaceInserted) {
-    return;
-  }
-  for (const symbolName of [
-    "meta",
-    "action",
-    "namedDefinition",
-    "prelude",
-  ] as const) {
-    const symbolId =
-      symbolName === "action"
-        ? state.ActionId
-        : symbolName === "prelude"
-          ? state.PreludeId
-          : symbolName === "meta"
-            ? state.MetaId
-            : state.NamedDefinitionId;
-    state.typingPendingStatements.push(
-      {
-        type: "TSTypeAliasDeclaration",
-        id: symbolId,
-        typeAnnotation: {
-          type: "TSLiteralType",
-          literal: {
-            type: "Literal",
-            value: "~" + symbolName,
-          },
-        },
-      } as {} as VariableDeclaration,
-      {
-        type: "VariableDeclaration",
-        kind: "const",
-        declarations: [
-          {
-            type: "VariableDeclarator",
-            id: {
-              ...symbolId,
-              typeAnnotation: {
-                type: "TSTypeAnnotation",
-                typeAnnotation: {
-                  type: "TSTypeReference",
-                  typeName: symbolId,
-                },
-              },
-            } as Identifier,
-            init: ANY_INIT,
-          },
-        ],
-      } as VariableDeclaration,
-    );
-  }
-  state.prefaceInserted = true;
-};
-
 const enterVMFromRoot = (state: TypingTranspileState) => {
-  emitPreface(state);
   let defTypeId: Identifier = {
     type: "Identifier",
     name: `__gts_rootVmDefType_${state.idCounter++}`,
@@ -321,28 +264,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         body.unshift(varDecl);
       }
     }
-    if (state.prefaceInserted) {
-      body.unshift(
-        {
-          type: "ImportDeclaration",
-          diagnosticsOnTop: true,
-          specifiers: [
-            {
-              type: "ImportDefaultSpecifier",
-              local: state.rootVmId,
-            },
-          ],
-          source: {
-            type: "Literal",
-            value: `${state.providerImportSource}/vm`,
-          },
-          attributes: [],
-        },
-        createReplacementHolder(state, {
-          type: "preface",
-        }),
-      );
-    }
     if (state.hasQueryExpressions) {
       body.unshift({
         type: "ImportDeclaration",
@@ -360,6 +281,26 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         attributes: [],
       });
     }
+    body.unshift(
+      {
+        type: "ImportDeclaration",
+        diagnosticsOnTop: true,
+        specifiers: [
+          {
+            type: "ImportDefaultSpecifier",
+            local: state.rootVmId,
+          },
+        ],
+        source: {
+          type: "Literal",
+          value: `${state.providerImportSource}/vm`,
+        },
+        attributes: [],
+      },
+      createReplacementHolder(state, {
+        type: "preface",
+      }),
+    );
     return {
       ...node,
       body,
@@ -471,7 +412,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       visit(attr);
     }
     if (node.directAction) {
-      const attrName = state.ActionId.name;
+      const attrName = JSON.stringify(state.ActionLit.value);
       const { lhsId } = enterAttr(state, attrName);
       const actionNotExistsReplacementStr = `${lhsId.name}[${attrName}]`;
       const actionNotExistsErrorLoc = `${node.directAction.loc?.start.line}:${node.directAction.loc?.start.column}`;
@@ -505,7 +446,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
               callee: {
                 type: "MemberExpression",
                 object: lhsId,
-                property: state.ActionId,
+                property: state.ActionLit,
                 computed: true,
                 optional: false,
               },
