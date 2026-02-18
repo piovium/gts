@@ -136,7 +136,7 @@ const setupLanguageClientConfig = (): LanguageClientConfig => {
           "/workspace/test2.gts": "export const A = 1",
           "/tsconfig.json": JSON.stringify({
             compilerOptions: {
-              lib: ["ESNext"],
+              lib: ["esnext"],
               types: [],
               target: "esnext",
               module: "preserve",
@@ -147,6 +147,7 @@ const setupLanguageClientConfig = (): LanguageClientConfig => {
               strict: true,
               skipLibCheck: true,
             },
+            include: ["**/*.gts", "**/*.ts"],
           }),
         },
         inlineGtsConfig: {
