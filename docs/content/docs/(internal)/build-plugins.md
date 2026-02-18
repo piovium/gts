@@ -1,4 +1,6 @@
-# Build Plugins
+---
+title: Build Plugins
+---
 
 GTS provides build plugins for esbuild, Rollup, and Bun, plus a standalone TypeScript compiler CLI (`gtsc`).
 

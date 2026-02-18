@@ -1,0 +1,8 @@
+{
+  "title": "Example Pages",
+  "root": true,
+  "pages": [
+    "index",
+    "test"
+  ]
+}

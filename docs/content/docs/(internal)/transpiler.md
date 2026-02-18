@@ -1,4 +1,6 @@
-# Transpiler Internals
+---
+title: Transpiler Internals
+---
 
 The transpiler (`@gi-tcg/gts-transpiler`) is the core of GTS. It converts `.gts` source into JavaScript (for execution) and TypeScript type declarations (for IDE support).
 

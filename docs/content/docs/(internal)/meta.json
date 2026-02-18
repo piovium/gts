@@ -1,0 +1,14 @@
+{
+  "title": "Internal Dev Notes",
+  "root": true,
+  "pages": [
+    "index",
+    "architecture",
+    "gts-syntax",
+    "transpiler",
+    "runtime",
+    "language-tooling",
+    "build-plugins",
+    "configuration"
+  ]
+}

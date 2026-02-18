@@ -1,4 +1,6 @@
-# GTS Syntax Reference
+---
+title: GTS Syntax Reference
+---
 
 GamingTS (GTS) is a superset of TypeScript. A `.gts` file can contain any valid TypeScript, plus GTS-specific `define` statements and `query` expressions.
 

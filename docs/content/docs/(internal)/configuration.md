@@ -1,4 +1,6 @@
-# Configuration
+---
+title: Configuration
+---
 
 GTS configuration determines how `.gts` files are transpiled — which runtime and provider packages to import, which symbols are available in shortcut functions, and which query bindings exist.
 

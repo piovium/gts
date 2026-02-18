@@ -1,4 +1,6 @@
-# GamingTS (GTS) Development Notes
+---
+title: Introduction
+---
 
 > Internal developer documentation for the GamingTS toolchain — a domain-specific language extension for TypeScript, designed for writing Genshin Impact TCG (Genius Invokation) card definitions.
 
@@ -75,3 +77,4 @@ bun test packages/transpiler/__tests__/transpile.test.ts
 
 # Run all tests
 bun test
+```

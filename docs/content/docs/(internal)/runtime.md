@@ -1,4 +1,6 @@
-# Runtime System
+---
+title: Runtime System
+---
 
 The runtime (`@gi-tcg/gts-runtime`) provides the execution model for transpiled GTS code. It defines the ViewModel pattern that processes `define` statements at runtime.
 

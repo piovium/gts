@@ -1,4 +1,6 @@
-# Architecture
+---
+title: Architecture
+---
 
 ## Monorepo Structure
 

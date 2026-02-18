@@ -1,33 +1,35 @@
-# Language Tooling
+---
+title: Language Tooling
+---
 
 GTS provides full IDE support through a Volar-based language server, a TypeScript Language Service Plugin, and a VS Code extension.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │                      VS Code Extension                       │
 │  (gts-vscode)                                                │
-│  ┌──────────────────┐  ┌──────────────────────────────────┐ │
+│  ┌───────────────────┐  ┌──────────────────────────────────┐ │
 │  │  Extension Client │  │  TS Extension Patch (patch.ts)   │ │
-│  │  (extension.ts)   │  │  Adds "gaming-ts" to TS modes   │ │
-│  └────────┬─────────┘  └──────────────┬───────────────────┘ │
-│           │                           │                      │
-│  ┌────────┴──────────────────────────┴───────────────────┐  │
-│  │              Language Server (node.ts)                  │  │
+│  │  (extension.ts)   │  │  Adds "gaming-ts" to TS modes    │ │
+│  └────────┬──────────┘  └──────────────┬───────────────────┘ │
+│           │                            │                     │
+│  ┌────────┴────────────────────────────┴──────────────────┐  │
+│  │              Language Server (node.ts)                 │  │
 │  │  ┌────────────────────┐  ┌──────────────────────────┐  │  │
-│  │  │  TypeScript Service │  │  Diagnostics Plugin      │  │  │
-│  │  │  (volar-service-ts) │  │  (GTS transpiler errors) │  │  │
+│  │  │ TypeScript Service │  │  Diagnostics Plugin      │  │  │
+│  │  │ (volar-service-ts) │  │  (GTS transpiler errors) │  │  │
 │  │  └────────────────────┘  └──────────────────────────┘  │  │
 │  │  ┌──────────────────────────────────────────────────┐  │  │
-│  │  │           Language Plugin                         │  │  │
+│  │  │           Language Plugin                        │  │  │
 │  │  │  ┌────────────────────────────────────────────┐  │  │  │
-│  │  │  │         GtsVirtualCode                      │  │  │  │
-│  │  │  │  (transpileForVolar → code + mappings)     │  │  │  │
+│  │  │  │         GtsVirtualCode                     │  │  │  │
+│  │  │  │  (transpileForVolar -> code + mappings)    │  │  │  │
 │  │  │  └────────────────────────────────────────────┘  │  │  │
 │  │  └──────────────────────────────────────────────────┘  │  │
 │  └────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## Language Plugin (`@gi-tcg/gts-language-plugin`)
