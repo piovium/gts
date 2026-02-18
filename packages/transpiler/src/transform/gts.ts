@@ -48,8 +48,8 @@ export interface TranspileState {
   /** Internal counters / state for emitting per-define nodes & bindings */
   defineIdCounter: number;
 
-  /** Buffered statements to be inserted after visiting a define statement */
-  pendingStatements: (Statement | ModuleDeclaration)[];
+  /** Binding statements to be inserted before all define statement */
+  bindingStatements: (Statement | ModuleDeclaration)[];
 }
 
 export const commonGtsVisitor: Visitors<Node, TranspileState> = {
@@ -60,7 +60,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
         {
           type: "Property",
           key: { type: "Identifier", name: "name" },
-          computed: true,
+          computed: false,
           kind: "init",
           method: false,
           shorthand: false,
@@ -182,15 +182,11 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
     const body: Program["body"] = [];
     for (const stmt of node.body) {
       const visited = visit(stmt) as Statement;
-      // `GTSDefineStatement` is expanded into multiple statements via buffer
-      if (visited.type !== "EmptyStatement") {
-        body.push(visited);
-      }
-      if (state.pendingStatements.length > 0) {
-        body.push(...(state.pendingStatements));
-        state.pendingStatements = [];
-      }
+      body.push(visited);
     }
+
+    body.unshift(...state.bindingStatements);
+    state.bindingStatements = [];
 
     if (state.hasQueryExpressions) {
       body.unshift({
@@ -262,9 +258,8 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
 
     const newBindings = state.externalizedBindings;
     state.externalizedBindings = [];
-    const statements: (Statement | ModuleDeclaration)[] = [];
 
-    statements.push({
+    state.bindingStatements.push({
       type: "VariableDeclaration",
       kind: "const",
       declarations: [
@@ -277,7 +272,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       loc: node.loc,
     });
 
-    statements.push({
+    state.bindingStatements.push({
       type: "VariableDeclaration",
       kind: "const",
       declarations: [
@@ -315,33 +310,26 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         ],
       };
       if (binding.export) {
-        statements.push({
+        state.bindingStatements.push({
           type: "ExportNamedDeclaration",
           declaration: decl,
           specifiers: [],
           attributes: [],
         });
       } else {
-        statements.push(decl);
+        state.bindingStatements.push(decl);
       }
     }
-
-    statements.push({
+    return {
       type: "ExpressionStatement",
       expression: {
         type: "CallExpression",
         optional: false,
-        callee: {
-          ...state.createDefineFnId,
-          loc: node.loc,
-        },
+        callee: state.createDefineFnId,
         arguments: [state.rootVmId, nodeVarId],
       },
       loc: node.loc,
-    });
-
-    state.pendingStatements.push(...statements);
-    return { type: "EmptyStatement" };
+    };
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
     const namedBody = visit(node.body) as ObjectExpression;
@@ -566,7 +554,7 @@ export const initialTranspileState = (
     hasQueryExpressions: false,
     defineIdCounter: 0,
 
-    pendingStatements: [],
+    bindingStatements: [],
   };
 };
 

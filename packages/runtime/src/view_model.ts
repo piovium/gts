@@ -141,7 +141,7 @@ class AttributeDefHelper<ModelT> {
       model,
       positionals,
       named,
-    ) => action(model, positionals, named);
+    ) => action(model, positionals(), named);
     Object.defineProperty(returnValue, AttributeDefHelper.#lazyActionSlot, {
       value: lazyAction,
       enumerable: true,
