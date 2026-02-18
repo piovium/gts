@@ -85,7 +85,7 @@
     },
     "packages/esbuild-plugin": {
       "name": "@gi-tcg/gts-esbuild-plugin",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
       },
@@ -98,7 +98,7 @@
     },
     "packages/language-plugin": {
       "name": "@gi-tcg/gts-language-plugin",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
         "@volar/language-core": "~2.4.0",
@@ -108,7 +108,7 @@
     },
     "packages/language-server": {
       "name": "@gi-tcg/gts-language-server",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "bin": {
         "gts-language-server": "./bin/gts-language-server.js",
       },
@@ -126,7 +126,7 @@
     },
     "packages/rollup-plugin": {
       "name": "@gi-tcg/gts-rollup-plugin",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
       },
@@ -139,7 +139,7 @@
     },
     "packages/runtime": {
       "name": "@gi-tcg/gts-runtime",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "devDependencies": {
         "@standard-schema/spec": "^1.1.0",
         "json-schema-typed": "^8.0.2",
@@ -147,7 +147,7 @@
     },
     "packages/transpiler": {
       "name": "@gi-tcg/gts-transpiler",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@jridgewell/sourcemap-codec": "^1.5.5",
         "@sveltejs/acorn-typescript": "^1.0.8",
@@ -164,7 +164,7 @@
     },
     "packages/tsc": {
       "name": "@gi-tcg/gtsc",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "bin": {
         "gtsc": "./bin/gtsc.js",
       },
@@ -178,7 +178,7 @@
     },
     "packages/typescript-language-service-plugin": {
       "name": "@gi-tcg/gts-typescript-language-service-plugin",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@gi-tcg/gts-language-plugin": "workspace:*",
         "@volar/typescript": "~2.4.0",
