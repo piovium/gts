@@ -8,13 +8,13 @@ title: Introduction
 
 | Document | Description |
 |----------|-------------|
-| [Architecture](./architecture.md) | Monorepo structure, package map, dependency graph, and build system |
-| [GTS Syntax](./gts-syntax.md) | Language syntax reference with formal grammar and examples |
-| [Transpiler](./transpiler.md) | Transpiler internals: parsing, AST, transformation pipeline |
-| [Runtime](./runtime.md) | Runtime system: ViewModel, bindings, define/query execution |
-| [Language Tooling](./language-tooling.md) | Volar integration, language server, VS Code extension, and TypeScript plugin |
-| [Build Plugins](./build-plugins.md) | esbuild, Rollup, and Bun plugins, plus `gtsc` CLI compiler |
-| [Configuration](./configuration.md) | Configuration resolution, `package.json` fields, and defaults |
+| [Architecture](/docs/architecture) | Monorepo structure, package map, dependency graph, and build system |
+| [GTS Syntax](/docs/gts-syntax) | Language syntax reference with formal grammar and examples |
+| [Transpiler](/docs/transpiler) | Transpiler internals: parsing, AST, transformation pipeline |
+| [Runtime](/docs/runtime) | Runtime system: ViewModel, bindings, define/query execution |
+| [Language Tooling](/docs/language-tooling) | Volar integration, language server, VS Code extension, and TypeScript plugin |
+| [Build Plugins](/docs/build-plugins) | esbuild, Rollup, and Bun plugins, plus `gtsc` CLI compiler |
+| [Configuration](/docs/configuration) | Configuration resolution, `package.json` fields, and defaults |
 
 ## How GTS Works (Summary)
 

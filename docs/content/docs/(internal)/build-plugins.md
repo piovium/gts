@@ -176,7 +176,7 @@ interface TranspileOption {
 }
 ```
 
-These options are merged with configuration from the nearest `package.json` (see [Configuration](./configuration.md)). The merge priority is:
+These options are merged with configuration from the nearest `package.json` (see [Configuration](/docs/configuration)). The merge priority is:
 
 ```
 DEFAULT_GTS_CONFIG < package.json gamingTs < inline plugin option
