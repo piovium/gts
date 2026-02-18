@@ -1,7 +1,8 @@
 {
   "workspaces": [
     "packages/*",
-    "examples/*"
+    "examples/*",
+    "docs"
   ],
   "scripts": {
     "build": "bunx bunup"
