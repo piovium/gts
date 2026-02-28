@@ -316,7 +316,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         incDec?: boolean,
         forInit?: boolean | "await",
       ): AST.Expression {
-        if (this.isContextual("query")) {
+        if (this.isShortcutContext && this.isContextual("query")) {
           const expr = this.gts_parseQueryExpression();
           if (!incDec && this.eat(tokTypes.starstar)) {
             this.unexpected(this.lastTokStart);

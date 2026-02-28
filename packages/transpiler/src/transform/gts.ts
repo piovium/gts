@@ -162,6 +162,15 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
                 value: !!node.star,
               },
             },
+            {
+              type: "Property",
+              key: { type: "Identifier", name: "context" },
+              computed: false,
+              kind: "init",
+              method: false,
+              shorthand: false,
+              value: state.fnArgId,
+            }
           ],
         },
       ],
