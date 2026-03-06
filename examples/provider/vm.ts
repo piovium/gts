@@ -80,7 +80,9 @@ const CharacterVM = defineViewModel(
   {} as { varNames: never } satisfies BuilderMeta,
 );
 
-class SkillBuilder {}
+class SkillBuilder {
+  constructor(characterId?: number) {}
+}
 
 interface SkillContext<TMeta extends BuilderMeta> {
   "~prelude": {
@@ -220,7 +222,7 @@ export default defineViewModel(RootBuilder, (helper) => ({
   skill: helper.attribute<{
     (): AR.With<typeof SkillVM, { varNames: never }>;
   }>((model, _, named) => {
-    const skill = SkillVM.parse(named);
+    const skill = SkillVM.parse(named, 0);
     registered.push(skill);
   }, SkillVM),
   summon: helper.attribute<{

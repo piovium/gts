@@ -21,8 +21,15 @@ export type BlockDefinitionRewriteMeta<
     ? R
     : never;
 
-export interface IViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
-  parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT;
+export interface IViewModel<
+  ModelT,
+  BlockDef extends AttributeBlockDefinition,
+  CtorArgs extends any[],
+> {
+  parse(
+    view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>,
+    ...args: CtorArgs
+  ): ModelT;
   "~namedDefinition": BlockDef;
 }
 
@@ -35,7 +42,8 @@ type LazyAttributeActionOrBinder<ModelT> = (
 class ViewModel<
   ModelT,
   BlockDef extends AttributeBlockDefinition,
-> implements IViewModel<ModelT, BlockDef> {
+  CtorArgs extends any[],
+> implements IViewModel<ModelT, BlockDef, CtorArgs> {
   declare "~namedDefinition": BlockDef;
 
   #registeredActions: Map<PropertyKey, LazyAttributeActionOrBinder<ModelT>> =
@@ -43,9 +51,9 @@ class ViewModel<
   #registeredBinders: Map<PropertyKey, LazyAttributeActionOrBinder<ModelT>> =
     new Map();
 
-  #Ctor: new () => ModelT;
+  #Ctor: new (...args: CtorArgs) => ModelT;
 
-  constructor(Ctor: new () => ModelT) {
+  constructor(Ctor: new (...args: CtorArgs) => ModelT) {
     this.#Ctor = Ctor;
   }
 
@@ -61,8 +69,11 @@ class ViewModel<
     }
   }
 
-  parse(view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>): ModelT {
-    const model = new this.#Ctor();
+  parse(
+    view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>,
+    ...args: CtorArgs
+  ): ModelT {
+    const model = new this.#Ctor(...args);
     for (const attrNode of view._node.attributes) {
       let { name, positionals, named, binding } = attrNode;
       const insideBindingCtx = !!view._bindingCtx;
@@ -87,8 +98,8 @@ class ViewModel<
 }
 
 class AttributeDefHelper<ModelT> {
-  #viewModel: ViewModel<ModelT, any>;
-  constructor(viewModel: ViewModel<ModelT, any>) {
+  #viewModel: ViewModel<ModelT, any, any>;
+  constructor(viewModel: ViewModel<ModelT, any, any>) {
     this.#viewModel = viewModel;
   }
 
@@ -126,7 +137,7 @@ class AttributeDefHelper<ModelT> {
     action: AttributeAction<ModelT, T>,
     binder?:
       | AttributeBinder<ModelT, T>
-      | IViewModel<any, ReturnType<T>["namedDefinition"]>,
+      | IViewModel<any, ReturnType<T>["namedDefinition"], []>,
   ): T;
   attribute<T extends AttributeDefinition>(
     action: AttributeAction<ModelT, T>,
@@ -134,7 +145,7 @@ class AttributeDefHelper<ModelT> {
   ): T;
   attribute(
     action: any,
-    binder?: AttributeBinder<any, any> | IViewModel<any, any>,
+    binder?: AttributeBinder<any, any> | IViewModel<any, any, any>,
   ) {
     const returnValue = {};
     const lazyAction: LazyAttributeActionOrBinder<ModelT> = (
@@ -195,13 +206,14 @@ class AttributeDefHelper<ModelT> {
 export function defineViewModel<
   T,
   const BlockDef extends Partial<Record<string | Action, AttributeDefinition>>,
+  CtorArgs extends any[] = [],
   InitMeta = void,
 >(
-  Ctor: new () => T,
+  Ctor: new (...args: CtorArgs) => T,
   modelDefFn: (helper: AttributeDefHelper<T>) => BlockDef,
   initMeta?: InitMeta,
-): IViewModel<T, BlockDef & { "~meta": InitMeta }> {
-  const vm = new ViewModel<T, BlockDef & { "~meta": InitMeta }>(Ctor);
+): IViewModel<T, BlockDef & { "~meta": InitMeta }, CtorArgs> {
+  const vm = new ViewModel<T, BlockDef & { "~meta": InitMeta }, CtorArgs>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult = modelDefFn(helper);
   helper["~assignActions"](defResult);
@@ -216,7 +228,8 @@ export type SimpleViewModel<T> = IViewModel<
       uniqueKey(): K;
       required(): {} extends Pick<T, K> ? false : true;
     };
-  } & { "~meta": undefined }
+  } & { "~meta": undefined },
+  []
 >;
 
 export function defineSimpleViewModel<const T extends StandardJSONSchemaV1>(
@@ -226,7 +239,7 @@ export function defineSimpleViewModel<const T extends StandardJSONSchemaV1>(
     target: "draft-2020-12",
   });
   const Ctor = class SimpleViewModel {};
-  const vm = new ViewModel<any, any>(Ctor);
+  const vm = new ViewModel<any, any, []>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult: Record<string, any> = {};
   for (const key of Object.keys(jsonSchema.properties ?? {})) {
