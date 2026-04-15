@@ -1,6 +1,6 @@
 {
   "name": "@gi-tcg/gts-transpiler",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "type": "module",
@@ -15,14 +15,14 @@
     "src",
     "dist"
   ],
-  "scripts": {
-  },
+  "scripts": {},
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.5.5",
     "@sveltejs/acorn-typescript": "^1.0.8",
     "acorn": "8.15.0",
     "esrap": "2.2.1",
     "magic-string": "^0.30.21",
+    "path-browserify-esm": "^1.0.6",
     "zimmerframe": "^1.1.4"
   },
   "devDependencies": {

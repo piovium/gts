@@ -1,6 +1,6 @@
 {
   "name": "@gi-tcg/gts-language-server",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "type": "module",
@@ -28,6 +28,7 @@
     "@gi-tcg/gts-transpiler": "workspace:*",
     "@volar/language-server": "~2.4.0",
     "@zenfs/core": "^2.5.0",
+    "path-browserify-esm": "^1.0.6",
     "volar-service-typescript": "volar-2.4",
     "vscode-uri": "^3.0.8"
   },

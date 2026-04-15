@@ -39,6 +39,4 @@ export {
   resolveGtsConfig,
   resolveGtsConfigSync,
   type GtsConfig,
-  path,
-  type PathPolyfill,
 } from "./config";

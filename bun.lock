@@ -85,7 +85,7 @@
     },
     "packages/esbuild-plugin": {
       "name": "@gi-tcg/gts-esbuild-plugin",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
       },
@@ -98,7 +98,7 @@
     },
     "packages/language-plugin": {
       "name": "@gi-tcg/gts-language-plugin",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
         "@volar/language-core": "~2.4.0",
@@ -108,7 +108,7 @@
     },
     "packages/language-server": {
       "name": "@gi-tcg/gts-language-server",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "bin": {
         "gts-language-server": "./bin/gts-language-server.js",
       },
@@ -117,6 +117,7 @@
         "@gi-tcg/gts-transpiler": "workspace:*",
         "@volar/language-server": "~2.4.0",
         "@zenfs/core": "^2.5.0",
+        "path-browserify-esm": "^1.0.6",
         "volar-service-typescript": "volar-2.4",
         "vscode-uri": "^3.0.8",
       },
@@ -126,7 +127,7 @@
     },
     "packages/rollup-plugin": {
       "name": "@gi-tcg/gts-rollup-plugin",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@gi-tcg/gts-transpiler": "workspace:*",
       },
@@ -139,7 +140,7 @@
     },
     "packages/runtime": {
       "name": "@gi-tcg/gts-runtime",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "devDependencies": {
         "@standard-schema/spec": "^1.1.0",
         "json-schema-typed": "^8.0.2",
@@ -147,13 +148,14 @@
     },
     "packages/transpiler": {
       "name": "@gi-tcg/gts-transpiler",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@jridgewell/sourcemap-codec": "^1.5.5",
         "@sveltejs/acorn-typescript": "^1.0.8",
         "acorn": "8.15.0",
         "esrap": "2.2.1",
         "magic-string": "^0.30.21",
+        "path-browserify-esm": "^1.0.6",
         "zimmerframe": "^1.1.4",
       },
       "devDependencies": {
@@ -164,7 +166,7 @@
     },
     "packages/tsc": {
       "name": "@gi-tcg/gtsc",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "bin": {
         "gtsc": "./bin/gtsc.js",
       },
@@ -178,7 +180,7 @@
     },
     "packages/typescript-language-service-plugin": {
       "name": "@gi-tcg/gts-typescript-language-service-plugin",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@gi-tcg/gts-language-plugin": "workspace:*",
         "@volar/typescript": "~2.4.0",
@@ -1498,6 +1500,8 @@
     "parse5-parser-stream": ["parse5-parser-stream@7.1.2", "", { "dependencies": { "parse5": "^7.0.0" } }, "sha512-JyeQc9iwFLn5TbvvqACIF/VXG6abODeB3Fwmv/TGdLk2LfbWkaySGY72at4+Ty7EkPZj854u4CrICqNk2qIbow=="],
 
     "path-browserify": ["path-browserify@1.0.1", "", {}, "sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g=="],
+
+    "path-browserify-esm": ["path-browserify-esm@1.0.6", "", {}, "sha512-9nUwYvvu/yq1PYrUyYCihNWmpzacaRYF6gGbjLWErrZ4MRDWyfPN7RpE8E7tsw8eqBU/rr7mcoTXbS+Vih8uUA=="],
 
     "path-is-absolute": ["path-is-absolute@1.0.1", "", {}, "sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg=="],
 

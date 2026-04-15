@@ -9,7 +9,8 @@ import {
   type InitializeParams,
 } from "@volar/language-server/browser.js";
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
-import { path, type GtsConfig } from "@gi-tcg/gts-transpiler";
+import path from "path-browserify-esm";
+import { type GtsConfig } from "@gi-tcg/gts-transpiler";
 import { createDiagnosticsPlugin } from "./diagnostics";
 import { createTypeScriptServices } from "./typescript";
 import { createCompletionPlugin } from "./completion";

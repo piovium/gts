@@ -11,7 +11,7 @@ const PACKAGES = [
   "typescript-language-service-plugin",
 ];
 
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 import { repository as REPOSITORY, license as LICENSE } from "../package.json";
 
 for (const pkg of PACKAGES) {
