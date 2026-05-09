@@ -1,6 +1,6 @@
 import { defineConfig, type Plugin } from "vite";
-import { gts } from "@gi-tcg/gts-rollup-plugin";
+import gts from "@gi-tcg/unplugin-gts/vite";
 
 export default defineConfig({
-  plugins: [gts() as Plugin],
+  plugins: [gts()],
 });

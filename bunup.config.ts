@@ -5,22 +5,58 @@ export default defineWorkspace(
     {
       name: "transpiler",
       root: "packages/transpiler",
-      
     },
     {
       name: "runtime",
       root: "packages/runtime",
     },
     {
-      name: "esbuild-plugin",
-      root: "packages/esbuild-plugin",
-      config: {
-        target: "node",
-      },
-    },
-    {
-      name: "rollup-plugin",
-      root: "packages/rollup-plugin",
+      name: "unplugin",
+      root: "packages/unplugin",
+      config: [
+        {
+          name: "bun",
+          target: "bun",
+          entry: "src/bun.ts",
+          clean: false,
+        },
+        {
+          name: "esbuild",
+          target: "node",
+          entry: "src/esbuild.ts",
+          clean: false,
+        },
+        {
+          name: "rollup",
+          target: "browser",
+          entry: "src/rollup.ts",
+          clean: false,
+        },
+        {
+          name: "rolldown",
+          target: "browser",
+          entry: "src/rolldown.ts",
+          clean: false,
+        },
+        {
+          name: "rspack",
+          target: "browser",
+          entry: "src/rspack.ts",
+          clean: false,
+        },
+        {
+          name: "vite",
+          target: "node",
+          entry: "src/vite.ts",
+          clean: false,
+        },
+        {
+          name: "webpack",
+          target: "node",
+          entry: "src/webpack.ts",
+          clean: false,
+        },
+      ],
     },
     {
       name: "language-plugin",
@@ -34,15 +70,15 @@ export default defineWorkspace(
           name: "node",
           entry: "src/node.ts",
           target: "node",
-          outDir: "dist/node",
+          clean: false,
         },
         {
           name: "browser",
           entry: "src/browser.ts",
           target: "browser",
-          outDir: "dist/browser",
+          clean: false,
         },
-      ]
+      ],
     },
     {
       name: "tsc",

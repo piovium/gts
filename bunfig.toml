@@ -1,4 +1,4 @@
-preload = ["@gi-tcg/gts-esbuild-plugin/bun-preload"]
+# preload = ["@gi-tcg/unplugin-gts/bun/preload"]
 
 [install]
 linker = "hoisted"

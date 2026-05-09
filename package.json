@@ -10,7 +10,7 @@
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@gi-tcg/gts-esbuild-plugin": "workspace:*",
+    "@gi-tcg/unplugin-gts": "workspace:*",
     "@gi-tcg/gtsc": "workspace:*",
     "@types/bun": "^1.3.6",
     "bunup": "^0.16.26",

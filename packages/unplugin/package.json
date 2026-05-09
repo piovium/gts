@@ -1,0 +1,80 @@
+{
+  "name": "@gi-tcg/unplugin-gts",
+  "version": "0.1.0",
+  "repository": "https://github.com/piovium/gts.git",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./bun": {
+      "types": "./dist/bun.d.ts",
+      "default": "./dist/bun.js"
+    },
+    "./bun/preload": "./src/bun_preload.ts",
+    "./esbuild": {
+      "types": "./dist/esbuild.d.ts",
+      "default": "./dist/esbuild.js"
+    },
+    "./rolldown": {
+      "types": "./dist/rolldown.d.ts",
+      "default": "./dist/rolldown.js"
+    },
+    "./rollup": {
+      "types": "./dist/rollup.d.ts",
+      "default": "./dist/rollup.js"
+    },
+    "./rspack": {
+      "types": "./dist/rspack.d.ts",
+      "default": "./dist/rspack.js"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.js"
+    },
+    "./webpack": {
+      "types": "./dist/webpack.d.ts",
+      "default": "./dist/webpack.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {},
+  "peerDependencies": {
+    "@rspack/core": "^1",
+    "esbuild": "*",
+    "rollup": ">=3",
+    "rolldown": "*",
+    "vite": "*",
+    "webpack": "^4 || ^5"
+  },
+  "peerDependenciesMeta": {
+    "@rspack/core": {
+      "optional": true
+    },
+    "esbuild": {
+      "optional": true
+    },
+    "rolldown": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    },
+    "webpack": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@gi-tcg/gts-transpiler": "workspace:*",
+    "unplugin": "npm:@gytx/unplugin@3.1.0-patch.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0"
+  }
+}

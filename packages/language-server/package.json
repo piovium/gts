@@ -7,11 +7,11 @@
   "exports": {
     "./node": {
       "bun": "./src/node.ts",
-      "default": "./dist/node/node.js"
+      "default": "./dist/node.js"
     },
     "./browser": {
       "bun": "./src/browser.ts",
-      "default": "./dist/browser/browser.js"
+      "default": "./dist/browser.js"
     }
   },
   "bin": {
