@@ -7,7 +7,7 @@ import type { UnpluginFactory } from "unplugin";
 
 export const unpluginFactory: UnpluginFactory<TranspileOption | undefined> = (option) => {
   return {
-    name: "rollup-plugin-gaming-ts",
+    name: "unplugin-gaming-ts",
     transform: {
       filter: {
         id: /\.gts$/,
