@@ -2,115 +2,90 @@
 title: Build Plugins
 ---
 
-GTS provides build plugins for esbuild, Rollup, and Bun, plus a standalone TypeScript compiler CLI (`gtsc`).
+GTS provides a unified build plugin (`@gi-tcg/unplugin-gts`) that supports vite, esbuild, rollup, rolldown, rspack, webpack, and bun, plus a standalone TypeScript compiler CLI (`gtsc`).
 
-## esbuild Plugin (`@gi-tcg/gts-esbuild-plugin`)
+## Unplugin (`@gi-tcg/unplugin-gts`)
 
-### Plugin Registration
+The build plugin is built on [unplugin](https://unplugin.unjs.io/), providing a single plugin factory that adapts to multiple bundler APIs. Import the bundler-specific entry point:
 
 ```ts
-import { gts } from "@gi-tcg/gts-esbuild-plugin";
+// vite
+import gts from "@gi-tcg/unplugin-gts/vite";
 
 // esbuild
-await esbuild.build({
-  plugins: [gts()],
-  // ...
-});
+import gts from "@gi-tcg/unplugin-gts/esbuild";
+
+// rollup
+import gts from "@gi-tcg/unplugin-gts/rollup";
+
+// webpack
+import gts from "@gi-tcg/unplugin-gts/webpack";
+
+// rspack
+import gts from "@gi-tcg/unplugin-gts/rspack";
+
+// rolldown
+import gts from "@gi-tcg/unplugin-gts/rolldown";
+
+// bun
+import gts from "@gi-tcg/unplugin-gts/bun";
+
+// generic (createUnplugin)
+import gts from "@gi-tcg/unplugin-gts";
 ```
 
-### Implementation (`src/index.ts`)
+### Implementation (`src/unplugin.ts`)
 
-The `gts()` function returns a plugin compatible with both esbuild and Bun:
+The `unpluginFactory` function transforms `.gts` files using the `transpile()` API:
 
 ```ts
-function gts(option: TranspileOption = {}): EsBuildPlugin & BunPlugin {
+import {
+  transpile,
+  type TranspileOption,
+  resolveGtsConfig,
+} from "@gi-tcg/gts-transpiler";
+import type { UnpluginFactory } from "unplugin";
+
+export const unpluginFactory: UnpluginFactory<TranspileOption | undefined> = (option) => {
   return {
-    name: "esbuild-plugin-gaming-ts",
-    setup(build) {
-      build.onLoad({ filter: /\.gts$/ }, async (args) => {
-        const sourceCode = await readFile(args.path, "utf8");
-        const resolvedOption = await resolveGtsConfig(args.path, option, {
-          cwd: process.cwd(),
-          readFileFn: readFile,
+    name: "unplugin-gaming-ts",
+    transform: {
+      filter: { id: /\.gts$/ },
+      async handler(source, id) {
+        const resolvedOption = await resolveGtsConfig(id, option ?? {}, {
+          readFileFn: (path, encoding) =>
+            this.fs.readFile(path, { encoding }) as Promise<string>,
         });
-        const { code, sourceMap } = transpile(sourceCode, args.path, resolvedOption);
-        const mappingUrl = sourceMap.toUrl();
-        return {
-          contents: `${code}\n//# sourceMappingURL=${mappingUrl}`,
-          loader: "js",
-          resolveDir: path.dirname(args.path),
-        };
-      });
+        const { code, sourceMap } = transpile(source, id, resolvedOption);
+        return { code, map: sourceMap };
+      },
     },
   };
-}
-```
-
-**Flow:**
-1. Intercepts `.gts` file loads
-2. Reads the source file
-3. Resolves GTS configuration from the nearest `package.json`
-4. Transpiles GTS → JS using `transpile()`
-5. Appends an inline source map URL
-6. Returns the result as JavaScript with `resolveDir` set for import resolution
-
-### Bun Preload (`src/bun_preload.ts`)
-
-For Bun's native plugin system:
-
-```ts
-import { gts } from "./index";
-Bun.plugin(gts());
-```
-
-This is loaded via `bunfig.toml`:
-
-```toml
-preload = ["@gi-tcg/gts-esbuild-plugin/bun-preload"]
-```
-
-When `bun` starts, it automatically registers the GTS plugin, allowing direct `.gts` imports:
-
-```ts
-import { Barbara } from "./characters.gts";
-```
-
-## Rollup Plugin (`@gi-tcg/gts-rollup-plugin`)
-
-### Plugin Registration
-
-```ts
-import { gts } from "@gi-tcg/gts-rollup-plugin";
-
-export default {
-  plugins: [gts()],
-  // ...
 };
 ```
 
-### Implementation (`src/index.ts`)
+**Flow:**
+1. Intercepts `.gts` file loads via the `transform` hook
+2. Resolves GTS configuration from the nearest `package.json`
+3. Transpiles GTS → JS using `transpile()`
+4. Returns the generated JavaScript and source map (each bundler handles source maps natively)
+
+### Bun Preload (`src/bun_preload.ts`)
+
+For Bun's native plugin system, a preload script registers the plugin at startup:
 
 ```ts
-function gts(option: TranspileOption = {}): Plugin {
-  return {
-    name: "rollup-plugin-gaming-ts",
-    async load(id) {
-      if (!id.endsWith(".gts")) return null;
-      const sourceCode = await this.fs.readFile(id, { encoding: "utf8" });
-      const resolvedOption = await resolveGtsConfig(id, option, {
-        readFileFn: (path, encoding) => this.fs.readFile(path, { encoding }),
-      });
-      const { code, sourceMap } = transpile(sourceCode, id, resolvedOption);
-      return { code, map: sourceMap };
-    },
-  };
-}
+/// <reference types="bun" />
+import gts from "./bun.ts";
+
+await Bun.plugin(gts());
 ```
 
-**Differences from esbuild plugin:**
-- Uses Rollup's `this.fs.readFile` instead of Node.js `fs`
-- Returns the source map as an object (Rollup handles source map combination)
-- No inline source map URL needed (Rollup manages this)
+Users can configure it via `bunfig.toml`:
+
+```toml
+preload = ["@gi-tcg/unplugin-gts/bun/preload"]
+```
 
 ## gtsc CLI Compiler (`@gi-tcg/gtsc`)
 
@@ -186,8 +161,7 @@ DEFAULT_GTS_CONFIG < package.json gamingTs < inline plugin option
 
 All build plugins generate source maps:
 
-- **esbuild plugin** — inline data URL (appended as `//# sourceMappingURL=data:...`)
-- **Rollup plugin** — returned as a separate map object (Rollup combines it with other source maps)
+- **Unplugin** — returns a source map object; each bundler handles it natively (inline data URL for esbuild, combined map for rollup, etc.)
 - **gtsc** — uses Volar mappings for error position mapping (not traditional source maps)
 
 Source maps enable:

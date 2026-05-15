@@ -4,7 +4,7 @@ title: Architecture
 
 ## Monorepo Structure
 
-GTS is a monorepo managed with **Bun** (workspaces defined in the root `package.json`). The build orchestration is handled by [bunup](https://github.com/nicepkg/bunup), configured in `bunup.config.ts`.
+GTS is a monorepo managed with **pnpm** (workspaces defined in the root `package.json`). Each package uses [tsdown](https://tsdown.dev) for building, with the root `pnpm build` command orchestrating builds in dependency order via `pnpm -r build`.
 
 ```
 gts/
@@ -13,8 +13,7 @@ gts/
 │   ├── runtime/             # Runtime library (ViewModel, createDefine, createBinding)
 │   ├── language-plugin/     # Volar language plugin (virtual code generation)
 │   ├── language-server/     # LSP server (Node.js + browser entry points)
-│   ├── esbuild-plugin/      # esbuild/Bun plugin for .gts files
-│   ├── rollup-plugin/       # Rollup plugin for .gts files
+│   ├── unplugin/            # Build plugin (vite, esbuild, rollup, rspack, webpack, bun)
 │   ├── tsc/                 # CLI: gtsc (TypeScript compiler with GTS support)
 │   ├── typescript-language-service-plugin/  # TS Language Service Plugin (CJS)
 │   └── vscode/              # VS Code extension (syntax, LSP client)
@@ -22,8 +21,6 @@ gts/
 │   ├── local/               # Dev testing with .gts files
 │   ├── provider/            # Example provider (ViewModel definitions)
 │   └── web/                 # Vite + web example
-├── bunup.config.ts          # Build configuration for all packages
-├── bunfig.toml              # Bun config (preloads GTS esbuild plugin)
 └── package.json             # Root workspace definition
 ```
 
@@ -35,8 +32,7 @@ gts/
 | runtime | `@gi-tcg/gts-runtime` | ESM | browser | Runtime library for execution |
 | language-plugin | `@gi-tcg/gts-language-plugin` | ESM | browser | Volar virtual code provider |
 | language-server | `@gi-tcg/gts-language-server` | ESM | node+browser | Full LSP implementation |
-| esbuild-plugin | `@gi-tcg/gts-esbuild-plugin` | ESM | node | esbuild/Bun build plugin |
-| rollup-plugin | `@gi-tcg/gts-rollup-plugin` | ESM | browser | Rollup build plugin |
+| unplugin | `@gi-tcg/unplugin-gts` | ESM | browser | Multi-bundler build plugin (vite, esbuild, rollup, rspack, webpack, bun) |
 | tsc | `@gi-tcg/gtsc` | ESM | node | CLI compiler wrapper |
 | ts-ls-plugin | `@gi-tcg/gts-typescript-language-service-plugin` | CJS | node | TS editor plugin |
 | vscode | `gts-vscode` (private) | CJS | node | VS Code extension |
@@ -48,23 +44,23 @@ gts/
                         │  transpiler  │
                         └──────┬───────┘
                                │ used by
-            ┌──────────┬───────┼───────────┬────────────┐
-            │          │       │           │            │
-      ┌─────┴─────┐ ┌──┴──┐ ┌─┴──────┐ ┌──┴───┐  ┌────┴─────┐
-      │  esbuild  │ │rollup│ │language │ │ tsc  │  │ language │
-      │  plugin   │ │plugin│ │ plugin  │ │(gtsc)│  │  server  │
-      └───────────┘ └─────┘ └────┬────┘ └──┬───┘  └────┬─────┘
-                                 │         │            │
+         ┌───────────┬─────────┴─┬────────┬───────────┐
+         │           │           │        │           │
+   ┌─────┴─────┐ ┌───┴────┐ ┌────┴───┐ ┌──┴───┐  ┌────┴─────┐
+   │  esbuild  │ │unplugin│ │language│ │ tsc  │  │ language │
+   │  plugin   │ │        │ │ plugin │ │(gtsc)│  │  server  │
+   └───────────┘ └────────┘ └────┬───┘ └───┬──┘  └────┬─────┘
+                                 │         │          │
                                  │    uses language-plugin
-                                 │         │            │
-                                 └─────────┼────────────┘
+                                 │         │          │
+                                 └─────────┼──────────┘
                                            │
                               ┌────────────┴──────────────┐
-                              │  ts-language-service-plugin │
+                              │ ts-language-service-plugin│
                               └────────────┬──────────────┘
                                            │
                               ┌────────────┴──────────────┐
-                              │     vscode extension       │
+                              │     vscode extension      │
                               └───────────────────────────┘
 
       ┌──────────┐
@@ -79,41 +75,9 @@ gts/
 
 ## Build System
 
-### bunup (Build Orchestrator)
+### tsdown (Package Bundler)
 
-The root `bunup.config.ts` defines workspaces with individual build configs:
-
-```ts
-export default defineWorkspace([
-  { name: "transpiler", root: "packages/transpiler" },
-  { name: "runtime", root: "packages/runtime" },
-  { name: "esbuild-plugin", root: "packages/esbuild-plugin", config: { target: "node" } },
-  { name: "rollup-plugin", root: "packages/rollup-plugin", config: { target: "browser" } },
-  { name: "language-plugin", root: "packages/language-plugin", config: { target: "browser" } },
-  { name: "language-server", root: "packages/language-server", config: [
-    { name: "node", entry: "src/node.ts", target: "node", outDir: "dist/node" },
-    { name: "browser", entry: "src/browser.ts", target: "browser", outDir: "dist/browser" },
-  ]},
-  { name: "tsc", root: "packages/tsc", config: { target: "node", dts: false } },
-  { name: "ts-ls-plugin", root: "packages/typescript-language-service-plugin",
-    config: { target: "node", format: "cjs", dts: false } },
-  { name: "vscode", root: "packages/vscode",
-    config: { entry: ["src/extension.ts", "src/server.ts"], target: "node",
-              format: "cjs", dts: false, packages: "bundle" } },
-], { outDir: "dist", format: "esm", target: "browser", conditions: ["bun"], packages: "external" });
-```
-
-Default output format is ESM targeting browser. Individual packages override as needed (CJS for VS Code/TS plugin, node for CLI tools).
-
-### Bun Preloading
-
-The root `bunfig.toml` preloads the esbuild plugin so that `.gts` files can be imported directly when running with `bun`:
-
-```toml
-preload = ["@gi-tcg/gts-esbuild-plugin/bun-preload"]
-```
-
-This calls `Bun.plugin(gts())` at startup, registering a loader for `.gts` files.
+Each package uses [tsdown](https://tsdown.dev) as its bundler, configured in a per-package `tsdown.config.ts`. The root `pnpm build` runs `pnpm -r build`, which executes each package's `build` script (typically `tsdown`) in dependency order.
 
 ## External Dependencies
 
@@ -121,7 +85,7 @@ This calls `Bun.plugin(gts())` at startup, registering a loader for `.gts` files
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `acorn` | 8.15.0 | JavaScript parser (base) |
+| `acorn` | 8.16.0 | JavaScript parser (base) |
 | `@sveltejs/acorn-typescript` | — | TypeScript syntax plugin for Acorn |
 | `esrap` | 2.2.1 | AST printer with source map support |
 | `zimmerframe` | 1.1.4 | AST walker/visitor framework |

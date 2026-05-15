@@ -1,83 +1,75 @@
 # Agent Instructions for GamingTS (GTS) Repository
 
-This repository hosts the GamingTS (GTS) toolchain, a domain-specific language ecosystem for Genshin Impact TCG. It is a monorepo managed with **Bun**.
+GamingTS (GTS) is a TypeScript-based DSL toolchain for Genshin Impact TCG card definitions. It is a pnpm monorepo.
 
 ## 1. Environment & Build
 
-- **Package Manager:** `bun` (do NOT use npm/yarn/pnpm).
-- **Workspaces:** Defined in `package.json`. Packages are in `packages/*`.
+- **Package manager:** pnpm (`packageManager: pnpm@11.0.8`). Do NOT use npm/yarn/bun.
+- **Node.js:** >= 26 (see `engines` in root `package.json`).
 - **Setup:**
   ```bash
-  bun install
+  pnpm install
   ```
 - **Build:**
-  - **Note:** There is no root build script. You must build individual packages.
-  - Navigate to package: `cd packages/<name>` (or use `workdir` param).
-  - Command: `bun run build`
-  - Typical build uses `bun build` targeting node/esm.
+  - Root build: `pnpm build` (runs `pnpm -r build` — builds all packages in dependency order).
+  - Each package uses **tsdown** as the bundler (not tsup, not rolldown directly).
+  - Some packages need extra flags, e.g.:
+    - `packages/tsc`: `tsdown --no-dts --no-fixed-extension`
+    - `packages/typescript-language-service-plugin`: `tsdown --format=cjs --no-dts --no-fixed-extension`
 
 ## 2. Testing
 
-> N.B. Testing are poorly written now and the author recommends to write more tests or adjust existing tests.
-
-- **Test Runner:** `bun test` (native Bun test runner).
-- **Location:** Tests are typically located in `packages/<pkg>/__tests__/` and end with `.test.ts`.
-- **Running Tests:**
-  - Run all tests from root: `bun test`
-  - Run tests for a specific package: `bun test` (inside package dir).
-  - Run a single test file:
-    ```bash
-    bun test packages/transpiler/__tests__/transpile.test.ts
-    ```
-  - Run a specific test case (by name):
-    ```bash
-    bun test -t "basic transpile pipeline"
-    ```
+- **Test runner:** vitest (version pinned in root `dependencies`).
+- **Test files:** `__tests__/**/*.test.ts` inside each package, plus `examples/local/import.test.ts`.
+- **Test imports:** `import { test, expect } from "vitest"`.
+- **Running tests:**
+  ```bash
+  pnpm vitest                        # all tests from root
+  pnpm vitest --run                  # single run (no watch)
+  pnpm vitest <file>                 # run a specific file
+  pnpm vitest -t "test name"         # filter by test name
+  ```
+  Without vitest in PATH, use `pnpm exec vitest ...`.
+- There is no `vitest.config.ts` — vitest auto-discovers test files and uses inline config from `examples/local/vite.config.ts` for GTS import support.
 
 ## 3. Code Style & Conventions
 
-### General
-- **Language:** TypeScript (strict mode, v5.9+).
-- **Runtime:** Bun.
-- **Formatting:**
-  - Indentation: **2 spaces**.
-  - Semicolons: **Yes**.
-  - Quotes: Double quotes (`"`) preferred.
-  - Follow `.editorconfig` settings.
+- **Language:** TypeScript, strict mode (`"strict": true` in all `tsconfig.json`).
+- **Indent:** 2 spaces (see `.editorconfig`).
+- **Semicolons:** required.
+- **Quotes:** double quotes (`"`) preferred.
+- **Module system:** ESM for all packages **except** `packages/vscode` and `packages/typescript-language-service-plugin` which are `"type": "commonjs"`.
+- **Imports:**
+  - Use ESM `import`/`export`.
+  - Workspace deps use the `workspace:*` protocol (e.g., `"@gi-tcg/gts-transpiler": "workspace:*"`).
+  - `tsconfig` uses `"module": "NodeNext"` and `"verbatimModuleSyntax": true` in most packages; `"module": "Node16"` in the vscode package.
+- **Naming:**
+  - Packages: `@gi-tcg/gts-<name>` (except `gts-vscode` and `@gi-tcg/unplugin-gts`).
+  - Files: snake_case or kebab-case.
+  - Classes/Types: PascalCase.
+  - Variables/Functions: camelCase.
+- **No lint/format/typecheck scripts are defined** in any `package.json`.
 
-### Imports & Dependencies
-- **Syntax:** Use ESM (`import` / `export`).
-- **Workspace Dependencies:** Use the `workspace:*` protocol for internal deps (e.g., `"@gi-tcg/gts-esbuild-plugin": "workspace:*"`).
-- **Test Imports:** Always use `import { test, expect } from "bun:test";`.
-- **Node Polyfills:** Prefer Bun native APIs, but use node compat if targeting VS Code extension (commonjs/node).
+## 4. Architecture
 
-### Naming
-- **Packages:** `@gi-tcg/gts-<name>` (e.g., `@gi-tcg/gts-transpiler`).
-- **Files:** snake_case or kebab-case preferred for utilities (e.g., `loose_plugin.test.ts`).
-- **Classes/Types:** PascalCase.
-- **Variables/Functions:** camelCase.
+| Package | Scope | Notable |
+|---|---|---|
+| `packages/transpiler` | Core: parse `.gts` → AST → transform → `{ code, sourceMap }` | Entry: `src/index.ts`. Uses acorn + esrap. |
+| `packages/language-plugin` | Volar language plugin for `.gts` | Depends on `@volar/language-core`. |
+| `packages/tsc` | Custom TSC wrapper (`gtsc`) that supports `.gts` | Uses `@volar/typescript`. |
+| `packages/language-server` | LSP server (node + browser) | Uses Volar framework; bin: `gts-language-server`. |
+| `packages/vscode` | VS Code extension | CJS only; language ID `gaming-ts`, extension `.gts`; packaged with `vsce`. |
+| `packages/unplugin` | Bundler plugin (vite, esbuild, rollup, rspack, webpack, bun) | Entry points per bundler under `./vite`, `./esbuild`, etc. |
+| `packages/typescript-language-service-plugin` | TS language service plugin for VS Code | CJS; injected via `typescriptServerPlugins` in the VS Code extension. |
+| `packages/runtime` | Runtime helpers for generated code | Thin, mostly type definitions. |
 
-### Error Handling
-- Use domain-specific errors where possible (e.g., `GtsTranspilerError`).
-- When parsing/transforming, ensure source maps are preserved or generated.
+### Key patterns:
+- **Transpiler pipeline:** `parse(source)` → AST → `transform(ast, options, context)` → `{ code, sourceMap }`. The public API is `transpile()` and `transpileForVolar()` in `packages/transpiler/src/index.ts`.
+- **Config:** GTS options are resolved from the nearest `package.json`'s `gamingTs` field. See `packages/transpiler/src/config.ts`. Defaults include `runtimeImportSource`, `providerImportSource`, and `shortcutFunctionPreludes`.
+- **Volar integration:** The language plugin, language server, and tsc all depend on `@volar/*` packages for `.gts` language support in editors.
 
-## 4. Architecture Overview
+## 5. Workflow
 
-- **packages/transpiler:** Core logic.
-  - Pipeline: `parse(source)` -> AST -> `transform(ast)` -> `{ code, sourceMap }`.
-  - Tests rely on snapshot-like string comparisons or execution of generated code.
-- **packages/vscode:** VS Code Extension.
-  - Uses `vsce` for packaging.
-  - Language ID: `gaming-ts` (`.gts`).
-  - Grammar: `syntaxes/GamingTS.tmLanguage.json`.
-- **packages/language-server:** LSP implementation (likely using Volar framework).
-
-## 5. Workflow Rules for Agents
-
-- **Filesystem:** Always use **absolute paths** when using tools like `read` or `write`.
-- ~~**Verification:** After editing code, ALWAYS run related tests:~~
-  ```bash
-  bun test packages/relevant-package/__tests__/related.test.ts
-  ```
-- **Dependencies:** Do not add external dependencies unless absolutely necessary; prefer `bun` built-ins.
-- **Context:** When working on `transpiler`, checking `src/index.ts` is a good start to understand the public API.
+- **Dependencies:** Do not add external dependencies unless absolutely necessary; prefer Node.js built-ins.
+- **When working on transpiler**, start at `packages/transpiler/src/index.ts` for the public API.
+- **When changing vscode extension**, rebuild with `pnpm build` in `packages/vscode`, then use the VS Code launch config in `.vscode/launch.json`.

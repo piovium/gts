@@ -13,7 +13,7 @@ title: Introduction
 | [Transpiler](/docs/transpiler) | Transpiler internals: parsing, AST, transformation pipeline |
 | [Runtime](/docs/runtime) | Runtime system: ViewModel, bindings, define/query execution |
 | [Language Tooling](/docs/language-tooling) | Volar integration, language server, VS Code extension, and TypeScript plugin |
-| [Build Plugins](/docs/build-plugins) | esbuild, Rollup, and Bun plugins, plus `gtsc` CLI compiler |
+| [Build Plugins](/docs/build-plugins) | Build plugins (vite, esbuild, rollup, webpack, and more) plus `gtsc` CLI compiler |
 | [Configuration](/docs/configuration) | Configuration resolution, `package.json` fields, and defaults |
 
 ## How GTS Works (Summary)
@@ -46,7 +46,7 @@ For IDE support, a parallel Volar-based pipeline generates TypeScript type decla
     Runtime Path                            IDE / Volar Path
          │                                         │
   ┌──────┴──────┐                      ┌───────────┴──────────┐
-  │ GTS → TS    │                      │ GTS → TypeScript     │
+  │ GTS -> TS   │                      │ GTS -> TypeScript    │
   │ Transform   │                      │ Typings (Volar)      │
   └──────┬──────┘                      └───────────┬──────────┘
          │                                         │
@@ -66,15 +66,15 @@ For IDE support, a parallel Volar-based pipeline generates TypeScript type decla
 ## Quick Start for Contributors
 
 ```bash
-# Install dependencies (use bun, not npm/yarn/pnpm)
-bun install
+# Install dependencies (use pnpm, not npm/yarn/bun)
+pnpm install
 
 # Build all packages
-bun run build
+pnpm build
 
 # Run transpiler tests
-bun test packages/transpiler/__tests__/transpile.test.ts
+pnpm vitest packages/transpiler/__tests__/transpile.test.ts
 
 # Run all tests
-bun test
+pnpm vitest
 ```
