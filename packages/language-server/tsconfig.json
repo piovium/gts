@@ -4,7 +4,7 @@
     "lib": [
       "ES2021",
     ],
-    "module": "Preserve",
+    "module": "NodeNext",
     "sourceMap": true,
     "composite": true,
     "verbatimModuleSyntax": true,

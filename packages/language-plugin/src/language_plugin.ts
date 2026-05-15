@@ -5,7 +5,7 @@ import { URI } from "vscode-uri";
 import { resolveGtsConfigSync, type GtsConfig } from "@gi-tcg/gts-transpiler";
 import { GtsVirtualCode } from "./virtual_code.ts";
 
-type Ts = typeof import("typescript");
+type Ts = typeof ts;
 
 export function createGtsLanguagePlugin(
   ts: Ts,
