@@ -1,7 +1,7 @@
-import { AttributeReturn } from "./attribute_return";
-import { Action, Meta, NamedDefinition } from "./symbols";
-import { View } from "./view";
-import { StandardJSONSchemaV1 } from "@standard-schema/spec";
+import type { AttributeReturn } from "./attribute_return.ts";
+import type { Action, Meta, NamedDefinition } from "./symbols.ts";
+import { View } from "./view.ts";
+import  type { StandardJSONSchemaV1 } from "@standard-schema/spec";
 
 export interface AttributeBlockDefinition {
   "~action"?: AttributeDefinition | undefined;

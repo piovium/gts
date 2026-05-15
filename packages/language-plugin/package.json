@@ -7,7 +7,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "bun": "./src/index.ts",
+      "development": "./src/index.ts",
       "default": "./dist/index.js"
     }
   },
@@ -15,10 +15,16 @@
     "src",
     "dist"
   ],
+  "scripts": {
+    "build": "tsdown --platform neutral"
+  },
   "dependencies": {
     "@gi-tcg/gts-transpiler": "workspace:*",
     "@volar/language-core": "~2.4.0",
     "@volar/typescript": "~2.4.0",
     "vscode-uri": "^3.0.8"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:"
   }
 }

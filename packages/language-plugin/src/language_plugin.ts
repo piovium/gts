@@ -1,12 +1,14 @@
 import { type LanguagePlugin } from "@volar/language-core";
 import type {} from "@volar/typescript";
-import type * as ts from "typescript";
+import type ts from "typescript";
 import { URI } from "vscode-uri";
 import { resolveGtsConfigSync, type GtsConfig } from "@gi-tcg/gts-transpiler";
-import { GtsVirtualCode } from "./virtual_code";
+import { GtsVirtualCode } from "./virtual_code.ts";
+
+type Ts = typeof import("typescript");
 
 export function createGtsLanguagePlugin(
-  ts: typeof import("typescript"),
+  ts: Ts,
   inlineConfig: GtsConfig = {},
 ): LanguagePlugin<URI | string> {
   return {

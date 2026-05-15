@@ -1,4 +1,4 @@
-import type { BlockDefinitionRewriteMeta, IViewModel } from "./view_model";
+import type { BlockDefinitionRewriteMeta, IViewModel } from "./view_model.ts";
 
 export namespace AttributeReturn {
   export type This<TMeta> = {
@@ -14,7 +14,7 @@ export namespace AttributeReturn {
   };
 
   export type With<
-    VM extends IViewModel<any, any>,
+    VM extends IViewModel<any, any, any>,
     TMeta = VM["~namedDefinition"]["~meta"],
   > = {
     namedDefinition: BlockDefinitionRewriteMeta<VM["~namedDefinition"], TMeta>;
@@ -25,7 +25,7 @@ export namespace AttributeReturn {
     rewriteMeta: NewMeta;
   };
 
-  export type WithRewriteMeta<VM extends IViewModel<any, any>, NewMeta> = {
+  export type WithRewriteMeta<VM extends IViewModel<any, any, any>, NewMeta> = {
     namedDefinition: VM["~namedDefinition"];
     rewriteMeta: NewMeta;
   };

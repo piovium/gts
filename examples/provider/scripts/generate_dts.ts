@@ -1,4 +1,4 @@
-/// <reference types="bun" />
+/// <reference types="node" />
 
 import { rolldown } from "rolldown";
 import { dts } from "rolldown-plugin-dts";

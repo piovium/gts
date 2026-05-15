@@ -1,8 +1,10 @@
-import { createLanguageServicePlugin } from "@volar/typescript/lib/quickstart/createLanguageServicePlugin.js";
-import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
+const { createLanguageServicePlugin } =
+  require("@volar/typescript/lib/quickstart/createLanguageServicePlugin.js") as typeof import("@volar/typescript/lib/quickstart/createLanguageServicePlugin.js");
+const { createGtsLanguagePlugin } =
+  require("@gi-tcg/gts-language-plugin") as typeof import("@gi-tcg/gts-language-plugin");
 
 // Use CommonJS export to be compatible with TypeScript Language Service Plugin system
-export = createLanguageServicePlugin((ts, info) => {
+module.exports = createLanguageServicePlugin((ts, info) => {
   return {
     languagePlugins: [createGtsLanguagePlugin(ts)],
   };

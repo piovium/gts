@@ -1,11 +1,11 @@
 import { Parser } from "acorn";
 import type { Position, Program } from "estree";
 import { tsPlugin } from "@sveltejs/acorn-typescript";
-import { gtsPlugin, type GtsPluginOption } from "./gts_plugin.js";
-import { loosePlugin } from "./loose_plugin.js";
+import { gtsPlugin, type GtsPluginOption } from "./gts_plugin.ts";
+import { loosePlugin } from "./loose_plugin.ts";
 import { getCommentHandlers } from "./comment.js";
-import { GtsTranspilerError } from "../error.js";
-import { recordCallLParenPlugin } from "./record_call_lparen_plugin.js";
+import { GtsTranspilerError } from "../error.ts";
+import { recordCallLParenPlugin } from "./record_call_lparen_plugin.ts";
 
 const TsParser = Parser.extend(tsPlugin());
 

@@ -1,5 +1,5 @@
 import type { ExpressionStatement } from "estree";
-import type { TypingTranspileState } from "./walker";
+import type { TypingTranspileState } from "./walker.ts";
 
 type ReplacementPayload =
   | {

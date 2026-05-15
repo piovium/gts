@@ -1,0 +1,11 @@
+packages:
+  - 'packages/*'
+
+allowBuilds:
+  esbuild: true
+  keytar: true
+
+nodeLinker: hoisted
+
+catalog:
+  typescript: ^5.9.3

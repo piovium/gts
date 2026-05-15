@@ -7,35 +7,43 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
       "default": "./dist/index.js"
     },
     "./bun": {
       "types": "./dist/bun.d.ts",
+      "development": "./src/bun.ts",
       "default": "./dist/bun.js"
     },
     "./bun/preload": "./src/bun_preload.ts",
     "./esbuild": {
       "types": "./dist/esbuild.d.ts",
+      "development": "./src/esbuild.ts",
       "default": "./dist/esbuild.js"
     },
     "./rolldown": {
       "types": "./dist/rolldown.d.ts",
+      "development": "./src/rolldown.ts",
       "default": "./dist/rolldown.js"
     },
     "./rollup": {
       "types": "./dist/rollup.d.ts",
+      "development": "./src/rollup.ts",
       "default": "./dist/rollup.js"
     },
     "./rspack": {
       "types": "./dist/rspack.d.ts",
+      "development": "./src/rspack.ts",
       "default": "./dist/rspack.js"
     },
     "./vite": {
       "types": "./dist/vite.d.ts",
+      "development": "./src/vite.ts",
       "default": "./dist/vite.js"
     },
     "./webpack": {
       "types": "./dist/webpack.d.ts",
+      "development": "./src/webpack.ts",
       "default": "./dist/webpack.js"
     },
     "./package.json": "./package.json"
@@ -44,7 +52,9 @@
     "src",
     "dist"
   ],
-  "scripts": {},
+  "scripts": {
+    "build": "tsdown"
+  },
   "peerDependencies": {
     "@rspack/core": "^1",
     "esbuild": "*",
@@ -72,6 +82,7 @@
   },
   "dependencies": {
     "@gi-tcg/gts-transpiler": "workspace:*",
+    "@types/bun": "^1.3.6",
     "unplugin": "npm:@gytx/unplugin@3.1.0-patch.2"
   },
   "devDependencies": {

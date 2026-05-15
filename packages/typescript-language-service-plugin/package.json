@@ -9,6 +9,7 @@
     "dist"
   ],
   "scripts": {
+    "build": "tsdown --format=cjs --no-dts --no-fixed-extension"
   },
   "dependencies": {
     "@volar/typescript": "~2.4.0",

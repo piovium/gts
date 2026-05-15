@@ -1,19 +1,24 @@
 {
-  "workspaces": [
-    "packages/*",
-    "examples/*",
-    "docs"
-  ],
+  "name": "@gi-tcg/gts",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">= 26.0.0"
+  },
+  "packageManager": "pnpm@11.0.8",
   "scripts": {
-    "build": "bunx bunup"
+    "build": "pnpm -r build"
   },
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@gi-tcg/unplugin-gts": "workspace:*",
     "@gi-tcg/gtsc": "workspace:*",
-    "@types/bun": "^1.3.6",
+    "@gi-tcg/unplugin-gts": "workspace:*",
     "bunup": "^0.16.26",
-    "typescript": "^5.9.3"
+    "tsdown": "^0.22.0",
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "vitest": "^4.1.6"
   }
 }

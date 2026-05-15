@@ -6,9 +6,9 @@ import {
   loadTsdkByPath,
 } from "@volar/language-server/node.js";
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
-import { createDiagnosticsPlugin } from "./diagnostics";
-import { createTypeScriptServices } from "./typescript";
-import { createCompletionPlugin } from "./completion";
+import { createDiagnosticsPlugin } from "./diagnostics.ts";
+import { createTypeScriptServices } from "./typescript.ts";
+import { createCompletionPlugin } from "./completion.ts";
 
 const connection = createConnection();
 const server = createServer(connection);

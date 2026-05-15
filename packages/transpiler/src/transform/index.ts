@@ -1,9 +1,9 @@
 import type { Program } from "estree";
-import { eraseTs } from "./erase_ts";
+import { eraseTs } from "./erase_ts.ts";
 import { print } from "esrap";
 import jsPrinter from "esrap/languages/ts";
 import type { SourceMap } from "magic-string";
-import { gtsToTs, type TranspileOption } from "./gts";
+import { gtsToTs, type TranspileOption } from "./gts.ts";
 
 export interface TranspileResult {
   code: string;
@@ -33,4 +33,4 @@ export function transform(
   };
 }
 
-export { transformForVolar } from "./volar";
+export { transformForVolar } from "./volar/index.ts";

@@ -7,7 +7,7 @@ import type {
   Node,
   EmptyStatement,
 } from "estree";
-import { GtsTranspilerError } from "../error";
+import { GtsTranspilerError } from "../error.ts";
 
 const empty: EmptyStatement = {
   type: "EmptyStatement",

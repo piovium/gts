@@ -71,13 +71,13 @@
     ]
   },
   "scripts": {
-    "build": "cd ../.. && bunup --filter vscode",
-    "watch": "npm run build -- --watch",
-    "pack": "npm run build && vsce package --pre-release",
-    "release": "npm run build && vsce publish --pre-release"
+    "build": "tsdown",
+    "pack": "pnpm build && vsce package --pre-release",
+    "release": "pnpm build && vsce publish --pre-release"
   },
   "dependencies": {
-    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*"
+    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*",
+    "@types/node": "^24.10.4"
   },
   "devDependencies": {
     "@gi-tcg/gts-language-server": "workspace:*",

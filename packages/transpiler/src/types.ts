@@ -107,7 +107,7 @@ declare module "acorn" {
   }
 }
 
-export namespace Parse {
+export declare namespace Parse {
   /**
    * Destructuring errors object used during expression parsing
    * See: https://github.com/acornjs/acorn/blob/main/acorn/src/parseutil.js
@@ -365,7 +365,7 @@ export namespace Parse {
    * They are accessed by Ripple's custom parser plugin for whitespace handling,
    * JSX parsing, and other advanced features.
    */
-  export declare class Parser extends acorn.Parser {
+  export class Parser extends acorn.Parser {
     // ============================================================
     // Position and Location Tracking
     // ============================================================

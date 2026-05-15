@@ -1,7 +1,7 @@
 import { tokTypes, type Parser as ParserClass } from "acorn";
-import type { Parse, AST } from "../types";
-import { specialIdentifiers } from "../keywords";
-import { DUMMY_PLACEHOLDER } from "./loose_plugin";
+import type { Parse, AST } from "../types.ts";
+import { specialIdentifiers } from "../keywords.ts";
+import { DUMMY_PLACEHOLDER } from "./loose_plugin.ts";
 
 /*
 

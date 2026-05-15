@@ -1,12 +1,12 @@
-import { parse, parseLoose } from "./parse";
+import { parse, parseLoose } from "./parse/index.ts";
 import {
   transform,
   transformForVolar,
   type TranspileResult,
-} from "./transform";
-import type { TranspileOption } from "./transform/gts";
-import type { VolarMappingResult } from "./transform/volar";
-export { GtsTranspilerError } from "./error";
+} from "./transform/index.ts";
+import type { TranspileOption } from "./transform/gts.ts";
+import type { VolarMappingResult } from "./transform/volar/index.ts";
+export { GtsTranspilerError } from "./error.ts";
 
 export function transpile(
   source: string,
@@ -39,4 +39,4 @@ export {
   resolveGtsConfig,
   resolveGtsConfigSync,
   type GtsConfig,
-} from "./config";
+} from "./config.ts";

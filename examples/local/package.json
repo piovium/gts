@@ -2,7 +2,7 @@
   "name": "@example/local",
   "private": true,
   "scripts": {
-    "test:vitest": "bun vitest --run"
+    "test:vitest": "vitest --run"
   },
   "dependencies": {
     "@example/provider": "workspace:*"

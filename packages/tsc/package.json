@@ -12,6 +12,7 @@
     "dist"
   ],
   "scripts": {
+    "build": "tsdown --no-dts --no-fixed-extension"
   },
   "dependencies": {
     "@gi-tcg/gts-language-plugin": "workspace:*",
@@ -19,5 +20,8 @@
   },
   "devDependencies": {
     "@types/node": "^24.3.0"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:"
   }
 }

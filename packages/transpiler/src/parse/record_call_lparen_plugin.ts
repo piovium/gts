@@ -1,5 +1,5 @@
 import { tokTypes, type Parser } from "acorn";
-import type { AST, Parse } from "../types.js";
+import type { AST, Parse } from "../types.ts";
 
 /**
  * A plugin that records the location of the left parenthesis in CallExpression and 

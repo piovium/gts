@@ -1,10 +1,10 @@
-import { test, expect } from "bun:test";
+import { test, expect } from "vitest";
 import path from "node:path";
 import {
   resolveGtsConfig,
   resolveGtsConfigSync,
   type GtsConfig,
-} from "../src/config";
+} from "../src/config.ts";
 
 const PACKAGE_JSON = JSON.stringify({
   gamingTs: {

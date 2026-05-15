@@ -24,9 +24,9 @@ import {
   commonGtsVisitor,
   type ExternalizedBinding,
   type TranspileState,
-} from "../gts";
-import type { LeafToken } from "./collect_tokens";
-import { createReplacementHolder } from "./replacements";
+} from "../gts.ts";
+import type { LeafToken } from "./collect_tokens.ts";
+import { createReplacementHolder } from "./replacements.ts";
 
 interface ExternalizedTypedBinding extends ExternalizedBinding {
   typingId: Identifier;

@@ -1,6 +1,6 @@
 import { decode } from "@jridgewell/sourcemap-codec";
 import type { CodeInformation, CodeMapping } from "@volar/language-core";
-import type { LeafToken } from "./collect_tokens";
+import type { LeafToken } from "./collect_tokens.ts";
 
 export interface VolarMappingResult {
   code: string;

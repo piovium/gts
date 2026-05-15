@@ -1,5 +1,5 @@
 import tsPrinter from "esrap/languages/ts";
-import type { AST } from "../../types";
+import type { AST } from "../../types.ts";
 import type { Context, Visitors } from "esrap";
 import type { Node, SimpleCallExpression } from "estree";
 

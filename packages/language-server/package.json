@@ -6,11 +6,11 @@
   "type": "module",
   "exports": {
     "./node": {
-      "bun": "./src/node.ts",
+      "development": "./src/node.ts",
       "default": "./dist/node.js"
     },
     "./browser": {
-      "bun": "./src/browser.ts",
+      "development": "./src/browser.ts",
       "default": "./dist/browser.js"
     }
   },
@@ -22,7 +22,9 @@
     "dist",
     "bin"
   ],
-  "scripts": {},
+  "scripts": {
+    "build": "tsdown"
+  },
   "dependencies": {
     "@gi-tcg/gts-language-plugin": "workspace:*",
     "@gi-tcg/gts-transpiler": "workspace:*",

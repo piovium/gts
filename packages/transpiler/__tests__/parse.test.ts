@@ -1,5 +1,5 @@
-import { parse, parseLoose } from "../src/parse";
-import { test, expect } from "bun:test";
+import { parse, parseLoose } from "../src/parse/index.ts";
+import { test, expect } from "vitest";
 
 test("basic test", () => {
   const source = `

@@ -16,11 +16,11 @@ import type {
   Statement,
 } from "estree";
 import { walk, type Visitors } from "zimmerframe";
-import { GtsTranspilerError } from "../error";
+import { GtsTranspilerError } from "../error.ts";
 import {
   DEFAULT_QUERY_BINDINGS,
   DEFAULT_SHORTCUT_FUNCTION_PRELUDES,
-} from "./constants";
+} from "./constants.ts";
 
 export interface ExternalizedBinding {
   bindingName: Identifier;

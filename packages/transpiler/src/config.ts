@@ -1,4 +1,4 @@
-import type { TranspileOption } from "./transform/gts";
+import type { TranspileOption } from "./transform/gts.ts";
 import path from "path-browserify-esm";
 
 export interface GtsConfig extends TranspileOption {}

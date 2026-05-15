@@ -1,2 +1,2 @@
-export { createGtsLanguagePlugin } from "./language_plugin";
-export { GtsVirtualCode } from "./virtual_code";
+export { createGtsLanguagePlugin } from "./language_plugin.ts";
+export { GtsVirtualCode } from "./virtual_code.ts";

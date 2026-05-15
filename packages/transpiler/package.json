@@ -7,7 +7,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "bun": "./src/index.ts",
+      "development": "./src/index.ts",
       "default": "./dist/index.js"
     }
   },
@@ -15,7 +15,9 @@
     "src",
     "dist"
   ],
-  "scripts": {},
+  "scripts": {
+    "build": "tsdown --platform neutral"
+  },
   "dependencies": {
     "@jridgewell/sourcemap-codec": "^1.5.5",
     "@sveltejs/acorn-typescript": "^1.0.8",

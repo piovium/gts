@@ -11,12 +11,12 @@ import {
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import path from "path-browserify-esm";
 import { type GtsConfig } from "@gi-tcg/gts-transpiler";
-import { createDiagnosticsPlugin } from "./diagnostics";
-import { createTypeScriptServices } from "./typescript";
-import { createCompletionPlugin } from "./completion";
+import { createDiagnosticsPlugin } from "./diagnostics.ts";
+import { createTypeScriptServices } from "./typescript.ts";
+import { createCompletionPlugin } from "./completion.ts";
 import { Dirent, fs as memfs } from "@zenfs/core";
-import ts from "typescript";
-import zenFsProvider from "./zen_fs_provider";
+import type ts from "typescript";
+import zenFsProvider from "./zen_fs_provider.ts";
 
 export interface GtsLanguageServerBrowserInitializationOptions {
   tsdkUrl?: string;

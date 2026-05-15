@@ -1,6 +1,6 @@
 import { Parser } from "acorn";
 import { DUMMY_PLACEHOLDER, loosePlugin } from "../src/parse/loose_plugin.js";
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "vitest";
 import { parseLoose } from "../src/parse/index.js";
 
 const LooseParser = Parser.extend(loosePlugin());
@@ -58,7 +58,6 @@ define character {
 }    
 `;
   const ast = parseLoose(code);
-  console.log(ast);
   const defNode = ast.body.find(
     (node: any) => node.type === "GTSDefineStatement",
   );

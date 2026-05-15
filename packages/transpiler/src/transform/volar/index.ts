@@ -1,18 +1,18 @@
-import type { AST } from "../../types";
+import type { AST } from "../../types.ts";
 import { walk } from "zimmerframe";
-import type { SourceInfo, TranspileResult } from "..";
+import type { SourceInfo, TranspileResult } from "../index.ts";
 import { print } from "esrap";
 import {
   initialTranspileState,
   type TranspileOption,
   type TranspileState,
-} from "../gts";
-import { gtsToTypingsWalker, type TypingTranspileState } from "./walker";
-import { applyReplacements } from "./replacements";
+} from "../gts.ts";
+import { gtsToTypingsWalker, type TypingTranspileState } from "./walker.ts";
+import { applyReplacements } from "./replacements.ts";
 import type { Program } from "estree";
-import { convertToVolarMappings, type VolarMappingResult } from "./mappings";
-import { collectLeafTokens, type LeafToken } from "./collect_tokens";
-import { patchedPrinter } from "./printer";
+import { convertToVolarMappings, type VolarMappingResult } from "./mappings.ts";
+import { collectLeafTokens, type LeafToken } from "./collect_tokens.ts";
+import { patchedPrinter } from "./printer.ts";
 
 interface TypingTranspileOption extends TranspileOption {
   leafTokens: LeafToken[];
@@ -81,4 +81,4 @@ export function transformForVolar(
   };
 }
 
-export type { VolarMappingResult } from "./mappings";
+export type { VolarMappingResult } from "./mappings.ts";

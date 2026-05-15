@@ -4,10 +4,14 @@
     "lib": [
       "esnext"
     ],
-    "customConditions": ["bun"],
-    "module": "preserve",
+    "types": ["node"],
+    "module": "NodeNext",
+
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "rewriteRelativeImportExtensions": true,
+
     "sourceMap": true,
-    // "verbatimModuleSyntax": true,
     
     "composite": true,
     "declaration": true,

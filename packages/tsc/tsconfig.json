@@ -5,15 +5,20 @@
       "esnext"
     ],
     "types": ["node"],
-    "customConditions": ["bun"],
-    "module": "preserve",
-    "sourceMap": true,
+
+    "module": "Preserve",
     "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "rewriteRelativeImportExtensions": true,
+    "allowJs": true,
+
+    "sourceMap": true,
     "composite": true,
+
     "declaration": true,
     "emitDeclarationOnly": true,
+
     "strict": true,
-    "allowJs": true,
     "skipLibCheck": true
   },
 }

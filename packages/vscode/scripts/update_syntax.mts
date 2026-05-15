@@ -1,5 +1,6 @@
 // https://github.com/microsoft/vscode-typescript-next/blob/main/build/updateGrammar.js
 
+import { writeFile } from "node:fs/promises";
 import * as PLIST from "fast-plist";
 
 function removeDom(grammar: any) {
@@ -118,7 +119,7 @@ patched.repository["expression-operators"].patterns.unshift(
   }
 );
 
-await Bun.write(
+await writeFile(
   `./syntaxes/GamingTS.tmLanguage.json`,
   JSON.stringify(patched, null, 2)
 );
