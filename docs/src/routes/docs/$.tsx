@@ -1,19 +1,26 @@
-import { createFileRoute, notFound } from '@tanstack/react-router';
-import { DocsLayout } from 'fumadocs-ui/layouts/docs';
-import { createServerFn } from '@tanstack/react-start';
-import { source } from '@/lib/source';
-import browserCollections from 'fumadocs-mdx:collections/browser';
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
-import defaultMdxComponents from 'fumadocs-ui/mdx';
-import { baseOptions, gitConfig } from '@/lib/layout.shared';
-import { useFumadocsLoader } from 'fumadocs-core/source/client';
-import { Suspense } from 'react';
-import { LLMCopyButton, ViewOptions } from '@/components/ai/page-actions';
+import { createFileRoute, notFound } from "@tanstack/react-router";
+import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { createServerFn } from "@tanstack/react-start";
+import { slugsToMarkdownPath, source } from "@/lib/source";
+import browserCollections from "collections/browser";
+import {
+  DocsBody,
+  DocsDescription,
+  DocsPage,
+  DocsTitle,
+  MarkdownCopyButton,
+  ViewOptionsPopover,
+} from "fumadocs-ui/layouts/docs/page";
+import { baseOptions } from "@/lib/layout.shared";
+import { gitConfig } from "@/lib/shared";
+import { useFumadocsLoader } from "fumadocs-core/source/client";
+import { Suspense } from "react";
+import { useMDXComponents } from "@/components/mdx";
 
-export const Route = createFileRoute('/docs/$')({
+export const Route = createFileRoute("/docs/$")({
   component: Page,
   loader: async ({ params }) => {
-    const slugs = params._splat?.split('/') ?? [];
+    const slugs = params._splat?.split("/") ?? [];
     const data = await serverLoader({ data: slugs });
     await clientLoader.preload(data.path);
     return data;
@@ -21,7 +28,7 @@ export const Route = createFileRoute('/docs/$')({
 });
 
 const serverLoader = createServerFn({
-  method: 'GET',
+  method: "GET",
 })
   .inputValidator((slugs: string[]) => slugs)
   .handler(async ({ data: slugs }) => {
@@ -29,8 +36,8 @@ const serverLoader = createServerFn({
     if (!page) throw notFound();
 
     return {
-      url: page.url,
       path: page.path,
+      markdownUrl: slugsToMarkdownPath(page.slugs).url,
       pageTree: await source.serializePageTree(source.getPageTree()),
     };
   });
@@ -40,10 +47,10 @@ const clientLoader = browserCollections.docs.createClientLoader({
     { toc, frontmatter, default: MDX },
     // you can define props for the component
     {
-      url,
+      markdownUrl,
       path,
     }: {
-      url: string;
+      markdownUrl: string;
       path: string;
     },
   ) {
@@ -52,18 +59,14 @@ const clientLoader = browserCollections.docs.createClientLoader({
         <DocsTitle>{frontmatter.title}</DocsTitle>
         <DocsDescription>{frontmatter.description}</DocsDescription>
         <div className="flex flex-row gap-2 items-center border-b -mt-4 pb-6">
-          <LLMCopyButton markdownUrl={`${url}.mdx`} />
-          <ViewOptions
-            markdownUrl={`${url}.mdx`}
+          <MarkdownCopyButton markdownUrl={markdownUrl} />
+          <ViewOptionsPopover
+            markdownUrl={markdownUrl}
             githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/docs/${path}`}
           />
         </div>
         <DocsBody>
-          <MDX
-            components={{
-              ...defaultMdxComponents,
-            }}
-          />
+          <MDX components={useMDXComponents()} />
         </DocsBody>
       </DocsPage>
     );
@@ -71,11 +74,15 @@ const clientLoader = browserCollections.docs.createClientLoader({
 });
 
 function Page() {
-  const data = useFumadocsLoader(Route.useLoaderData());
+  const { path, pageTree, markdownUrl } = useFumadocsLoader(
+    Route.useLoaderData(),
+  );
 
   return (
-    <DocsLayout {...baseOptions()} tree={data.pageTree}>
-      <Suspense>{clientLoader.useContent(data.path, data)}</Suspense>
+    <DocsLayout {...baseOptions()} tree={pageTree}>
+      <Suspense>
+        {clientLoader.useContent(path, { markdownUrl, path })}
+      </Suspense>
     </DocsLayout>
   );
 }
