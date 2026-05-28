@@ -36,6 +36,9 @@ declare module "estree" {
   interface NewExpression {
     lParenLoc?: SourceLocation;
   }
+  interface ImportDeclaration {
+    endLoc?: SourceLocation;
+  }
 
   interface GTSDefineStatement extends BaseStatement {
     type: "GTSDefineStatement";

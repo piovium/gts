@@ -91,6 +91,19 @@ export function collectLeafTokens(ast: any): LeafToken[] {
       }
       next();
     },
+    ImportDeclaration(node, { state, next }) {
+      if (node.loc) {
+        state.tokens.push({
+          loc: {
+            start: node.loc.end,
+            end: node.loc.end,
+          },
+          sourceLength: 0,
+          generatedLength: 1
+        });
+      }
+      next();
+    },
   });
   return state.tokens;
 }

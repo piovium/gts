@@ -1,5 +1,6 @@
 import { A } from "./test2.gts"
 
+
 export const add = (a: number, b: number) => {
   return a + b;
 }
@@ -64,6 +65,7 @@ const sub = (a: number, b: number) => {
 }
 
 void A;
+gytx
 // obj.sub("test");
 // (0, obj).sub("test");
 // obj.foo ? 'a' : 'b';
