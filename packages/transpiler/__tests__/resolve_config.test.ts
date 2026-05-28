@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import path from "node:path";
+import path from "path-browserify-esm";
 import {
   resolveGtsConfig,
   resolveGtsConfigSync,

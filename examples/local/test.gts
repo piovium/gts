@@ -63,6 +63,7 @@ const sub = (a: number, b: number) => {
   return a - b;
 }
 
+void A;
 // obj.sub("test");
 // (0, obj).sub("test");
 // obj.foo ? 'a' : 'b';

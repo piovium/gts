@@ -1,10 +1,11 @@
 import { test, expect } from "vitest";
 import { parse } from "../src/parse/index.ts";
 import { transform } from "../src/transform/index.ts";
-// @ts-expect-error no typings 
-import SOURCE from "../../../examples/local/test.gts" with { type: "text" };
+import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 test("basic transpile pipeline", async () => {
+  const SOURCE = await readFile(path.resolve(import.meta.dirname, "../../../examples/local/test.gts"), "utf8");
   const parsed = parse(SOURCE);
   const output = transform(
     parsed,
@@ -16,8 +17,8 @@ test("basic transpile pipeline", async () => {
   expect(output.sourceMap?.sources).toEqual(["test.ts"]);
 
   // console.log(output.code);
-  // writeFileSync(
-  //   `temp/test.js`,
-  //   `${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`,
-  // );
+  await writeFile(
+    path.resolve(import.meta.dirname, `../../../temp/test.js`),
+    `${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`,
+  );
 });
