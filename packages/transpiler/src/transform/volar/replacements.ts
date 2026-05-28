@@ -143,6 +143,7 @@ export function applyReplacements(
         type ${uniqueKeyLhs} = {
           ${Meta}: ${payload.metaType}; 
           uniqueKey: ${payload.defType} extends { [${payload.attrName}]: { uniqueKey: infer UniqueKey } } ? UniqueKey : () => 0;
+        };
         
         let ${uniqueKeyLhs}!: ${uniqueKeyLhs};
         let ${uniqueKey} = ${uniqueKeyLhs}.uniqueKey();

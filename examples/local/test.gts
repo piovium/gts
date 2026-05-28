@@ -1,4 +1,4 @@
-import { A } from "./test2.gts";
+import { A } from "./test2.gts"
 
 export const add = (a: number, b: number) => {
   return a + b;
@@ -63,11 +63,7 @@ const sub = (a: number, b: number) => {
   return a - b;
 }
 
-export const obj = {
-  foo: "bar",
-  sub: (name: string) => {}
-};
 // obj.sub("test");
 // (0, obj).sub("test");
-obj.foo ? 'a' : 'b';
-new Date()
+// obj.foo ? 'a' : 'b';
+// new Date()
