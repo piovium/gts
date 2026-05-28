@@ -16,6 +16,10 @@ const DEFAULT_VOLAR_MAPPING_DATA: CodeInformation = {
   verification: true,
 };
 
+const COMPLETION_ONLY_MAPPING_DATA: CodeInformation = {
+  completion: true,
+};
+
 interface SourceMap {
   mappings: string;
 }
@@ -321,6 +325,17 @@ export function convertToVolarMappings(
     });
   }
 
+  const completionPreludeLength = getCompletionPreludeLength(mappings);
+  if (completionPreludeLength > 0) {
+    mappings.push({
+      sourceOffsets: [0],
+      generatedOffsets: [0],
+      lengths: [0],
+      generatedLengths: [completionPreludeLength],
+      data: COMPLETION_ONLY_MAPPING_DATA,
+    });
+  }
+
   // Handle extra mappings that purely generated and wants a diagnostic
   // that appears on the top of file.
   // We'd add these mappings at walker that they will have a `loc` to `1:0`
@@ -365,4 +380,21 @@ export function convertToVolarMappings(
   mappings.sort((a, b) => a.sourceOffsets[0] - b.sourceOffsets[0]);
 
   return mappings;
+}
+
+function getCompletionPreludeLength(mappings: CodeMapping[]): number {
+  let minGeneratedOffset = Number.POSITIVE_INFINITY;
+  for (const mapping of mappings) {
+    if (!mapping.data.completion) {
+      continue;
+    }
+    const generatedOffset = mapping.generatedOffsets[0];
+    if (generatedOffset < minGeneratedOffset) {
+      minGeneratedOffset = generatedOffset;
+    }
+  }
+  if (!Number.isFinite(minGeneratedOffset) || minGeneratedOffset <= 0) {
+    return 0;
+  }
+  return minGeneratedOffset;
 }
