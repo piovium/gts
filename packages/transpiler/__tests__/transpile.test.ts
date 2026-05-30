@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import { test, expect } from "vitest";
 import { parse } from "../src/parse/index.ts";
 import { transform } from "../src/transform/index.ts";

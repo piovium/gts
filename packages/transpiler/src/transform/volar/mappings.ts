@@ -361,7 +361,7 @@ export function convertToVolarMappings(
     });
   }
 
-  // Sort mappings by source offset	// Sort mappings by source offset
+  // Sort mappings by source offset
   mappings.sort((a, b) => a.sourceOffsets[0] - b.sourceOffsets[0]);
 
   return mappings;

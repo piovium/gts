@@ -1,4 +1,5 @@
-import { A } from "./test2.gts"
+
+import { A } from "./test2.gts";
 
 
 export const add = (a: number, b: number) => {
@@ -55,13 +56,14 @@ define summon {
     hint heal, 1;
     :heal(1, query* my.character);
     const currentUsage = :getVariable("usage");
+    void (1 + 1);
     :apply(hydro, query my.active);
   }
 }
 
 
 const sub = (a: number, b: number) => {
-  return a - b;
+  return     a - b;
 }
 
 void A;

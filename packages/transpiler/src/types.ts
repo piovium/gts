@@ -25,6 +25,11 @@ declare module "estree" {
     GTSQueryExpression: GTSQueryExpression;
   }
 
+  interface BaseNode {
+    /** For volar mappings, record the original source if purely TypeScript */
+    pureSource?: string;
+  }
+
   interface ImportDeclaration {
     /** Emit inner diagnostics to the top-of-file */
     diagnosticsOnTop?: boolean;

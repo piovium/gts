@@ -98,26 +98,17 @@ const newCallNewExpression: typeof prevCallNewExpression = function (
 printer.CallExpression = newCallNewExpression;
 printer.NewExpression = newCallNewExpression;
 
-const prevImportDeclaration = printer.ImportDeclaration!;
-printer.ImportDeclaration = function (node, context) {
-  prevImportDeclaration(node, context);
-  if (node.loc) {
-    const fakeEndNode = {
-      loc: {
-        start: node.loc.end,
-        end: node.loc.end,
-      },
-    } as AST.Node;
-    context.write("\n", fakeEndNode);
-  }
-}
-
 // Handle node with `diagnosticsOnTop`. These nodes and their children will be
 // printed with an extra `loc` that point to the beginning of the source file,
 // so the source-mapping will include them with a 0:1 -> generated position entry.
 
 const prevWildcard = printer._!;
 printer._ = (node: Node, context, visit) => {
+  if (typeof node.pureSource === "string") {
+    console.dir(node.pureSource)
+    context.write(node.pureSource, node);
+    return;
+  }
   const contextProto = Object.getPrototypeOf(context);
   const prevContextWrite: typeof context.write = contextProto.write;
   if ("diagnosticsOnTop" in node && node.diagnosticsOnTop) {

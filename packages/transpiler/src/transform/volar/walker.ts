@@ -382,7 +382,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       const export_ = node.bindingAccessModifier !== "private";
       const typingId: Identifier = {
         type: "Identifier",
-        name: `gts_binding_type_${state.externalizedBindings.length}`,
+        name: `__gts_binding_type_${state.externalizedBindings.length}`,
       };
       genBindingTyping(state, {
         attrName,

@@ -61,7 +61,7 @@ export function transformForVolar(
   option: TranspileOption,
   sourceInfo: Required<SourceInfo>,
 ): VolarMappingResult {
-  const tokens = collectLeafTokens(ast);
+  const tokens = collectLeafTokens(sourceInfo.content, ast);
   const extraMappings = new Map<string, string>();
   const { code, sourceMap } = gtsToTypings(ast, {
     ...option,

@@ -16,6 +16,7 @@ export function parse(input: string, options?: GtsPluginOption): Program {
       ecmaVersion: "latest",
       sourceType: "module",
       locations: true,
+      ranges: true,
     }) as Program;
   } catch (e) {
     if (e instanceof SyntaxError && "loc" in e) {
@@ -54,6 +55,7 @@ export function parseLoose(
       ecmaVersion: "latest",
       sourceType: "module",
       locations: true,
+      ranges: true,
       onComment,
     }) as Program;
     addComments(ast);

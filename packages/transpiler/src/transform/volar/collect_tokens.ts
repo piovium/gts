@@ -1,9 +1,9 @@
-import type { Node, SourceLocation } from "estree";
+import type { Node, Program, SourceLocation } from "estree";
 import { walk } from "zimmerframe";
 
-function isLeafNode(node: any): boolean {
+function isLeafNode(node: NonNullable<unknown>): boolean {
   for (const key in node) {
-    const val = node[key];
+    const val = (node as Record<string, unknown>)[key];
 
     // Ignore non-child properties (metadata)
     if (key === "loc" || key === "start" || key === "end" || key === "range") {
@@ -12,7 +12,12 @@ function isLeafNode(node: any): boolean {
 
     // Check if the property is a Node
     // (An object with a 'type' property is generally an AST node)
-    if (val && typeof val === "object" && typeof val.type === "string") {
+    if (
+      val &&
+      typeof val === "object" &&
+      "type" in val &&
+      typeof val.type === "string"
+    ) {
       return false; // Found a valid child node
     }
 
@@ -53,15 +58,35 @@ export interface LeafToken {
   generatedLength?: number;
 }
 
-export function collectLeafTokens(ast: any): LeafToken[] {
-  const state = {
-    tokens: [] as LeafToken[],
+export function collectLeafTokens(source: string, ast: Program): LeafToken[] {
+  interface CollectTokenState {
+    tokens: LeafToken[];
+    /** Whether the node is from source and purely TypeScript */
+    pureSource: boolean;
+    /** Whether the node is visited once (for detecting leaf node) */
+    visited: boolean;
+  }
+  const state: CollectTokenState = {
+    tokens: [],
+    pureSource: true,
+    visited: false,
   };
   walk(ast as Node, state, {
     _(node, { state, next }) {
-      if (isLeafNode(node) && node.loc) {
+      state.visited = true;
+      let currNodePureSource = !!node.loc && !node.type.startsWith("GTS");
+      const subState = { tokens: [], pureSource: true, visited: false };
+      next(subState);
+      currNodePureSource &&= subState.pureSource;
+      state.pureSource &&= currNodePureSource;
+      // record original source for purely branch node
+      if (subState.visited && node.range && currNodePureSource) {
+        const [start, end] = node.range;
+        node.pureSource = source.slice(start, end);
+      }
+      if (currNodePureSource) {
         const token: LeafToken = {
-          loc: node.loc,
+          loc: node.loc!,
         };
         if ("isDummy" in node && node.isDummy) {
           token.isDummy = true;
@@ -70,8 +95,9 @@ export function collectLeafTokens(ast: any): LeafToken[] {
           token.generatedLength = 1;
         }
         state.tokens.push(token);
+      } else {
+        state.tokens.push(...subState.tokens);
       }
-      next();
     },
     NewExpression(node, { state, next }) {
       const lParenLoc = node.lParenLoc;
@@ -87,19 +113,6 @@ export function collectLeafTokens(ast: any): LeafToken[] {
       if (lParenLoc) {
         state.tokens.push({
           loc: lParenLoc,
-        });
-      }
-      next();
-    },
-    ImportDeclaration(node, { state, next }) {
-      if (node.loc) {
-        state.tokens.push({
-          loc: {
-            start: node.loc.end,
-            end: node.loc.end,
-          },
-          sourceLength: 0,
-          generatedLength: 1
         });
       }
       next();
