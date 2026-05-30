@@ -1,5 +1,5 @@
 
-import { A } from "./test2.gts";
+import { A } from "./test2.gts";void 0;
 
 
 export const add = (a: number, b: number) => {
