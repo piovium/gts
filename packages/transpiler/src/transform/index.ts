@@ -1,6 +1,6 @@
 import type { Program } from "estree";
 import { eraseTs } from "./erase_ts.ts";
-import { print } from "esrap";
+import { print, type Visitors } from "esrap";
 import jsPrinter from "esrap/languages/ts";
 import type { SourceMap } from "magic-string";
 import { gtsToTs, type TranspileOption } from "./gts.ts";
@@ -18,11 +18,11 @@ export interface SourceInfo {
 export function transform(
   ast: Program,
   option: TranspileOption = {},
-  sourceInfo: SourceInfo = {}
+  sourceInfo: SourceInfo = {},
 ): TranspileResult {
   const ts = gtsToTs(ast, option);
   const js = eraseTs(ts);
-  const { code, map } = print(js, jsPrinter(), {
+  const { code, map } = print(js, jsPrinter() as Visitors, {
     indent: "  ",
     sourceMapContent: sourceInfo.content,
     sourceMapSource: sourceInfo.filename,

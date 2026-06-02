@@ -1,6 +1,5 @@
 
-import { A } from "./test2.gts";void 0;
-
+import { A } from "./test2.gts";
 
 export const add = (a: number, b: number) => {
   return a + b;
@@ -32,7 +31,7 @@ define character {
 define skill {
   id 12011 as private WhisperOfWater;
   cost hydro, 3;
-  variable foo, 42;
+  variable foo, ;
   const a = :getVariable("foo")
   :damage(hydro, 1);
   :summon(MelodyLoop);
@@ -63,12 +62,16 @@ define summon {
 
 
 const sub = (a: number, b: number) => {
-  return     a - b;
+  return a - b;
 }
 
 void A;
 gytx
+const obj = { sub, foo: 0 };
+obj.    
 // obj.sub("test");
 // (0, obj).sub("test");
 // obj.foo ? 'a' : 'b';
 // new Date()
+sub
+

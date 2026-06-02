@@ -6,7 +6,6 @@ import type * as AST from "estree";
 type ForInit = boolean | "await";
 
 declare module "estree" {
-  
   interface Identifier {
     isDummy?: boolean;
   }
@@ -24,25 +23,12 @@ declare module "estree" {
     GTSShortcutFunctionExpression: GTSShortcutFunctionExpression;
     GTSQueryExpression: GTSQueryExpression;
   }
-
-  interface BaseNode {
-    /** For volar mappings, record the original source if purely TypeScript */
-    pureSource?: string;
-  }
-
-  interface ImportDeclaration {
-    /** Emit inner diagnostics to the top-of-file */
-    diagnosticsOnTop?: boolean;
-  }
-
+  
   interface SimpleCallExpression {
-    lParenLoc?: SourceLocation;
+    lParenRange?: [number, number];
   }
   interface NewExpression {
-    lParenLoc?: SourceLocation;
-  }
-  interface ImportDeclaration {
-    endLoc?: SourceLocation;
+    lParenRange?: [number, number];
   }
 
   interface GTSDefineStatement extends BaseStatement {

@@ -66,6 +66,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
           shorthand: false,
           value: state.ActionLit,
           loc: node.loc,
+          range: node.range,
         },
         {
           type: "Property",
@@ -108,6 +109,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
         },
       ],
       loc: node.loc,
+      range: node.range,
     };
   },
   GTSShortcutFunctionExpression(
@@ -120,6 +122,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
       body: visit(node.body) as Expression | BlockStatement,
       expression: node.expression,
       loc: node.loc,
+      range: node.range,
     };
   },
   GTSShortcutArgumentExpression(node, { state, visit }): MemberExpression {
@@ -130,6 +133,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
       optional: false,
       property: visit(node.property) as Identifier,
       loc: node.loc,
+      range: node.range,
     };
   },
   GTSQueryExpression(node, { state, visit }) {
@@ -146,6 +150,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
           params: state.queryParameters,
           expression: true,
           loc: node.argument.loc,
+          range: node.argument.range,
         },
         {
           type: "ObjectExpression",
@@ -174,7 +179,6 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
           ],
         },
       ],
-      // loc: node.loc,
     };
   },
 };
@@ -279,6 +283,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         },
       ],
       loc: node.loc,
+      range: node.range,
     });
 
     state.bindingStatements.push({
@@ -297,6 +302,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         },
       ],
       loc: node.loc,
+      range: node.range,
     });
 
     for (let i = 0; i < newBindings.length; i++) {
@@ -338,6 +344,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         arguments: [state.rootVmId, nodeVarId],
       },
       loc: node.loc,
+      range: node.range,
     };
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
@@ -363,6 +370,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
       shorthand: false,
       value: nameValue,
       loc: node.loc,
+      range: node.range,
     });
     const body = { ...namedBody, properties };
     if (node.bindingName) {
@@ -414,8 +422,10 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
             body: positionals,
             expression: true,
             loc: positionals.loc,
+            range: positionals.range,
           },
           loc: positionals.loc,
+          range: positionals.range,
         },
         {
           type: "Property",
@@ -426,9 +436,11 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
           shorthand: false,
           value: named,
           loc: named.loc,
+          range: named.range,
         },
       ],
       loc: node.loc,
+      range: node.range,
     };
     return partialBody;
   },
@@ -447,6 +459,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         }
       }),
       loc: node.loc,
+      range: node.range,
     };
   },
   GTSNamedAttributeBlock(node, { visit }): ObjectExpression {
@@ -471,6 +484,7 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
         },
       ],
       loc: node.loc,
+      range: node.range,
     };
   },
   ...commonGtsVisitor,

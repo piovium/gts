@@ -230,15 +230,18 @@ importers:
 
   packages/transpiler:
     dependencies:
-      '@jridgewell/sourcemap-codec':
-        specifier: ^1.5.5
-        version: 1.5.5
       '@sveltejs/acorn-typescript':
         specifier: ^1.0.8
         version: 1.0.8(acorn@8.16.0)
       acorn:
         specifier: ^8.15.0
         version: 8.16.0
+      dedent:
+        specifier: ^1.7.2
+        version: 1.7.2
+      espolar:
+        specifier: ^0.1.4
+        version: 0.1.4(@types/estree@1.0.9)
       esrap:
         specifier: 2.2.1
         version: 2.2.1
@@ -253,8 +256,8 @@ importers:
         version: 1.1.4
     devDependencies:
       '@types/estree':
-        specifier: ^1.0.8
-        version: 1.0.8
+        specifier: ^1.0.9
+        version: 1.0.9
       '@types/node':
         specifier: ^24.3.0
         version: 24.10.4
@@ -2577,6 +2580,9 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@types/estree@1.0.9':
+    resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
+
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
 
@@ -2620,6 +2626,10 @@ packages:
 
   '@types/vscode@1.107.0':
     resolution: {integrity: sha512-XS8YE1jlyTIowP64+HoN30OlC1H9xqSlq1eoLZUgFEC8oUTO6euYZxti1xRiLSfZocs4qytTzR6xCBYtioQTCg==}
+
+  '@typescript-eslint/types@8.60.0':
+    resolution: {integrity: sha512-AsE7x2XaAK+CVbeih0Fvbn+r1qHxtpLDJ3XUuFcIinT318T90yHMJC+Zgv+jUuDjQQd06HKwxnDu6sz1IcTilA==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@ungap/structured-clone@1.3.1':
     resolution: {integrity: sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ==}
@@ -3066,6 +3076,14 @@ packages:
     resolution: {integrity: sha512-aW35yZM6Bb/4oJlZncMH2LCoZtJXTRxES17vE3hoRiowU2kWHaJKFkSBDnDR+cm9J+9QhXmREyIfv0pji9ejCQ==}
     engines: {node: '>=10'}
 
+  dedent@1.7.2:
+    resolution: {integrity: sha512-WzMx3mW98SN+zn3hgemf4OzdmyNhhhKz5Ay0pUfQiMQ3e1g+xmTJWp/pKdwKVXhdSkAEGIIzqeuWrL3mV/AXbA==}
+    peerDependencies:
+      babel-plugin-macros: ^3.1.0
+    peerDependenciesMeta:
+      babel-plugin-macros:
+        optional: true
+
   deep-extend@0.6.0:
     resolution: {integrity: sha512-LOHxIOaPYdHlJRtCQfDIVZtfw/ufM8+rVj649RIHzcm/vGwQRXFt6OPqIFWsm2XEMrNIEtWR64sY1LEKD2vAOA==}
     engines: {node: '>=4.0.0'}
@@ -3215,6 +3233,15 @@ packages:
   eslint-scope@5.1.1:
     resolution: {integrity: sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==}
     engines: {node: '>=8.0.0'}
+
+  espolar@0.1.4:
+    resolution: {integrity: sha512-LdzYJ+PZqqIN/Vy39wB2Hx3JmOgFg5it1kv7ybQO89ZtfujU+olFg00KqBQfoMDdcmu7a+qN4fiJYhWMYPo1UA==}
+    engines: {node: '>= 26.0.0'}
+    peerDependencies:
+      '@types/estree': ^1.0.9
+    peerDependenciesMeta:
+      '@types/estree':
+        optional: true
 
   esrap@2.2.1:
     resolution: {integrity: sha512-GiYWG34AN/4CUyaWAgunGt0Rxvr1PTMlGC0vvEov/uOQYWne2bpN03Um+k8jT+q3op33mKouP2zeJ6OlM+qeUg==}
@@ -7140,6 +7167,8 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
+  '@types/estree@1.0.9': {}
+
   '@types/hast@3.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -7180,6 +7209,8 @@ snapshots:
   '@types/unist@3.0.3': {}
 
   '@types/vscode@1.107.0': {}
+
+  '@typescript-eslint/types@8.60.0': {}
 
   '@ungap/structured-clone@1.3.1': {}
 
@@ -7678,6 +7709,8 @@ snapshots:
     dependencies:
       mimic-response: 3.1.0
 
+  dedent@1.7.2: {}
+
   deep-extend@0.6.0: {}
 
   defu@6.1.7: {}
@@ -7853,6 +7886,13 @@ snapshots:
     dependencies:
       esrecurse: 4.3.0
       estraverse: 4.3.0
+
+  espolar@0.1.4(@types/estree@1.0.9):
+    dependencies:
+      '@typescript-eslint/types': 8.60.0
+      '@volar/source-map': 2.4.27
+    optionalDependencies:
+      '@types/estree': 1.0.9
 
   esrap@2.2.1:
     dependencies:

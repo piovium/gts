@@ -1,128 +1,87 @@
-import tsPrinter from "esrap/languages/ts";
 import type { AST } from "../../types.ts";
-import type { Context, Visitors } from "esrap";
-import type { Node, SimpleCallExpression } from "estree";
+import type {
+  Identifier,
+  NewExpression,
+  Node,
+  SimpleCallExpression,
+} from "estree";
+import {
+  type PrinterContext,
+  type PrintOptions,
+  type AST as EspolarAST,
+  defaultPrinters,
+} from "espolar";
+import type { CodeInformation } from "@volar/language-core";
+import { DEFAULT_VOLAR_MAPPING_DATA, VERIFICATION_ONLY_MAPPING_DATA } from "./mappings.ts";
+import type { TypingTranspileState } from "./walker.ts";
 
-const printer = tsPrinter({
-  getLeadingComments: (node) => (node as AST.Node).leadingComments,
-  getTrailingComments: (node) => (node as AST.Node).trailingComments,
-});
-
-// Make the print of dummy identifier print nothing.
-// Exception: if GTS attribute list's last argument is dummy, e.g.
-//     foo bar, ;
-//             ^~ here
-// Then the printed JS will be `foo(bar, )` which WILL NOT be syntax error in ES6.
-// So we mark the lastArg manually and print an additional comma
-// for this dummy identifier, i.e. `foo(bar,,)` and TypeScript will recognize the error.
-
-const prevIdentifier = printer.Identifier!;
-printer.Identifier = function (node, context) {
-  if (node.isDummy) {
-    const text = Reflect.get(node, "lastArg") ? "," : "";
-    context.write(text, node);
-  } else {
-    prevIdentifier(node, context);
-  }
-};
-
-const prevCallNewExpression = printer.CallExpression!;
-const newCallNewExpression: typeof prevCallNewExpression = function (
-  node: SimpleCallExpression,
-  context,
-) {
-  const lastArg = node.arguments.at(-1);
-  if (lastArg) {
-    Reflect.set(lastArg, "lastArg", true);
-  }
-  if (!node.lParenLoc) {
-    return prevCallNewExpression(node, context);
-  }
-  let hasDeferredWrite = false;
-  let interceptionDone = false;
-  const lParenFakeNode = {
-    loc: node.lParenLoc!,
-  } as AST.Node;
-
-  // Map the print of `(` with the fake lParen node.
-  // The print of `(` can be happened in two area:
-  // 1. The wrapped parenthesis towards callee, which follows a `context.visit` to the callee;
-  // 2. The argument list (what we should map), which follows a `context.append` call
-  // so we defer the write of `(` to the next call of `context.visit|append`.
-  // If it is `context.append`, then make `context.write("(")` happens with our fake node
-  // and mapping will be added to the final code-mapping. Otherwise, keep original write.
-
-  const patchedWrite = (text: string, node?: AST.Node) => {
-    if (text === "(") {
-      hasDeferredWrite = true;
-    } else {
-      context.write(text, node);
-    }
-  };
-  const patchedVisit = (node: AST.Node) => {
-    if (hasDeferredWrite) {
-      context.write("(");
-    }
-    return context.visit(node);
-  };
-  const patchedAppend = (subcontext: Context) => {
-    if (hasDeferredWrite) {
-      context.write("(", lParenFakeNode);
-      // console.log("Inserted fake [LPAREN] for node at ", lParenFakeNode.loc);
-      interceptionDone = true;
-    }
-    return context.append(subcontext);
-  };
-  const proxiedContext = new Proxy(context, {
-    get(target, prop) {
-      if (!interceptionDone) {
-        if (prop === "write") {
-          return patchedWrite;
-        }
-        if (prop === "visit") {
-          return patchedVisit;
-        }
-        if (prop === "append") {
-          return patchedAppend;
-        }
-      }
-      const value = Reflect.get(target, prop);
-      if (typeof value === "function") {
-        return value.bind(target);
-      }
-      return value;
+export function getPrintOptions(
+  source: string,
+  state: TypingTranspileState,
+): PrintOptions<CodeInformation> {
+  return {
+    source,
+    isUntouched: (node) => {
+      return state.sourceNodes.has(node as Node);
     },
-  });
-  return prevCallNewExpression(node, proxiedContext);
-};
-printer.CallExpression = newCallNewExpression;
-printer.NewExpression = newCallNewExpression;
-
-// Handle node with `diagnosticsOnTop`. These nodes and their children will be
-// printed with an extra `loc` that point to the beginning of the source file,
-// so the source-mapping will include them with a 0:1 -> generated position entry.
-
-const prevWildcard = printer._!;
-printer._ = (node: Node, context, visit) => {
-  if (typeof node.pureSource === "string") {
-    console.dir(node.pureSource)
-    context.write(node.pureSource, node);
-    return;
-  }
-  const contextProto = Object.getPrototypeOf(context);
-  const prevContextWrite: typeof context.write = contextProto.write;
-  if ("diagnosticsOnTop" in node && node.diagnosticsOnTop) {
-    contextProto.write = function (text: string, node?: AST.Node) {
-      node ??= {} as AST.Node;
-      node.loc ??= {
-        start: { line: 1, column: 0 },
-        end: { line: 1, column: 0 },
-      };
-      return prevContextWrite.call(this, text, node);
-    };
-  }
-  prevWildcard(node, context, visit);
-  contextProto.write = prevContextWrite;
-};
-
-export const patchedPrinter: Visitors<AST.Node> = printer;
+    getLeadingComments: (node) => (node as Node).leadingComments,
+    getTrailingComments: (node) => (node as Node).trailingComments,
+    getMappingData: () => DEFAULT_VOLAR_MAPPING_DATA,
+    printers: {
+      // Make the print of dummy identifier print nothing.
+      // Exception: if GTS attribute list's last argument is dummy, e.g.
+      //     foo bar, ;
+      //             ^~ here
+      // Then the printed JS will be `foo(bar, )` which WILL NOT be syntax error in ES6.
+      // So we mark the lastArg manually and print an additional comma
+      // for this dummy identifier, i.e. `foo(bar,,)` and TypeScript will recognize the error.
+      Identifier(node, context) {
+        const identifier = node as Identifier;
+        if (identifier.isDummy && identifier.range) {
+          const text = state.lastArgNodes.has(node) ? "," : "";
+          context.writeMapped(text, identifier.range[0], identifier.range[1]);
+        } else {
+          return defaultPrinters.Identifier(node, context);
+        }
+      },
+      // For generated `import xxx from "yyy"`, add mappings from xxx and yyy
+      // to the top-of-file for diagnostics around missing / wrong imports.
+      Literal(node, context) {
+        const generatedStart = context.generatedOffset;
+        defaultPrinters.Literal(node, context);
+        if (state.diagnosticsOnTopNodes.has(node as Node)) {
+          const generatedEnd = context.generatedOffset;
+          context.appendMapping(
+            { start: 0, end: 1 },
+            generatedStart,
+            generatedEnd,
+            VERIFICATION_ONLY_MAPPING_DATA,
+          );
+        }
+      },
+      ImportDefaultSpecifier(node, context) {
+        const generatedStart = context.generatedOffset;
+        defaultPrinters.ImportDefaultSpecifier(node, context);
+        if (state.diagnosticsOnTopNodes.has(node as Node)) {
+          const generatedEnd = context.generatedOffset;
+          context.appendMapping(
+            { start: 0, end: 1 },
+            generatedStart,
+            generatedEnd,
+            VERIFICATION_ONLY_MAPPING_DATA,
+          );
+        }
+      },
+    },
+    // Enable triggering signature completion
+    experimentalGetLeftParenSourceRange: (node) => {
+      const callLike = node as SimpleCallExpression | NewExpression;
+      if (callLike.lParenRange) {
+        return {
+          start: callLike.lParenRange[0],
+          end: callLike.lParenRange[1],
+        };
+      }
+    },
+  };
+}

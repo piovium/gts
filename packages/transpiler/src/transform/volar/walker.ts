@@ -1,21 +1,19 @@
 import type { Visitors } from "zimmerframe";
 import type {
-  ArrayExpression,
   ArrowFunctionExpression,
-  BlockStatement,
   Comment,
-  Declaration,
   EmptyStatement,
   ExportNamedDeclaration,
   Expression,
   ExpressionStatement,
   GTSDefineStatement,
   Identifier,
+  ImportDeclaration,
   Literal,
   MemberExpression,
   Node,
   Program,
-  SourceLocation,
+  SimpleLiteral,
   Statement,
   VariableDeclaration,
   VariableDeclarator,
@@ -25,7 +23,6 @@ import {
   type ExternalizedBinding,
   type TranspileState,
 } from "../gts.ts";
-import type { LeafToken } from "./collect_tokens.ts";
 import { createReplacementHolder } from "./replacements.ts";
 
 interface ExternalizedTypedBinding extends ExternalizedBinding {
@@ -34,7 +31,6 @@ interface ExternalizedTypedBinding extends ExternalizedBinding {
 }
 
 export interface TypingTranspileState extends TranspileState {
-  leafTokens: LeafToken[];
   externalizedBindings: ExternalizedTypedBinding[];
   idCounter: number;
   rootVmId: Identifier;
@@ -55,7 +51,31 @@ export interface TypingTranspileState extends TranspileState {
   /** Pending statements to be inserted to the top-level */
   typingPendingStatements: Statement[];
   replacementTag: Identifier;
-  extraMappings: Map<string, string>;
+  /** untouched source nodes */
+  sourceNodes: WeakSet<Node>;
+  /**
+   * String literal or identifier nodes that are used as attribute names.
+   * Includes 1 more whitespace character after the name to trigger signature hint.
+   * - sourceLength += 1
+   * - generatedLength += 1
+   */
+  namedAttributeNodes: WeakSet<Literal | Identifier>;
+  /**
+   * String literal nodes that are derived from identifiers.
+   * - sourceStart += 1
+   * - sourceLength -= 2
+   */
+  literalFromIdentifier: WeakSet<SimpleLiteral>;
+  /** Nodes that are last arguments of a CallExpression */
+  lastArgNodes: WeakSet<Node>;
+  /** Nodes that have a diagnostic mappings to the top of the file */
+  diagnosticsOnTopNodes: WeakSet<Node>;
+  /** Extra mappings, the generated range will be found by the needle after replacement */
+  extraMappings: {
+    sourceOffset: number;
+    length: number;
+    generatedNeedle: string;
+  }[];
 }
 
 const EMPTY: EmptyStatement = { type: "EmptyStatement" };
@@ -128,7 +148,7 @@ const enterVMFromAttr = (
   state.attrsOfCurrentVm.push([]);
 };
 
-const exitVM = (state: TypingTranspileState, errorLoc?: string) => {
+const exitVM = (state: TypingTranspileState, errorRange?: [number, number]) => {
   const currentDefTypeId = state.vmDefTypeIdStack.pop()!;
   const currentMetaId = state.metaTypeIdStack.pop()!;
   const finalMetaId = state.finalMetaTypeIdStack.pop()!;
@@ -140,7 +160,7 @@ const exitVM = (state: TypingTranspileState, errorLoc?: string) => {
       defType: currentDefTypeId.name,
       finalMetaType: finalMetaId.name,
       collectedAttrs: collectedAttrNames,
-      errorLoc,
+      errorRange,
     }),
   );
 };
@@ -264,10 +284,10 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         body.unshift(varDecl);
       }
     }
+    const importDecls: ImportDeclaration[] = [];
     if (state.hasQueryExpressions) {
-      body.unshift({
+      importDecls.push({
         type: "ImportDeclaration",
-        diagnosticsOnTop: true,
         specifiers: [
           {
             type: "ImportDefaultSpecifier",
@@ -281,22 +301,28 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         attributes: [],
       });
     }
-    body.unshift(
-      {
-        type: "ImportDeclaration",
-        diagnosticsOnTop: true,
-        specifiers: [
-          {
-            type: "ImportDefaultSpecifier",
-            local: state.rootVmId,
-          },
-        ],
-        source: {
-          type: "Literal",
-          value: `${state.providerImportSource}/vm`,
+    importDecls.push({
+      type: "ImportDeclaration",
+      specifiers: [
+        {
+          type: "ImportDefaultSpecifier",
+          local: state.rootVmId,
         },
-        attributes: [],
+      ],
+      source: {
+        type: "Literal",
+        value: `${state.providerImportSource}/vm`,
       },
+      attributes: [],
+    });
+    for (const importDecl of importDecls) {
+      state.diagnosticsOnTopNodes.add(importDecl.source);
+      for (const specifier of importDecl.specifiers) {
+        state.diagnosticsOnTopNodes.add(specifier);
+      }
+    }
+    body.unshift(
+      ...importDecls,
       createReplacementHolder(state, {
         type: "preface",
       }),
@@ -317,28 +343,26 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     const attrName = JSON.stringify(
       name.type === "Literal" ? String(name.value) : name.name,
     );
-    const attributeNameToken = state.leafTokens.find((t) => t.loc === name.loc);
-    if (attributeNameToken) {
-      attributeNameToken.sourceLengthOffset = 1;
-    }
+    state.namedAttributeNodes.add(name);
     const { lhsId } = enterAttr(state, attrName);
-    state.extraMappings.set(
-      `${name.loc?.start.line}:${name.loc?.start.column}`,
-      `${lhsId.name}${name.type === "Literal" ? `[` : `.`}`,
-    );
+    if (name.range) {
+      state.extraMappings.push({
+        sourceOffset: name.range[0],
+        length: name.range[1] - name.range[0],
+        generatedNeedle: `${lhsId.name}${name.type === "Literal" ? `[` : `.`}`,
+      });
+    }
     const positionals = body.positionalAttributes.attributes.map(
       (attr): Expression => {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
-          const token = state.leafTokens.find((t) => t.loc === attr.loc);
-          if (token) {
-            token.generatedStartOffset = 1;
-            token.generatedLength = attr.name.length + 2; // quotation mark
-          }
-          return {
+          const lit: SimpleLiteral = {
             type: "Literal",
             value: attr.name,
             loc: attr.loc,
+            range: attr.range,
           };
+          state.literalFromIdentifier.add(lit);
+          return lit;
         } else {
           return visit(attr) as Expression;
         }
@@ -373,10 +397,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     if (body.namedAttributes) {
       enterVMFromAttr(state, returnValue);
       visit(body.namedAttributes);
-      exitVM(
-        state,
-        `${body.namedAttributes.loc?.start.line}:${body.namedAttributes.loc?.start.column}`,
-      );
+      exitVM(state, body.namedAttributes.range);
     }
     if (bindingName) {
       const export_ = node.bindingAccessModifier !== "private";
@@ -415,11 +436,13 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       const attrName = JSON.stringify(state.ActionLit.value);
       const { lhsId } = enterAttr(state, attrName);
       const actionNotExistsReplacementStr = `${lhsId.name}[${attrName}]`;
-      const actionNotExistsErrorLoc = `${node.directAction.loc?.start.line}:${node.directAction.loc?.start.column}`;
-      state.extraMappings.set(
-        actionNotExistsErrorLoc,
-        actionNotExistsReplacementStr,
-      );
+      if (node.directAction.range) {
+        state.extraMappings.push({
+          sourceOffset: node.directAction.range[0],
+          length: node.directAction.range[1] - node.directAction.range[0],
+          generatedNeedle: actionNotExistsReplacementStr,
+        });
+      }
       const fn: ArrowFunctionExpression = {
         type: "ArrowFunctionExpression",
         params: state.shortcutFunctionParameters,
@@ -459,14 +482,4 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     return EMPTY;
   },
   ...(commonGtsVisitor as Visitors<Node, TypingTranspileState>),
-  GTSShortcutArgumentExpression(node, { state, visit }): MemberExpression {
-    const lhs = { ...state.fnArgId };
-    return {
-      type: "MemberExpression",
-      object: lhs,
-      computed: false,
-      optional: false,
-      property: visit(node.property) as Identifier,
-    };
-  },
 };

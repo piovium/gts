@@ -251,10 +251,10 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
             this.isContextual("as"))
         ) {
           // Allow omitting the attribute expression for language tooling
-          const dummy = this.startNode() as AST.Identifier;
+          const dummy = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc) as AST.Identifier;
           dummy.name = DUMMY_PLACEHOLDER;
           dummy.isDummy = true;
-          return this.finishNode(dummy, "Identifier");
+          return this.finishNodeAt(dummy, "Identifier", this.start, this.startLoc);
         }
         return this.parseExprAtom();
       }
@@ -297,10 +297,10 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
             this.type !== tokTypes.name
           ) {
             // Allow omitting the identifier after ':' for language tooling
-            const dummy = this.startNode() as AST.Identifier;
+            const dummy = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc) as AST.Identifier;
             dummy.name = DUMMY_PLACEHOLDER;
             dummy.isDummy = true;
-            node.property = this.finishNode(dummy, "Identifier");
+            node.property = this.finishNodeAt(dummy, "Identifier", this.start, this.startLoc);
           } else {
             node.property = this.parseIdent();
           }

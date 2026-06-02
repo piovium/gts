@@ -1,7 +1,7 @@
 import type { AST } from "../../types.ts";
 import { walk } from "zimmerframe";
 import type { SourceInfo, TranspileResult } from "../index.ts";
-import { print } from "esrap";
+import { print } from "espolar";
 import {
   initialTranspileState,
   type TranspileOption,
@@ -10,28 +10,19 @@ import {
 import { gtsToTypingsWalker, type TypingTranspileState } from "./walker.ts";
 import { applyReplacements } from "./replacements.ts";
 import type { Program } from "estree";
-import { convertToVolarMappings, type VolarMappingResult } from "./mappings.ts";
-import { collectLeafTokens, type LeafToken } from "./collect_tokens.ts";
-import { patchedPrinter } from "./printer.ts";
+import { VERIFICATION_ONLY_MAPPING_DATA, type VolarMappingResult } from "./mappings.ts";
+import { getPrintOptions } from "./printer.ts";
 
-interface TypingTranspileOption extends TranspileOption {
-  leafTokens: LeafToken[];
-  /**
-   * "row:col" -> "replacement string"
-   */
-  extraMappings: Map<string, string>;
-}
-
-function gtsToTypings(
-  ast: AST.Program,
-  option: TypingTranspileOption,
-): TranspileResult {
+export function transformForVolar(
+  ast: Program,
+  option: TranspileOption,
+  sourceInfo: Required<SourceInfo>,
+): VolarMappingResult {
   const state: TypingTranspileState = {
     ...(initialTranspileState(option) as Pick<
       TypingTranspileState,
       keyof TranspileState
     >),
-    leafTokens: option.leafTokens,
     idCounter: 0,
     typingPendingStatements: [],
     rootVmId: { type: "Identifier", name: "__gts_root_vm" },
@@ -44,40 +35,52 @@ function gtsToTypings(
     metaTypeIdStack: [],
     finalMetaTypeIdStack: [],
     attrsOfCurrentVm: [],
-    extraMappings: option.extraMappings,
-  };
-  const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
-  const { code, map } = print(newAst, patchedPrinter, {
-    indent: "  ",
-  });
-  return {
-    code: applyReplacements(state, code),
-    sourceMap: map,
-  };
-}
 
-export function transformForVolar(
-  ast: Program,
-  option: TranspileOption,
-  sourceInfo: Required<SourceInfo>,
-): VolarMappingResult {
-  const tokens = collectLeafTokens(sourceInfo.content, ast);
-  const extraMappings = new Map<string, string>();
-  const { code, sourceMap } = gtsToTypings(ast, {
-    ...option,
-    leafTokens: tokens,
-    extraMappings,
+    sourceNodes: new WeakSet(),
+    namedAttributeNodes: new WeakSet(),
+    literalFromIdentifier: new WeakSet(),
+    lastArgNodes: new WeakSet(),
+    diagnosticsOnTopNodes: new WeakSet(),
+    extraMappings: [],
+  };
+  // mark sourceNodes before the transformation
+  walk(ast as AST.Node, state, {
+    _(node, { state, next }) {
+      if (node.range) {
+        state.sourceNodes.add(node);
+      }
+      next();
+    },
   });
-  const volarMappings = convertToVolarMappings(
-    code,
-    sourceInfo.content,
-    sourceMap,
-    tokens,
-    extraMappings,
-  );
+  const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
+  // mark lastArgNodes
+  walk(newAst as AST.Node, state, {
+    CallExpression(node, { state }) {
+      const lastArg = node.arguments.at(-1);
+      if (lastArg) {
+        state.lastArgNodes.add(lastArg);
+      }
+    }
+  });
+  const printOptions = getPrintOptions(sourceInfo.content, state);
+  let { code, mappings } = print(newAst, printOptions);
+  code = applyReplacements(state, code, mappings);
+  for (const extraMapping of state.extraMappings) {
+    const genOffset = code.indexOf(extraMapping.generatedNeedle);
+    mappings.push({
+      sourceOffsets: [extraMapping.sourceOffset],
+      lengths: [extraMapping.length],
+      generatedOffsets: [genOffset],
+      generatedLengths: [extraMapping.generatedNeedle.length],
+      data: VERIFICATION_ONLY_MAPPING_DATA,
+    });
+  }
+  // TODO1: dummy identifier at EOF has wrong length
+  // TODO2: source/generated adjustment for attr name and literals
+  // TODO3: debug the mapping merging (inside espolar)
   return {
     code,
-    mappings: volarMappings,
+    mappings,
   };
 }
 

@@ -29,10 +29,10 @@ export function loosePlugin() {
       });
 
       createDummyIdentifier() {
-        const dummy = this.startNode() as AST.Identifier;
+        const dummy = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc) as AST.Identifier;
         dummy.name = DUMMY_PLACEHOLDER;
         dummy.isDummy = true;
-        return this.finishNode(dummy, "Identifier");
+        return this.finishNodeAt(dummy, "Identifier", this.start, this.startLoc);
       }
 
       override parseSubscript(

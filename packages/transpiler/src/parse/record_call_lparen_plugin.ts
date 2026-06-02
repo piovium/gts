@@ -26,12 +26,9 @@ export function recordCallLParenPlugin() {
         optionalChained?: boolean,
         forInit?: boolean | "await",
       ): AST.Expression {
-        let recordedLParenLoc: AST.SourceLocation | null = null;
+        let recordedLParenLoc: [number, number] | null = null;
         if (!noCalls && this.type === tokTypes.parenL) {
-          recordedLParenLoc = {
-            start: this.startLoc,
-            end: this.endLoc,
-          };
+          recordedLParenLoc = [this.start, this.end];
         }
         const result = super.parseSubscript(
           base,
@@ -43,18 +40,15 @@ export function recordCallLParenPlugin() {
           forInit,
         );
         if (recordedLParenLoc && result.type === "CallExpression") {
-          result.lParenLoc = recordedLParenLoc;
+          result.lParenRange = recordedLParenLoc;
         }
         return result;
       }
 
-      private _capturedLParenLocFromNew: AST.SourceLocation | null = null;
+      private _capturedLParenRangeFromNew: [number, number] | null = null;
       private readonly _patchedEat = (type: any) => {
         if (type === tokTypes.parenL) {
-          this._capturedLParenLocFromNew = {
-            start: this.startLoc,
-            end: this.endLoc,
-          };
+          this._capturedLParenRangeFromNew = [this.start, this.end];
         }
         return this.eat(type);
       };
@@ -74,9 +68,12 @@ export function recordCallLParenPlugin() {
 
       override parseNew() {
         const result = super.parseNew.apply(this.#proxiedThis);
-        if (this._capturedLParenLocFromNew && result.type === "NewExpression") {
-          result.lParenLoc = this._capturedLParenLocFromNew;
-          this._capturedLParenLocFromNew = null;
+        if (
+          this._capturedLParenRangeFromNew &&
+          result.type === "NewExpression"
+        ) {
+          result.lParenRange = this._capturedLParenRangeFromNew;
+          this._capturedLParenRangeFromNew = null;
         }
         return result;
       }
