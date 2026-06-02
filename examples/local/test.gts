@@ -31,7 +31,7 @@ define character {
 define skill {
   id 12011 as private WhisperOfWater;
   cost hydro, 3;
-  variable foo, ;
+  variable foo, 2;
   const a = :getVariable("foo")
   :damage(hydro, 1);
   :summon(MelodyLoop);
@@ -68,10 +68,10 @@ const sub = (a: number, b: number) => {
 void A;
 gytx
 const obj = { sub, foo: 0 };
-obj.    
+
 // obj.sub("test");
 // (0, obj).sub("test");
 // obj.foo ? 'a' : 'b';
-// new Date()
-sub
+new Date().         
+// sub
 

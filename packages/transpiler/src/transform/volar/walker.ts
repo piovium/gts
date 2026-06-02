@@ -24,6 +24,7 @@ import {
   type TranspileState,
 } from "../gts.ts";
 import { createReplacementHolder } from "./replacements.ts";
+import type { SourceRange } from "espolar";
 
 interface ExternalizedTypedBinding extends ExternalizedBinding {
   typingId: Identifier;
@@ -54,18 +55,16 @@ export interface TypingTranspileState extends TranspileState {
   /** untouched source nodes */
   sourceNodes: WeakSet<Node>;
   /**
-   * String literal or identifier nodes that are used as attribute names.
-   * Includes 1 more whitespace character after the name to trigger signature hint.
-   * - sourceLength += 1
-   * - generatedLength += 1
+   * The callee of typing source of GTS' attribute names. Map the character
+   * after the name (typically whitespace) as the lParen of CallExpression
    */
-  namedAttributeNodes: WeakSet<Literal | Identifier>;
+  namedAttributeCalleeLParenRange: WeakMap<Node, SourceRange>;
   /**
    * String literal nodes that are derived from identifiers.
    * - sourceStart += 1
    * - sourceLength -= 2
    */
-  literalFromIdentifier: WeakSet<SimpleLiteral>;
+  literalFromIdentifier: WeakSet<Literal>;
   /** Nodes that are last arguments of a CallExpression */
   lastArgNodes: WeakSet<Node>;
   /** Nodes that have a diagnostic mappings to the top of the file */
@@ -173,7 +172,7 @@ const enterAttr = (
   const metaTypeId = state.metaTypeIdStack.at(-1);
   if (!defTypeId || !metaTypeId) {
     // TODO error handling?
-    return { lhsId: { type: "Identifier", name: "__invalid_attr_obj" } };
+    return { lhsId: { type: "Identifier", name: "__gts_invalid_attr_obj" } };
   }
   state.attrsOfCurrentVm.at(-1)!.push(attrName);
   const lhsId: Identifier = {
@@ -343,15 +342,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     const attrName = JSON.stringify(
       name.type === "Literal" ? String(name.value) : name.name,
     );
-    state.namedAttributeNodes.add(name);
     const { lhsId } = enterAttr(state, attrName);
-    if (name.range) {
-      state.extraMappings.push({
-        sourceOffset: name.range[0],
-        length: name.range[1] - name.range[0],
-        generatedNeedle: `${lhsId.name}${name.type === "Literal" ? `[` : `.`}`,
-      });
-    }
     const positionals = body.positionalAttributes.attributes.map(
       (attr): Expression => {
         if (attr.type === "Identifier" && /^[a-z_]/.test(attr.name)) {
@@ -364,7 +355,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           state.literalFromIdentifier.add(lit);
           return lit;
         } else {
-          return visit(attr) as Expression;
+          return { ...(visit(attr) as Expression) };
         }
       },
     );
@@ -372,6 +363,24 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       type: "Identifier",
       name: `__gts_attrRet_${state.idCounter++}`,
     };
+    const callee: MemberExpression = {
+      type: "MemberExpression",
+      object: lhsId,
+      property: name,
+      computed: name.type === "Literal",
+      optional: false,
+    };
+    if (name.range) {
+      state.extraMappings.push({
+        sourceOffset: name.range[0],
+        length: name.range[1] - name.range[0],
+        generatedNeedle: `${lhsId.name}${name.type === "Literal" ? `[` : `.`}`,
+      });
+      state.namedAttributeCalleeLParenRange.set(callee, {
+        start: name.range[1],
+        end: name.range[1] + 1,
+      });
+    }
     state.typingPendingStatements.push({
       type: "VariableDeclaration",
       kind: "const",
@@ -382,13 +391,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           init: {
             type: "CallExpression",
             optional: false,
-            callee: {
-              type: "MemberExpression",
-              object: lhsId,
-              property: name,
-              computed: name.type === "Literal",
-              optional: false,
-            },
+            callee,
             arguments: positionals,
           },
         },

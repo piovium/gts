@@ -37,7 +37,7 @@ export function transformForVolar(
     attrsOfCurrentVm: [],
 
     sourceNodes: new WeakSet(),
-    namedAttributeNodes: new WeakSet(),
+    namedAttributeCalleeLParenRange: new WeakMap(),
     literalFromIdentifier: new WeakSet(),
     lastArgNodes: new WeakSet(),
     diagnosticsOnTopNodes: new WeakSet(),
@@ -75,9 +75,8 @@ export function transformForVolar(
       data: VERIFICATION_ONLY_MAPPING_DATA,
     });
   }
-  // TODO1: dummy identifier at EOF has wrong length
-  // TODO2: source/generated adjustment for attr name and literals
-  // TODO3: debug the mapping merging (inside espolar)
+  // TODO1: dummy identifier at EOF not extended to EOF (debug espolar end gap)
+  // TODO2: debug the mapping merging (inside espolar)
   return {
     code,
     mappings,

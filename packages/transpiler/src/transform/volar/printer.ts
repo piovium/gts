@@ -1,4 +1,3 @@
-import type { AST } from "../../types.ts";
 import type {
   Identifier,
   NewExpression,
@@ -6,13 +5,15 @@ import type {
   SimpleCallExpression,
 } from "estree";
 import {
-  type PrinterContext,
   type PrintOptions,
   type AST as EspolarAST,
   defaultPrinters,
 } from "espolar";
 import type { CodeInformation } from "@volar/language-core";
-import { DEFAULT_VOLAR_MAPPING_DATA, VERIFICATION_ONLY_MAPPING_DATA } from "./mappings.ts";
+import {
+  DEFAULT_VOLAR_MAPPING_DATA,
+  VERIFICATION_ONLY_MAPPING_DATA,
+} from "./mappings.ts";
 import type { TypingTranspileState } from "./walker.ts";
 
 export function getPrintOptions(
@@ -22,6 +23,9 @@ export function getPrintOptions(
   return {
     source,
     isUntouched: (node) => {
+      if (node.type === "Identifier" && (node as Identifier).isDummy) {
+        return false;
+      }
       return state.sourceNodes.has(node as Node);
     },
     getLeadingComments: (node) => (node as Node).leadingComments,
@@ -38,18 +42,33 @@ export function getPrintOptions(
       Identifier(node, context) {
         const identifier = node as Identifier;
         if (identifier.isDummy && identifier.range) {
-          const text = state.lastArgNodes.has(node) ? "," : "";
-          context.writeMapped(text, identifier.range[0], identifier.range[1]);
+          const text = state.lastArgNodes.has(identifier) ? "," : "";
+          // extend the source mapping of dummy id to the before next token
+          let firstNonWhiteSpaceIndex = context.source
+            .slice(identifier.range[1])
+            .search(/\S/);
+          const rangeEnd =
+            firstNonWhiteSpaceIndex === -1
+              ? context.source.length
+              : identifier.range[1] + firstNonWhiteSpaceIndex;
+          context.writeMapped(text, identifier.range[0], rangeEnd);
         } else {
           return defaultPrinters.Identifier(node, context);
         }
       },
-      // For generated `import xxx from "yyy"`, add mappings from xxx and yyy
-      // to the top-of-file for diagnostics around missing / wrong imports.
       Literal(node, context) {
         const generatedStart = context.generatedOffset;
-        defaultPrinters.Literal(node, context);
-        if (state.diagnosticsOnTopNodes.has(node as Node)) {
+        if (state.literalFromIdentifier.has(node) && node.range) {
+          const text = JSON.stringify(node.value);
+          context.write('"');
+          context.writeMapped(text.slice(1, -1), node.range[0], node.range[1]);
+          context.write('"');
+        } else {
+          defaultPrinters.Literal(node, context);
+        }
+        // For generated `import xxx from "yyy"`, add mappings from xxx and yyy
+        // to the top-of-file for diagnostics around missing / wrong imports.
+        if (state.diagnosticsOnTopNodes.has(node)) {
           const generatedEnd = context.generatedOffset;
           context.appendMapping(
             { start: 0, end: 1 },
@@ -82,6 +101,7 @@ export function getPrintOptions(
           end: callLike.lParenRange[1],
         };
       }
+      return state.namedAttributeCalleeLParenRange.get(callLike.callee);
     },
   };
 }

@@ -254,7 +254,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           const dummy = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc) as AST.Identifier;
           dummy.name = DUMMY_PLACEHOLDER;
           dummy.isDummy = true;
-          return this.finishNodeAt(dummy, "Identifier", this.start, this.startLoc);
+          return this.finishNode(dummy, "Identifier");
         }
         return this.parseExprAtom();
       }
@@ -300,7 +300,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
             const dummy = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc) as AST.Identifier;
             dummy.name = DUMMY_PLACEHOLDER;
             dummy.isDummy = true;
-            node.property = this.finishNodeAt(dummy, "Identifier", this.start, this.startLoc);
+            node.property = this.finishNode(dummy, "Identifier");
           } else {
             node.property = this.parseIdent();
           }
