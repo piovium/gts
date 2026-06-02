@@ -371,6 +371,9 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       optional: false,
     };
     if (name.range) {
+      // If the `obj.name` is not callable, the error squiggle begins from `obj` not `name`
+      // Add a diagnostic-only mapping from the `name` to a call starting from `obj.`
+      // This should be unique since each attribute decl generates a new obj name
       state.extraMappings.push({
         sourceOffset: name.range[0],
         length: name.range[1] - name.range[0],
