@@ -9,8 +9,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "vitest",
-    "prepublishOnly": "pnpm build",
-    "publish": "pnpm -r publish --access public --no-git-checks"
+    "publish": "pnpm build && pnpm -r publish --access public --no-git-checks"
   },
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
