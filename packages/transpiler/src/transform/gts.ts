@@ -10,7 +10,6 @@ import type {
   ModuleDeclaration,
   Node,
   ObjectExpression,
-  ObjectPattern,
   Pattern,
   Program,
   Statement,
@@ -35,14 +34,12 @@ export interface TranspileState {
   readonly fnArgId: Identifier;
   readonly shortcutFunctionParameters: Pattern[];
   readonly rootVmId: Identifier;
-  readonly queryFnId: Identifier;
   readonly queryParameters: Pattern[];
+  readonly QueryLit: Literal;
+  readonly QueryAllLit: Literal;
 
   readonly runtimeImportSource: string;
   readonly providerImportSource: string;
-  readonly queryArg: ObjectPattern;
-  
-  hasQueryExpressions: boolean;
 
   externalizedBindings: ExternalizedBinding[];
   /** Internal counters / state for emitting per-define nodes & bindings */
@@ -137,12 +134,17 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
     };
   },
   GTSQueryExpression(node, { state, visit }) {
-    state.hasQueryExpressions = true;
     return {
       ...node,
       type: "CallExpression",
       optional: false,
-      callee: state.queryFnId,
+      callee: {
+        type: "MemberExpression",
+        object: state.fnArgId,
+        property: node.star ? state.QueryAllLit : state.QueryLit,
+        computed: true,
+        optional: false,
+      },
       arguments: [
         {
           type: "ArrowFunctionExpression",
@@ -152,45 +154,12 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
           loc: node.argument.loc,
           range: node.argument.range,
         },
-        {
-          type: "ObjectExpression",
-          properties: [
-            {
-              type: "Property",
-              key: { type: "Identifier", name: "star" },
-              computed: false,
-              kind: "init",
-              method: false,
-              shorthand: false,
-              value: {
-                type: "Literal",
-                value: !!node.star,
-              },
-            },
-            {
-              type: "Property",
-              key: { type: "Identifier", name: "context" },
-              computed: false,
-              kind: "init",
-              method: false,
-              shorthand: false,
-              value: state.fnArgId,
-            }
-          ],
-        },
       ],
     };
   },
 };
 
 const gtsVisitor: Visitors<Node, TranspileState> = {
-  // _(node, { next }) {
-  //   console.log(node.type, !!node.leadingComments)
-  //   if (node.leadingComments) {
-  //     console.log(node.leadingComments);
-  //   }
-  //   return next();
-  // },
   Program(node, { state, visit }) {
     const body: Program["body"] = [];
     for (const stmt of node.body) {
@@ -201,22 +170,6 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
     body.unshift(...state.bindingStatements);
     state.bindingStatements = [];
 
-    if (state.hasQueryExpressions) {
-      body.unshift({
-        type: "ImportDeclaration",
-        specifiers: [
-          {
-            type: "ImportDefaultSpecifier",
-            local: state.queryFnId,
-          },
-        ],
-        source: {
-          type: "Literal",
-          value: `${state.providerImportSource}/query`,
-        },
-        attributes: [],
-      });
-    }
     body.unshift(
       {
         type: "ImportDeclaration",
@@ -555,26 +508,14 @@ export const initialTranspileState = (
     fnArgId,
     shortcutFunctionParameters,
     rootVmId: { type: "Identifier", name: "__gts_rootVm" },
-    queryFnId: { type: "Identifier", name: "__gts_query" },
     queryParameters,
+    QueryLit: { type: "Literal", value: "~query" },
+    QueryAllLit: { type: "Literal", value: "~queryAll" },
 
     runtimeImportSource: option.runtimeImportSource ?? "@gi-tcg/gts-runtime",
     providerImportSource: option.providerImportSource ?? "@gi-tcg/core/gts",
-    queryArg: {
-      type: "ObjectPattern",
-      properties: (option.queryBindings ?? []).map((name) => ({
-        type: "Property",
-        key: { type: "Identifier", name },
-        computed: false,
-        kind: "init",
-        method: false,
-        shorthand: true,
-        value: { type: "Identifier", name },
-      })),
-    },
 
     externalizedBindings: [],
-    hasQueryExpressions: false,
     defineIdCounter: 0,
 
     bindingStatements: [],

@@ -22,7 +22,6 @@ import EXAMPLE_CODE from "../../local/test.gts?raw";
 import GTS_LANGUAGE_CONFIG from "gts-vscode/language-configuration?raw";
 import GTS_SYNTAXES from "gts-vscode/syntaxes?raw";
 import PROVIDER_VM from "@example/provider/types/vm?raw";
-import PROVIDER_QUERY from "@example/provider/types/query?raw";
 import GTS_RUNTIME from "@example/provider/types/runtime?raw";
 import type { GtsLanguageServerBrowserInitializationOptions } from "@gi-tcg/gts-language-server/browser";
 
@@ -131,7 +130,6 @@ const setupLanguageClientConfig = (): LanguageClientConfig => {
       initializationOptions: {
         fs: {
           "/provider/vm.d.ts": PROVIDER_VM,
-          "/provider/query.d.ts": PROVIDER_QUERY,
           "/provider/runtime.d.ts": GTS_RUNTIME,
           "/workspace/test2.gts": "export const A = 1",
           "/tsconfig.json": JSON.stringify({

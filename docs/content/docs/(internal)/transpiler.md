@@ -138,9 +138,8 @@ The visitor maintains a `TranspileState` that tracks:
 #### Visitor Transformations
 
 **`Program`** — Wraps the body with:
-1. Import of `{ createDefine, createBinding, Action, Prelude }` from the runtime
+1. Import of `{ createDefine, createBinding }` from the runtime
 2. Import of the root ViewModel from the provider's `/vm` module
-3. Conditional import of the query function from the provider's `/query` module
 
 **`GTSDefineStatement`** → Expands into:
 ```js
@@ -167,7 +166,7 @@ __gts_createDefine(__gts_rootVm, __gts_node_0);
 
 **`GTSShortcutArgumentExpression`** → `__gts_fnArg.property` member expression.
 
-**`GTSQueryExpression`** → `__gts_query(({ my, opp }) => <expr>, { star: true/false })`.
+**`GTSQueryExpression`** → `__gts_fnArg["~query"](<arrow>)` or `__gts_fnArg["~queryAll"](<arrow>)` depending on whether the `*` syntax is used.
 
 ### TypeScript Erasure (`transform/erase_ts.ts`)
 

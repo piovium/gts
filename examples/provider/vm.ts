@@ -1,4 +1,3 @@
-import type { Query } from "./query";
 import {
   defineSimpleViewModel,
   defineViewModel,
@@ -84,6 +83,15 @@ class SkillBuilder {
   constructor(characterId?: number) {}
 }
 
+export interface QueryBuilder {
+  my: QueryBuilder;
+  opp: QueryBuilder;
+  character: QueryBuilder;
+  active: QueryBuilder;
+}
+
+export type Query = { readonly _query: unique symbol };
+
 interface SkillContext<TMeta extends BuilderMeta> {
   "~prelude": {
     cryo: number;
@@ -100,6 +108,14 @@ interface SkillContext<TMeta extends BuilderMeta> {
   summon(type: SummonHandle<any>): void;
   heal(count: number, query: Query): void;
   apply(type: number, query: Query): void;
+  "~query"(
+    queryFn: (querier: QueryBuilder) => unknown,
+    option: { star: boolean, context: any },
+  ): Query
+  "~queryAll"(
+    queryFn: (querier: QueryBuilder) => unknown,
+    option: { star: boolean, context: any },
+  ): Query
 }
 
 type SkillAction<TMeta extends BuilderMeta> = (

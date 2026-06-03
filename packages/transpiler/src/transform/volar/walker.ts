@@ -284,36 +284,39 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       }
     }
     const importDecls: ImportDeclaration[] = [];
-    if (state.hasQueryExpressions) {
-      importDecls.push({
+    importDecls.push(
+      {
         type: "ImportDeclaration",
         specifiers: [
           {
             type: "ImportDefaultSpecifier",
-            local: state.queryFnId,
+            local: state.rootVmId,
           },
         ],
         source: {
           type: "Literal",
-          value: `${state.providerImportSource}/query`,
+          value: `${state.providerImportSource}/vm`,
         },
         attributes: [],
-      });
-    }
-    importDecls.push({
-      type: "ImportDeclaration",
-      specifiers: [
-        {
-          type: "ImportDefaultSpecifier",
-          local: state.rootVmId,
-        },
-      ],
-      source: {
-        type: "Literal",
-        value: `${state.providerImportSource}/vm`,
       },
-      attributes: [],
-    });
+      {
+        type: "ImportDeclaration",
+        specifiers: [
+          {
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name: "createDefine" },
+            local: state.createDefineFnId,
+          },
+          {
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name: "createBinding" },
+            local: state.createBindingFnId,
+          },
+        ],
+        source: { type: "Literal", value: state.runtimeImportSource },
+        attributes: [],
+      },
+    );
     for (const importDecl of importDecls) {
       state.diagnosticsOnTopNodes.add(importDecl.source);
       for (const specifier of importDecl.specifiers) {

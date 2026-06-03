@@ -81,7 +81,20 @@ export function getPrintOptions(
       ImportDefaultSpecifier(node, context) {
         const generatedStart = context.generatedOffset;
         defaultPrinters.ImportDefaultSpecifier(node, context);
-        if (state.diagnosticsOnTopNodes.has(node as Node)) {
+        if (state.diagnosticsOnTopNodes.has(node)) {
+          const generatedEnd = context.generatedOffset;
+          context.createExtraMapping(
+            { start: 0, end: 1 },
+            generatedStart,
+            generatedEnd,
+            VERIFICATION_ONLY_MAPPING_DATA,
+          );
+        }
+      },
+      ImportSpecifier(node, context) {
+        const generatedStart = context.generatedOffset;
+        defaultPrinters.ImportSpecifier(node, context);
+        if (state.diagnosticsOnTopNodes.has(node)) {
           const generatedEnd = context.generatedOffset;
           context.createExtraMapping(
             { start: 0, end: 1 },

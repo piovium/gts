@@ -74,12 +74,10 @@ The module prefix for the provider. The transpiler generates:
 
 ```ts
 import __gts_rootVm from "<providerImportSource>/vm";
-import __gts_query from "<providerImportSource>/query";  // only if query expressions exist
 ```
 
 The provider must export:
 - `./vm` — default export of the root `ViewModel`
-- `./query` — default export of the query function (if queries are used)
 
 ### `shortcutFunctionPreludes`
 
@@ -108,7 +106,7 @@ Names destructured in query expression callbacks:
 query my.character
 
 // Transpiles to:
-__gts_query(({ my, opp }) => my.character, { star: false })
+__gts_fnArg["~query"](({ my, opp }) => my.character)
 ```
 
 ## Resolution Algorithm
@@ -168,7 +166,6 @@ my-game/
 │   ├── provider/
 │   │   ├── package.json  # No gamingTs field needed
 │   │   ├── vm.ts         # Root ViewModel (default export)
-│   │   ├── query.ts      # Query function (default export)
 │   │   └── runtime.ts    # Re-exports @gi-tcg/gts-runtime
 │   └── cards/
 │       ├── package.json  # { "gamingTs": { "providerImportSource": "@my-game/provider" } }
@@ -182,7 +179,6 @@ The `provider/package.json` must export the correct subpaths:
   "name": "@my-game/provider",
   "exports": {
     "./vm": "./vm.ts",
-    "./query": "./query.ts",
     "./runtime": "./runtime.ts"
   }
 }

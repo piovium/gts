@@ -4,12 +4,13 @@
   "type": "module",
   "exports": {
     "./vm": "./vm.ts",
-    "./query": "./query.ts",
     "./runtime": "./runtime.ts",
     
     "./types/vm": "./dist/vm.d.ts",
-    "./types/query": "./dist/query.d.ts",
     "./types/runtime": "./dist/runtime.d.ts"
+  },
+  "scripts": {
+    "build": "tsdown"
   },
   "dependencies": {
     "@gi-tcg/gts-runtime": "workspace:*",

@@ -166,11 +166,11 @@ This is equivalent to having an `[Action]` attribute with the function body.
 The `query` keyword creates a query expression for accessing game state:
 
 ```gts
-query my.character       // query({ my, opp }) => my.character
-query* my.character      // query with star flag (e.g., multi-select)
+query my.character       // calls __gts_fnArg["~query"](({ my, opp }) => my.character)
+query* my.character      // calls __gts_fnArg["~queryAll"](({ my, opp }) => my.character)
 ```
 
-The `*` after `query` sets a `star: true` flag on the generated call. Query expressions are transformed into calls to a query function with destructured bindings (default: `my`, `opp`).
+The `*` after `query` switches between `"~query"` and `"~queryAll"` on the `__gts_fnArg` object. Query expressions are transformed into calls on `__gts_fnArg` with an arrow function capturing destructured bindings (default: `my`, `opp`).
 
 ## Binding Exports
 
