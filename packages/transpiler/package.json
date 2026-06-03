@@ -1,6 +1,6 @@
 {
   "name": "@gi-tcg/gts-transpiler",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "type": "module",
