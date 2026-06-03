@@ -186,7 +186,6 @@ const SummonVM = defineViewModel(
       },
     ),
 
-    // TODO FIXME: can we prevent an attribute defined as undefined from TS?
     oops: undefined,
 
     usage: helper.attribute<{

@@ -75,8 +75,6 @@ export function transformForVolar(
       data: VERIFICATION_ONLY_MAPPING_DATA,
     });
   }
-  // TODO1: dummy identifier at EOF not extended to EOF (debug espolar end gap)
-  // TODO2: debug the mapping merging (inside espolar)
   return {
     code,
     mappings,

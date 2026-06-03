@@ -70,7 +70,7 @@ export function getPrintOptions(
         // to the top-of-file for diagnostics around missing / wrong imports.
         if (state.diagnosticsOnTopNodes.has(node)) {
           const generatedEnd = context.generatedOffset;
-          context.appendMapping(
+          context.createExtraMapping(
             { start: 0, end: 1 },
             generatedStart,
             generatedEnd,
@@ -83,7 +83,7 @@ export function getPrintOptions(
         defaultPrinters.ImportDefaultSpecifier(node, context);
         if (state.diagnosticsOnTopNodes.has(node as Node)) {
           const generatedEnd = context.generatedOffset;
-          context.appendMapping(
+          context.createExtraMapping(
             { start: 0, end: 1 },
             generatedStart,
             generatedEnd,
