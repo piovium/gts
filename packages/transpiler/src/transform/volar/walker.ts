@@ -79,18 +79,6 @@ export interface TypingTranspileState extends TranspileState {
 
 const EMPTY: EmptyStatement = { type: "EmptyStatement" };
 
-const ANY = {
-  type: "TSAnyKeyword",
-};
-
-// definite not supported by esrap yet, so we init the binding with an `as any` cast
-// https://github.com/sveltejs/esrap/issues/95
-const ANY_INIT = {
-  type: "TSAsExpression",
-  expression: { type: "Literal", value: 0 },
-  typeAnnotation: ANY,
-} as {} as Expression;
-
 const enterVMFromRoot = (state: TypingTranspileState) => {
   let defTypeId: Identifier = {
     type: "Identifier",
@@ -253,12 +241,12 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     for (const extBinding of state.externalizedBindings) {
       const varDecl: VariableDeclaration = {
         type: "VariableDeclaration",
-        kind: "const",
+        kind: "let",
         declarations: [
           {
             type: "VariableDeclarator",
             id: extBinding.bindingName,
-            init: ANY_INIT,
+            definite: true,
             typeAnnotation: {
               type: "TSTypeAnnotation",
               typeAnnotation: {
