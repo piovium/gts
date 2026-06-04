@@ -199,11 +199,11 @@ Two sources of diagnostics:
 
 ### Signature Help
 
-When the user types a space after an attribute name (e.g., `id `), the language server triggers signature help because space is registered as a trigger character. The generated code contains a function call (`__gts_attr_obj_0.id(...)`), so TypeScript provides parameter information.
+When the user types a space after an attribute name (e.g., `id `), the language server triggers signature help because space is registered as a trigger character. The generated code contains a function call (`__gts_attr_obj_0.id(...)`), so TypeScript provides parameter information. The `lParenLoc` recording in the parser ensures correct mapping for function calls.
 
 ### Go-to-Definition / Hover
 
-These work through the Volar mappings — source positions map to generated positions, and TypeScript resolves definitions/types in the generated code. The `lParenLoc` recording in the parser ensures correct mapping for function calls.
+These work through the Volar mappings — source positions map to generated positions, and TypeScript resolves definitions/types in the generated code. The preservation of leading comments during transpilation keeps documentation of definition when Hover.
 
 ## Configuration for Language Tooling
 

@@ -87,7 +87,8 @@ Each package uses [tsdown](https://tsdown.dev) as its bundler, configured in a p
 |---------|---------|---------|
 | `acorn` | 8.16.0 | JavaScript parser (base) |
 | `@sveltejs/acorn-typescript` | — | TypeScript syntax plugin for Acorn |
-| `esrap` | 2.2.1 | AST printer with source map support |
+| `esrap` | 2.2.1 | AST printer with source map support (used in runtime pipeline) |
+| `espolar` | 0.3.0 | AST printer with native Volar CodeMapping support (used in IDE/Volar pipeline) |
 | `zimmerframe` | 1.1.4 | AST walker/visitor framework |
 | `magic-string` | 0.30.21 | Source map generation |
 | `@jridgewell/sourcemap-codec` | — | VLQ source map decoding |

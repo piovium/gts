@@ -8,8 +8,16 @@ The transpiler (`@gi-tcg/gts-transpiler`) is the core of GTS. It converts `.gts`
 
 ```ts
 // src/index.ts
-function transpile(source: string, filename: string, option: TranspileOption): TranspileResult;
-function transpileForVolar(source: string, filename: string, option: TranspileOption): VolarMappingResult;
+function transpile(
+  source: string,
+  filename: string,
+  option: TranspileOption,
+): TranspileResult;
+function transpileForVolar(
+  source: string,
+  filename: string,
+  option: TranspileOption,
+): VolarMappingResult;
 ```
 
 - **`transpile`** — full pipeline for runtime: parse → GTS-to-TS → erase TS → print JS + source map
@@ -43,17 +51,15 @@ Source (.gts)
     ├── parseLoose(source)         # Tolerant parser (with dummy tokens)
     │       → Program (AST)
     │
-    ├── collectLeafTokens(ast)     # Extract leaf nodes for mapping
-    │       → LeafToken[]
-    │
-    ├── gtsToTypings(ast, option)  # GTS → TS type declarations
-    │   ├── walker                 # Type-generating visitor
-    │   ├── esrap print            # Print with patched printer
-    │   └── applyReplacements      # Expand type placeholders
-    │       → { code, sourceMap }
-    │
-    └── convertToVolarMappings     # Source map → Volar CodeMapping[]
-            → { code, mappings }
+    └── gtsToTypings(ast, option)  # GTS → TS type declarations
+        ├── walker                 # Type-generating visitor (emits replacement placeholders)
+        │       → Program (TS AST with __gts_replacement_tag placeholders)
+        │
+        ├── espolar print          # Print with embedded Volar CodeMapping[]
+        │       → { code, mappings }
+        │
+        └── applyReplacements      # Expand placeholders → type code; adjust mapping offsets
+                → { code, mappings }
 ```
 
 ## Parsing (`src/parse/`)
@@ -75,11 +81,13 @@ Acorn Base Parser
 Extends the Acorn parser class (`GtsParser`) with GTS-specific grammar:
 
 **Overridden methods:**
+
 - `parseStatement()` — intercepts `define` at top level to parse `GTSDefineStatement`
 - `parseExprAtom()` — handles `:identifier` for `GTSShortcutArgumentExpression`
 - `parseMaybeUnary()` — handles `query` keyword for `GTSQueryExpression`
 
 **New methods:**
+
 - `gts_isDefineStatement()` — checks for `define` followed by no line break
 - `gts_parseNamedAttributeDefinition()` — parses `AttributeName AttributeBody BindingClause? ;`
 - `gts_parseAttributeBody()` — parses `PositionalAttributeList? NamedAttributeBlock?`
@@ -91,6 +99,7 @@ Extends the Acorn parser class (`GtsParser`) with GTS-specific grammar:
 - `gts_parseQueryExpression()` — `query *? UnaryExpression`
 
 **Plugin options:**
+
 - `allowEmptyShortcutMember` — permits `:` without an identifier (for IDE completion)
 - `allowEmptyPositionalAttribute` — permits empty positional slots (for IDE completion)
 
@@ -108,17 +117,17 @@ Records the source location of the `(` token in `CallExpression` and `NewExpress
 
 The parser produces these custom AST nodes (extending estree):
 
-| Node Type | Description |
-|-----------|-------------|
-| `GTSDefineStatement` | Top-level `define` block |
-| `GTSNamedAttributeDefinition` | Single attribute: name + body + optional binding |
-| `GTSAttributeBody` | Positional attributes + optional named block |
-| `GTSPositionalAttributeList` | Comma-separated list of positional expressions |
-| `GTSNamedAttributeBlock` | `{ attrs... }` — nested attribute definitions |
-| `GTSDirectFunction` | Function body inside a named block (starts with `:`) |
-| `GTSShortcutFunctionExpression` | `:(expr)` or `:{stmts}` |
-| `GTSShortcutArgumentExpression` | `:identifier` inside shortcuts |
-| `GTSQueryExpression` | `query *? expr` |
+| Node Type                       | Description                                          |
+| ------------------------------- | ---------------------------------------------------- |
+| `GTSDefineStatement`            | Top-level `define` block                             |
+| `GTSNamedAttributeDefinition`   | Single attribute: name + body + optional binding     |
+| `GTSAttributeBody`              | Positional attributes + optional named block         |
+| `GTSPositionalAttributeList`    | Comma-separated list of positional expressions       |
+| `GTSNamedAttributeBlock`        | `{ attrs... }` — nested attribute definitions        |
+| `GTSDirectFunction`             | Function body inside a named block (starts with `:`) |
+| `GTSShortcutFunctionExpression` | `:(expr)` or `:{stmts}`                              |
+| `GTSShortcutArgumentExpression` | `:identifier` inside shortcuts                       |
+| `GTSQueryExpression`            | `query *? expr`                                      |
 
 ## Transformation (`src/transform/`)
 
@@ -129,6 +138,7 @@ The `gtsToTs()` function walks the AST with `zimmerframe` and replaces GTS nodes
 #### TranspileState
 
 The visitor maintains a `TranspileState` that tracks:
+
 - Generated identifiers (`__gts_createDefine`, `__gts_createBinding`, `__gts_Action`, etc.)
 - Shortcut function parameters (destructured prelude symbols)
 - Query parameters (destructured query bindings)
@@ -138,10 +148,12 @@ The visitor maintains a `TranspileState` that tracks:
 #### Visitor Transformations
 
 **`Program`** — Wraps the body with:
+
 1. Import of `{ createDefine, createBinding }` from the runtime
 2. Import of the root ViewModel from the provider's `/vm` module
 
 **`GTSDefineStatement`** → Expands into:
+
 ```js
 const __gts_node_0 = <visited attribute body>;
 const __gts_bindings_0 = __gts_createBinding(__gts_rootVm, __gts_node_0);
@@ -150,6 +162,7 @@ __gts_createDefine(__gts_rootVm, __gts_node_0);
 ```
 
 **`GTSNamedAttributeDefinition`** → Object literal:
+
 ```js
 { name: "id", positionals: () => [1201], named: null, binding: "public" }
 ```
@@ -181,7 +194,7 @@ The `eraseTs()` function removes all TypeScript-specific syntax:
 
 ### Printing (`transform/index.ts`)
 
-The `transform()` function orchestrates the pipeline and prints the final JS using `esrap` with source map generation:
+The `transform()` function orchestrates the **runtime pipeline** and prints the final JS using `esrap` with source map generation:
 
 ```ts
 function transform(ast, option, sourceInfo): TranspileResult {
@@ -203,10 +216,11 @@ The Volar transform generates TypeScript type declarations for IDE features. Ins
 ### Overview
 
 The Volar pipeline differs from the runtime pipeline:
+
 1. Uses a **typing walker** instead of the runtime visitor
 2. Generates **type aliases and typed variables** instead of function calls
-3. Uses a **replacement system** for complex type constructs
-4. Produces **Volar CodeMappings** instead of plain source maps
+3. Uses a **replacement system** for complex type constructs (expanded after printing)
+4. Uses **`espolar`** for printing, which produces **Volar CodeMappings** natively
 
 ### Typing Walker (`volar/walker.ts`)
 
@@ -231,10 +245,10 @@ The `gtsToTypingsWalker` visitor generates type information by maintaining stack
 Complex type constructs can't be expressed directly in the AST. Instead, the walker emits **placeholder tagged template expressions**:
 
 ```js
-__gts_replacement_tag`{"type":"enterVMFromRoot","vm":"__root_vm",...}`
+__gts_replacement_tag`{"type":"enterVMFromRoot","vm":"__root_vm",...}`;
 ```
 
-After printing, `applyReplacements()` regex-replaces these with actual TypeScript type code. For example, `enterVMFromRoot` becomes:
+After printing with `espolar`, `applyReplacements()` regex-replaces these placeholders with actual TypeScript type code, and adjusts the generated offsets in the already-produced `CodeMapping[]` to account for length differences. For example, `enterVMFromRoot` becomes:
 
 ```ts
 type __gts_rootVmDefType_0 = (typeof __root_vm)[__gts_symbols_namedDef];
@@ -253,36 +267,37 @@ namespace __rans {
 
 This produces a TypeScript error if required attributes are missing.
 
-### Leaf Token Collection (`volar/collect_tokens.ts`)
+### Printing & Mappings (`volar/printer.ts`, `volar/mappings.ts`)
 
-Before transformation, `collectLeafTokens()` walks the AST and collects all leaf nodes (nodes with no child AST nodes). Each `LeafToken` stores:
-- `loc` — source location
-- `isDummy` — whether this is a dummy identifier from loose parsing
-- `sourceLength` / `sourceLengthOffset` — overrides for mapping length
-- `startOffset` — adjusts the generated code start position
-- `generatedLength` — overrides the generated code length
+The Volar pipeline uses **`espolar`** (instead of `esrap`) for printing. `espolar` generates Volar `CodeMapping[]` directly alongside the code output, eliminating the need for a separate source-map-to-mapping conversion step.
 
-These tokens drive the source-to-generated mapping conversion.
+#### `getPrintOptions()` (`volar/printer.ts`)
 
-### Patched Printer (`volar/printer.ts`)
+Configures `espolar`'s `PrintOptions<CodeInformation>` with:
 
-The esrap printer is patched for Volar output:
+- **`isUntouched`** — returns `true` for nodes from the original source (tracked via `state.sourceNodes: WeakSet<Node>`), so `espolar` preserves their original text and creates proper source-to-generated mappings.
+- **`getMappingData`** — returns `DEFAULT_VOLAR_MAPPING_DATA` (all capabilities: completion, format, navigation, semantic, structure, verification) for most mappings, or `VERIFICATION_ONLY_MAPPING_DATA` for diagnostic-only mappings.
+- **Custom printers** — overrides for specific node types:
+  - **`Identifier`** — dummy identifiers print as `""` (or `","` if the node is the last argument of a `CallExpression`, to preserve TypeScript error detection). Uses `context.writeMapped()` to create inline mappings with correct source ranges.
+  - **`Literal`** — identifiers wrapped as string literals (lowercase positional args like `cryo`) are printed with quote mapping: the source maps to the content between the quotes. Import sources (`"..."` in generated import statements) with `diagnosticsOnTop` get a verification-only mapping to the top of the source file for missing-import diagnostics.
+  - **`ImportDefaultSpecifier` / `ImportSpecifier`** — generated import specifiers also get top-of-file diagnostic mappings via `context.createExtraMapping()`.
+- **`experimentalGetLeftParenSourceRange`** — maps `(` tokens in `CallExpression`/`NewExpression` to their original source position for signature help support.
 
-1. **Dummy identifiers** print as empty string (or `,` if it's the last argument, to preserve TypeScript error detection)
-2. **CallExpression/NewExpression** — the `(` token is mapped to the `lParenLoc` node for signature help support. Uses a `Proxy` to intercept `context.write("(")` and associate it with the fake location node.
+#### Mappings (`volar/mappings.ts`)
 
-### Volar Mappings (`volar/mappings.ts`)
+Defines the `VolarMappingResult` type and two `CodeInformation` constants:
 
-`convertToVolarMappings()` converts the esrap source map into Volar `CodeMapping[]`:
+- `DEFAULT_VOLAR_MAPPING_DATA` — all capabilities (completion, format, navigation, semantic, structure, verification)
+- `VERIFICATION_ONLY_MAPPING_DATA` — verification only, used for diagnostic-position mappings (e.g., import errors pointing to top-of-file, required-attribute validation errors)
 
-1. Decodes the VLQ source map with `@jridgewell/sourcemap-codec`
-2. Builds a source-to-generated position lookup map
-3. For each leaf token, finds the generated position and creates a `CodeMapping` with:
-   - `sourceOffsets` / `generatedOffsets` — byte offsets
-   - `lengths` / `generatedLengths` — mapped region sizes
-   - `data` — Volar code information flags (completion, navigation, verification, etc.)
-4. Special handling for dummy tokens (adjusts source start to include whitespace before the dummy)
-5. Processes additional mappings from the walker (e.g., attribute name → typed variable access)
+After `espolar` produces the initial `{ code, mappings }`, `applyReplacements()` expands the placeholder tagged templates and **adjusts the generated offsets** in the existing `CodeMapping[]` to account for the length differences between placeholders and their expanded type code. Extra diagnostic mappings (from `state.extraMappings`) are appended by searching for unique generated-code needle strings.
+
+#### Runtime vs Volar Printers
+
+| Pipeline                  | Printer   | Output                                                          |
+| ------------------------- | --------- | --------------------------------------------------------------- |
+| Runtime (`transpile`)     | `esrap`   | `{ code, sourceMap }` (source map v3, decoded from VLQ)         |
+| IDE (`transpileForVolar`) | `espolar` | `{ code, mappings }` (Volar `CodeMapping[]`, produced natively) |
 
 ## Error Handling
 
@@ -298,4 +313,4 @@ Parse errors (from Acorn's `SyntaxError`) are caught and re-thrown as `GtsTransp
 
 ### Minimal Missing String (`utils/minimal_missing_string.ts`)
 
-A suffix automaton-based utility that finds the shortest string NOT present in a given input. Uses BFS over a suffix automaton to find the minimal missing substring from a given alphabet. Used internally for generating unique identifiers in validation.
+A suffix automaton-based utility that finds the shortest string NOT present in a given input. Uses BFS over a suffix automaton to find the minimal missing substring from a given alphabet. ~~Used internally for generating unique identifiers in validation.~~ Not used yet.
