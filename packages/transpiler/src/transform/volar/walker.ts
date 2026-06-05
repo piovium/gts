@@ -241,12 +241,12 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     for (const extBinding of state.externalizedBindings) {
       const varDecl: VariableDeclaration = {
         type: "VariableDeclaration",
-        kind: "let",
+        kind: "const",
         declarations: [
           {
             type: "VariableDeclarator",
             id: extBinding.bindingName,
-            definite: true,
+            // @ts-expect-error TS property not provided in ESTree
             typeAnnotation: {
               type: "TSTypeAnnotation",
               typeAnnotation: {
@@ -254,7 +254,14 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
                 typeName: extBinding.typingId,
               },
             },
-          } as VariableDeclarator,
+            init: {
+              type: "TSNonNullExpression",
+              expression: {
+                type: "Literal",
+                value: null,
+              } satisfies Expression,
+            } as any,
+          },
         ],
       };
       if (extBinding.export) {

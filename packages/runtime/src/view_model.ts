@@ -108,6 +108,10 @@ class AttributeDefHelper<ModelT> {
 
   "~assignActions"(defResult: Partial<Record<string, unknown>>): void {
     for (const [name, value] of Object.entries(defResult)) {
+      if (!value) {
+        console?.warn?.(`Attribute "${name}" is assigned a falsy value, which is not a valid attribute definition.`);
+        continue;
+      }
       const actionDescriptor = Object.getOwnPropertyDescriptor(
         value,
         AttributeDefHelper.#lazyActionSlot,

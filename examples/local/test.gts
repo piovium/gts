@@ -1,5 +1,18 @@
-
-import { A } from "./test2.gts";
+#!/usr/bin/env node
+// Copyright (C) 2026 Piovium Labs
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 export const add = (a: number, b: number) => {
   return a + b;
@@ -56,7 +69,11 @@ define summon {
     hint heal, 1;
     :heal(1, query* my.character);
     const currentUsage = :getVariable("usage");
-    void (1 + 1);
+    void (1 +1);
+    class A {
+      // This comment should be visible
+      x = () => void :heal;
+    }
     :apply(hydro, query my.active);
   }
 }
@@ -73,6 +90,6 @@ const obj = { sub, foo: 0 };
 // obj.sub("test");
 // (0, obj).sub("test");
 // obj.foo ? 'a' : 'b';
-new Date().         
+// new Date().         
 // sub
 

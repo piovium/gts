@@ -67,7 +67,7 @@ export function getPrintOptions(
           defaultPrinters.Literal(node, context);
         }
         // For generated `import xxx from "yyy"`, add mappings from xxx and yyy
-        // to the top-of-file for diagnostics around missing / wrong imports.
+        // to the top-of-file for diagnostics around missing / wrong imports. [[1]]
         if (state.diagnosticsOnTopNodes.has(node)) {
           const generatedEnd = context.generatedOffset;
           context.createExtraMapping(
@@ -78,6 +78,7 @@ export function getPrintOptions(
           );
         }
       },
+      // Same as [[1]]
       ImportDefaultSpecifier(node, context) {
         const generatedStart = context.generatedOffset;
         defaultPrinters.ImportDefaultSpecifier(node, context);
@@ -91,6 +92,7 @@ export function getPrintOptions(
           );
         }
       },
+      // Same as [[1]]
       ImportSpecifier(node, context) {
         const generatedStart = context.generatedOffset;
         defaultPrinters.ImportSpecifier(node, context);
