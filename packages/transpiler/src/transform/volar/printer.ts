@@ -106,6 +106,19 @@ export function getPrintOptions(
           );
         }
       },
+      // Maps the last generated import declaration
+      ImportDeclaration(node, context) {
+        defaultPrinters.ImportDeclaration(node, context);
+        if (state.lastImportDeclarationIfGen === node) {
+          context.createExtraMapping(
+            // TODO: should be after hashbang and leading comments
+            { start: 0, end: 1 },
+            context.generatedOffset + 1,
+            context.generatedOffset + 2,
+            VERIFICATION_ONLY_MAPPING_DATA,
+          );
+        }
+      },
     },
     // Enable triggering signature completion
     experimentalGetLeftParenSourceRange: (node) => {

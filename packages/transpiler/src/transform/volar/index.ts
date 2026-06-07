@@ -10,7 +10,10 @@ import {
 import { gtsToTypingsWalker, type TypingTranspileState } from "./walker.ts";
 import { applyReplacements } from "./replacements.ts";
 import type { Program } from "estree";
-import { VERIFICATION_ONLY_MAPPING_DATA, type VolarMappingResult } from "./mappings.ts";
+import {
+  VERIFICATION_ONLY_MAPPING_DATA,
+  type VolarMappingResult,
+} from "./mappings.ts";
 import { getPrintOptions } from "./printer.ts";
 
 export function transformForVolar(
@@ -40,6 +43,7 @@ export function transformForVolar(
     namedAttributeCalleeLParenRange: new WeakMap(),
     literalFromIdentifier: new WeakSet(),
     lastArgNodes: new WeakSet(),
+    lastImportDeclarationIfGen: null,
     diagnosticsOnTopNodes: new WeakSet(),
     extraMappings: [],
   };
@@ -60,7 +64,12 @@ export function transformForVolar(
       if (lastArg) {
         state.lastArgNodes.add(lastArg);
       }
-    }
+    },
+    ImportDeclaration(node, { state }) {
+      if (!state.sourceNodes.has(node)) {
+        state.lastImportDeclarationIfGen = node;
+      }
+    },
   });
   const printOptions = getPrintOptions(sourceInfo.content, state);
   let { code, mappings } = print(newAst, printOptions);
@@ -75,6 +84,20 @@ export function transformForVolar(
       data: VERIFICATION_ONLY_MAPPING_DATA,
     });
   }
+  walk(newAst, null, {
+    ImportDeclaration(node) {
+      if (!node.range) {
+        return;
+      }
+      const endOffset = node.range[1];
+      const mappingEndsWithThisImport = mappings.find(
+        (m) => m.sourceOffsets[0] + m.lengths[0] === endOffset,
+      );
+      if (mappingEndsWithThisImport?.lengths[0]) {
+        mappingEndsWithThisImport.lengths[0] += 1; // include the newline after the import
+      }
+    },
+  });
   return {
     code,
     mappings,

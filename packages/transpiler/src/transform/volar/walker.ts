@@ -67,6 +67,11 @@ export interface TypingTranspileState extends TranspileState {
   literalFromIdentifier: WeakSet<Literal>;
   /** Nodes that are last arguments of a CallExpression */
   lastArgNodes: WeakSet<Node>;
+  /**
+   * The last import declaration, record if it is a generated one.
+   * This declaration marks the TS auto-import insertion point.
+   */
+  lastImportDeclarationIfGen: ImportDeclaration | null;
   /** Nodes that have a diagnostic mappings to the top of the file */
   diagnosticsOnTopNodes: WeakSet<Node>;
   /** Extra mappings, the generated range will be found by the needle after replacement */
@@ -318,8 +323,26 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         state.diagnosticsOnTopNodes.add(specifier);
       }
     }
+    const lastImportDecl = importDecls.pop() ?? {
+      type: "ImportDeclaration",
+      specifiers: [],
+      source: { type: "Literal", value: "" },
+      attributes: [],
+    } satisfies ImportDeclaration;
     body.unshift(
       ...importDecls,
+      // Add an unrelated statement between system generated imports to make them unsorted,
+      // so that TSServer will always insert auto-imports after the last ImportDeclaration.
+      // `lastImportDecl` will be marked as insertion point in printer if no user's
+      // ImportDeclaration is provided
+      {
+        type: "ExpressionStatement",
+        expression: {
+          type: "Literal",
+          value: 0,
+        }
+      },
+      lastImportDecl,
       createReplacementHolder(state, {
         type: "preface",
       }),

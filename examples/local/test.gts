@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-export const add = (a: number, b: number) => {
-  return a + b;
-}
+// export const add = (a: number, b: number) => {
+//   return a + b;
+// }
 
 /**
  * @id 1201
@@ -83,8 +83,8 @@ const sub = (a: number, b: number) => {
   return a - b;
 }
 
-void A;
 gytx
+A
 const obj = { sub, foo: 0 };
 
 // obj.sub("test");
