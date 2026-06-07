@@ -205,6 +205,96 @@ When the user types a space after an attribute name (e.g., `id `), the language 
 
 These work through the Volar mappings — source positions map to generated positions, and TypeScript resolves definitions/types in the generated code. The preservation of leading comments during transpilation keeps documentation of definition when Hover.
 
+## Volar Transform (`src/transform/volar/`)
+
+The Volar transform generates TypeScript type declarations for IDE features. Instead of producing runnable code, it generates type-level constructs that let TypeScript's type checker validate GTS definitions.
+
+### Overview
+
+The Volar pipeline differs from the runtime pipeline:
+
+1. Uses a **typing walker** instead of the runtime visitor
+2. Generates **type aliases and typed variables** instead of function calls
+3. Uses a **replacement system** for complex type constructs (expanded after printing)
+4. Uses **`espolar`** for printing, which produces **Volar CodeMappings** natively
+
+### Typing Walker (`volar/walker.ts`)
+
+The `gtsToTypingsWalker` visitor generates type information by maintaining stacks:
+
+- **`vmDefTypeIdStack`** — tracks the type of the current ViewModel's definition (what attributes are available)
+- **`metaTypeIdStack`** — tracks the current meta type (accumulated state from attribute calls)
+- **`finalMetaTypeIdStack`** — tracks the final meta type after all attributes in a block
+- **`attrsOfCurrentVm`** — tracks which attribute names have been used (for required attribute validation)
+
+**Key operations:**
+
+- `enterVMFromRoot(state)` — starts processing a `define` block. Emits type aliases for the root VM's definition type and initial meta type.
+- `enterVMFromAttr(state, returningId)` — enters a nested ViewModel from an attribute's return type (e.g., `skill` attribute returns a `SkillVM`).
+- `exitVM(state)` — validates that all required attributes have been provided. Emits a type check that produces an error if required attributes are missing.
+- `enterAttr(state, attrName)` — prepares to call an attribute. Creates a typed variable that combines the current meta with the VM definition.
+- `exitAttr(state, returningId)` — updates the meta type based on the attribute's return type (some attributes can rewrite the meta, e.g., adding variable names).
+- `genBindingTyping(state, info)` — generates a type for a binding export (the `as` clause).
+
+### Replacement System (`volar/replacements.ts`)
+
+Complex type constructs can't be expressed directly in the AST. Instead, the walker emits **placeholder tagged template expressions**:
+
+```js
+__gts_replacement_tag`{"type":"enterVMFromRoot","vm":"__root_vm",...}`;
+```
+
+After printing with `espolar`, `applyReplacements()` regex-replaces these placeholders with actual TypeScript type code, and adjusts the generated offsets in the already-produced `CodeMapping[]` to account for length differences. For example, `enterVMFromRoot` becomes:
+
+```ts
+type __gts_rootVmDefType_0 = (typeof __root_vm)[__gts_symbols_namedDef];
+type __gts_rootVmInitMetaType_1 = __gts_rootVmDefType_0[__gts_symbols_meta];
+```
+
+The `exitVM` replacement generates a required-attribute validation check:
+
+```ts
+namespace __rans {
+  export type Collected = "id" | "since" | "tags";
+  export type Expected = { [K in keyof DefType]: ... }[keyof DefType];
+}
+((_: __rans.Expected extends __rans.Collected ? string : __rans.Expected) => 0)("...");
+```
+
+This produces a TypeScript error if required attributes are missing.
+
+### Printing & Mappings (`volar/printer.ts`, `volar/mappings.ts`)
+
+The Volar pipeline uses **`espolar`** (instead of `esrap`) for printing. `espolar` generates Volar `CodeMapping[]` directly alongside the code output, eliminating the need for a separate source-map-to-mapping conversion step.
+
+#### `getPrintOptions()` (`volar/printer.ts`)
+
+Configures `espolar`'s `PrintOptions<CodeInformation>` with:
+
+- **`isUntouched`** — returns `true` for nodes from the original source (tracked via `state.sourceNodes: WeakSet<Node>`), so `espolar` preserves their original text and creates proper source-to-generated mappings.
+- **`getMappingData`** — returns `DEFAULT_VOLAR_MAPPING_DATA` (all capabilities: completion, format, navigation, semantic, structure, verification) for most mappings, or `VERIFICATION_ONLY_MAPPING_DATA` for diagnostic-only mappings.
+- **Custom printers** — overrides for specific node types:
+  - **`Identifier`** — dummy identifiers print as `""` (or `","` if the node is the last argument of a `CallExpression`, to preserve TypeScript error detection). Uses `context.writeMapped()` to create inline mappings with correct source ranges.
+  - **`Literal`** — identifiers wrapped as string literals (lowercase positional args like `cryo`) are printed with quote mapping: the source maps to the content between the quotes. Import sources (`"..."` in generated import statements) with `diagnosticsOnTop` get a verification-only mapping to the top of the source file for missing-import diagnostics.
+  - **`ImportDefaultSpecifier` / `ImportSpecifier`** — generated import specifiers also get top-of-file diagnostic mappings via `context.createExtraMapping()`.
+- **`experimentalGetLeftParenSourceRange`** — maps `(` tokens in `CallExpression`/`NewExpression` to their original source position for signature help support.
+
+#### Mappings (`volar/mappings.ts`)
+
+Defines the `VolarMappingResult` type and two `CodeInformation` constants:
+
+- `DEFAULT_VOLAR_MAPPING_DATA` — all capabilities (completion, format, navigation, semantic, structure, verification)
+- `VERIFICATION_ONLY_MAPPING_DATA` — verification only, used for diagnostic-position mappings (e.g., import errors pointing to top-of-file, required-attribute validation errors)
+
+After `espolar` produces the initial `{ code, mappings }`, `applyReplacements()` expands the placeholder tagged templates and **adjusts the generated offsets** in the existing `CodeMapping[]` to account for the length differences between placeholders and their expanded type code. Extra diagnostic mappings (from `state.extraMappings`) are appended by searching for unique generated-code needle strings.
+
+#### Runtime vs Volar Printers
+
+| Pipeline                  | Printer   | Output                                                          |
+| ------------------------- | --------- | --------------------------------------------------------------- |
+| Runtime (`transpile`)     | `esrap`   | `{ code, sourceMap }` (source map v3, decoded from VLQ)         |
+| IDE (`transpileForVolar`) | `espolar` | `{ code, mappings }` (Volar `CodeMapping[]`, produced natively) |
+
 ## Configuration for Language Tooling
 
 Language tooling reads GTS configuration from the nearest `package.json` using `resolveGtsConfigSync()`. This determines which provider to use, which affects the ViewModel types available in completions. See [Configuration](/docs/configuration) for details.
