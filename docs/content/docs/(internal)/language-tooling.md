@@ -185,7 +185,7 @@ Editor settings for GTS files:
 ### Completions
 
 1. User types in a `.gts` file
-2. The language plugin transpiles the source to TypeScript with Volar mappings
+2. The language plugin transpiles (see below) the source to TypeScript with Volar mappings
 3. TypeScript's completions service runs on the generated code
 4. Volar maps the completions back to the source positions
 
@@ -204,6 +204,16 @@ When the user types a space after an attribute name (e.g., `id `), the language 
 ### Go-to-Definition / Hover
 
 These work through the Volar mappings — source positions map to generated positions, and TypeScript resolves definitions/types in the generated code. The preservation of leading comments during transpilation keeps documentation of definition when Hover.
+
+###  Auto-Import Insertion
+
+This is done by resolving the location where TSServer inserts new imports. When auto-importing (code action or completion), TSServer determines the insertion point by looking at existing import declarations. The language server intercepts this through the Volar transform by:
+
+1. **Making generated imports unsorted** — an unrelated `ExpressionStatement` (`0;`) is inserted between system-generated import declarations and the last import group. This makes the generated imports appear "unsorted" to TSServer, so it always chooses the position after the final generated import as the insertion point.
+
+2. **Mapping to content start** — if the last import is a generated one, it will gets an extra range mapping that maps a newline after it to the content start offset in the source file. The "content start" is calculated by `getContentStartOffset()` (`volar/content_start.ts`), that skips hashbang lines (`#!/usr/bin/env node`) and leading block-level comments (until two consecutive blank lines or non-comment content is encountered), yielding the character offset where meaningful content begins. This is used as the source mapping target so auto-imports are placed after file headers but before the main code.
+
+3. **Enlarged import declaration mapping** For each user's import, if it was mapped as end of a mapping range, then the transpiler will enlarge its mapping range 1 character from its right boundary, to cover TSServer's insertion point.
 
 ## Volar Transform (`src/transform/volar/`)
 
