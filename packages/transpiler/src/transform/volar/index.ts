@@ -15,6 +15,7 @@ import {
   type VolarMappingResult,
 } from "./mappings.ts";
 import { getPrintOptions } from "./printer.ts";
+import { getContentStartOffset } from "./content_start.ts";
 
 export function transformForVolar(
   ast: Program,
@@ -46,6 +47,7 @@ export function transformForVolar(
     lastImportDeclarationIfGen: null,
     diagnosticsOnTopNodes: new WeakSet(),
     extraMappings: [],
+    contentStartOffset: getContentStartOffset(sourceInfo.content),
   };
   // mark sourceNodes before the transformation
   walk(ast as AST.Node, state, {

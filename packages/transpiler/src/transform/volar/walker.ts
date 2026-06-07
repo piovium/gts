@@ -80,6 +80,8 @@ export interface TypingTranspileState extends TranspileState {
     length: number;
     generatedNeedle: string;
   }[];
+  /** Character offset after hashbang and file-scope leading comments */
+  contentStartOffset: number;
 }
 
 const EMPTY: EmptyStatement = { type: "EmptyStatement" };

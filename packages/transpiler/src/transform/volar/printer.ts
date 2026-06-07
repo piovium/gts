@@ -106,16 +106,26 @@ export function getPrintOptions(
           );
         }
       },
-      // Maps the last generated import declaration
+      // If the last import declaration is a generated one, because of we ensured that
+      // the generated import declarations are always unsorted, so TSServer will set the
+      // auto-insertion point next to this last import declaration.
+      // Add a mapping to that position (a written newline character) to the top-of-file,
+      // after skipping hashbang and leading comments.
+      // NOTE: since the insertion derived from here won't add additional newline *before*
+      // the inserted text, so here is a difference behavior from standard TSServer and our
+      // language server. We'd try our best.
       ImportDeclaration(node, context) {
         defaultPrinters.ImportDeclaration(node, context);
         if (state.lastImportDeclarationIfGen === node) {
+          context.write("\n");
           context.createExtraMapping(
-            // TODO: should be after hashbang and leading comments
-            { start: 0, end: 1 },
+            {
+              start: state.contentStartOffset,
+              end: state.contentStartOffset + 1,
+            },
+            context.generatedOffset,
             context.generatedOffset + 1,
-            context.generatedOffset + 2,
-            VERIFICATION_ONLY_MAPPING_DATA,
+            DEFAULT_VOLAR_MAPPING_DATA,
           );
         }
       },
