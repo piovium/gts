@@ -120,7 +120,7 @@ export function applyReplacements(
       } else if (payload.type === "exitVM") {
         const lhs = `${payload.finalMetaType}_lhs`;
         const requiredAttrsNs = `${payload.finalMetaType}_rans`;
-        const collectedAttrsExpr = `${payload.collectedAttrs.join(" | ")}`;
+        const collectedAttrsExpr = `${payload.collectedAttrs.join(" | ") || "never"}`;
         const needleString = `"${requiredAttrsNs}_NeedleString" as any as "required attributes are missing"`;
         if (payload.errorRange) {
           state.extraMappings.push({

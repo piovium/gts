@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import { A } from "./test2.gts";
 
 // export const add = (a: number, b: number) => {
 //   return a + b;
@@ -83,7 +84,7 @@ const sub = (a: number, b: number) => {
   return a - b;
 }
 
-gytx
+// gytx
 A
 const obj = { sub, foo: 0 };
 
