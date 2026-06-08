@@ -24,7 +24,7 @@ importers:
         version: link:packages/tsc
       '@gi-tcg/unplugin-gts':
         specifier: workspace:*
-        version: file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0))
+        version: file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(unloader@0.9.0)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0))
       bunup:
         specifier: ^0.16.26
         version: 0.16.26(typescript@5.9.3)
@@ -107,7 +107,7 @@ importers:
     devDependencies:
       '@gi-tcg/unplugin-gts':
         specifier: workspace:*
-        version: file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0))
+        version: file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(unloader@0.9.0)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0))
       vite:
         specifier: ^7.3.1
         version: 7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)
@@ -144,7 +144,7 @@ importers:
         version: 25.1.2
       '@gi-tcg/gts-language-server':
         specifier: workspace:*
-        version: file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)
+        version: link:../../packages/language-server
       monaco-languageclient:
         specifier: ~10.7.0
         version: 10.7.0
@@ -311,6 +311,9 @@ importers:
       rollup:
         specifier: '>=3'
         version: 4.57.1
+      unloader:
+        specifier: '*'
+        version: 0.9.0
       unplugin:
         specifier: npm:@gytx/unplugin@3.1.0-patch.2
         version: '@gytx/unplugin@3.1.0-patch.2'
@@ -329,11 +332,11 @@ importers:
     dependencies:
       '@gi-tcg/gts-typescript-language-service-plugin':
         specifier: workspace:*
-        version: link:../typescript-language-service-plugin
+        version: file:packages/typescript-language-service-plugin(@types/estree@1.0.9)(typescript@5.9.3)
     devDependencies:
       '@gi-tcg/gts-language-server':
         specifier: workspace:*
-        version: file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)
+        version: link:../language-server
       '@types/node':
         specifier: ^24.10.4
         version: 24.10.4
@@ -1000,12 +1003,11 @@ packages:
     peerDependencies:
       typescript: 'catalog:'
 
-  '@gi-tcg/gts-language-server@file:packages/language-server':
-    resolution: {directory: packages/language-server, type: directory}
-    hasBin: true
-
   '@gi-tcg/gts-transpiler@file:packages/transpiler':
     resolution: {directory: packages/transpiler, type: directory}
+
+  '@gi-tcg/gts-typescript-language-service-plugin@file:packages/typescript-language-service-plugin':
+    resolution: {directory: packages/typescript-language-service-plugin, type: directory}
 
   '@gi-tcg/unplugin-gts@file:packages/unplugin':
     resolution: {directory: packages/unplugin, type: directory}
@@ -1014,6 +1016,7 @@ packages:
       esbuild: '*'
       rolldown: '*'
       rollup: '>=3'
+      unloader: '*'
       vite: '*'
       webpack: ^4 || ^5
     peerDependenciesMeta:
@@ -1022,6 +1025,8 @@ packages:
       esbuild:
         optional: true
       rolldown:
+        optional: true
+      unloader:
         optional: true
       vite:
         optional: true
@@ -4828,6 +4833,9 @@ packages:
   unconfig-core@7.5.0:
     resolution: {integrity: sha512-Su3FauozOGP44ZmKdHy2oE6LPjk51M/TRRjHv2HNCWiDvfvCoxC2lno6jevMA91MYAdCdwP05QnWdWpSbncX/w==}
 
+  unconfig@7.5.0:
+    resolution: {integrity: sha512-oi8Qy2JV4D3UQ0PsopR28CzdQ3S/5A1zwsUwp/rosSbfhJ5z7b90bIyTwi/F7hCLD4SGcZVjDzd4XoUQcEanvA==}
+
   underscore@1.13.7:
     resolution: {integrity: sha512-GMXzWtsc57XAtguZgaQViUOzs0KTkk8ojr3/xAxXLITqf/3EMwxC0inyETfDFjH/Krbhuep0HNbbjI9i/q3F3g==}
 
@@ -4867,6 +4875,10 @@ packages:
 
   unist-util-visit@5.1.0:
     resolution: {integrity: sha512-m+vIdyeCOpdr/QeQCu2EzxX/ohgS8KbnPDgFni4dQsfSCtpz8UqDyY5GjRru8PDKuYn7Fq19j1CQ+nJSsGKOzg==}
+
+  unloader@0.9.0:
+    resolution: {integrity: sha512-CnJpJhhH6ZxsYIpbdcp1FPzDjv135jHuHGM26p+RWooi6NiAhJ0IbOGUVJm8TZlyN/H66DMmncoD4g21vphiTw==}
+    engines: {node: '>=22.18.0'}
 
   unplugin@3.0.0:
     resolution: {integrity: sha512-0Mqk3AT2TZCXWKdcoaufeXNukv2mTrEZExeXlHIOZXdqYoHHr4n51pymnwV8x2BOVxwXbK2HLlI7usrqMpycdg==}
@@ -5925,21 +5937,6 @@ snapshots:
       - '@types/estree'
       - babel-plugin-macros
 
-  '@gi-tcg/gts-language-server@file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)':
-    dependencies:
-      '@gi-tcg/gts-language-plugin': file:packages/language-plugin(@types/estree@1.0.9)(typescript@5.9.3)
-      '@gi-tcg/gts-transpiler': file:packages/transpiler(@types/estree@1.0.9)
-      '@volar/language-server': 2.4.27
-      '@zenfs/core': 2.5.0
-      path-browserify-esm: 1.0.6
-      volar-service-typescript: 0.0.68(@volar/language-service@2.4.27)
-      vscode-uri: 3.1.0
-    transitivePeerDependencies:
-      - '@types/estree'
-      - '@volar/language-service'
-      - babel-plugin-macros
-      - typescript
-
   '@gi-tcg/gts-transpiler@file:packages/transpiler(@types/estree@1.0.9)':
     dependencies:
       '@sveltejs/acorn-typescript': 1.0.8(acorn@8.16.0)
@@ -5954,7 +5951,16 @@ snapshots:
       - '@types/estree'
       - babel-plugin-macros
 
-  '@gi-tcg/unplugin-gts@file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0))':
+  '@gi-tcg/gts-typescript-language-service-plugin@file:packages/typescript-language-service-plugin(@types/estree@1.0.9)(typescript@5.9.3)':
+    dependencies:
+      '@gi-tcg/gts-language-plugin': file:packages/language-plugin(@types/estree@1.0.9)(typescript@5.9.3)
+      '@volar/typescript': 2.4.27
+    transitivePeerDependencies:
+      - '@types/estree'
+      - babel-plugin-macros
+      - typescript
+
+  '@gi-tcg/unplugin-gts@file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(unloader@0.9.0)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0))':
     dependencies:
       '@gi-tcg/gts-transpiler': file:packages/transpiler(@types/estree@1.0.9)
       '@types/bun': 1.3.14
@@ -5964,13 +5970,14 @@ snapshots:
       '@rspack/core': 1.7.11
       esbuild: 0.28.0
       rolldown: 1.0.1
+      unloader: 0.9.0
       vite: 7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)
       webpack: 5.106.2(esbuild@0.28.0)(lightningcss@1.32.0)
     transitivePeerDependencies:
       - '@types/estree'
       - babel-plugin-macros
 
-  '@gi-tcg/unplugin-gts@file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0))':
+  '@gi-tcg/unplugin-gts@file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(unloader@0.9.0)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0))':
     dependencies:
       '@gi-tcg/gts-transpiler': file:packages/transpiler(@types/estree@1.0.9)
       '@types/bun': 1.3.14
@@ -5980,6 +5987,7 @@ snapshots:
       '@rspack/core': 1.7.11
       esbuild: 0.28.0
       rolldown: 1.0.1
+      unloader: 0.9.0
       vite: 8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)
       webpack: 5.106.2(esbuild@0.28.0)
     transitivePeerDependencies:
@@ -10017,6 +10025,14 @@ snapshots:
       '@quansync/fs': 1.0.0
       quansync: 1.0.0
 
+  unconfig@7.5.0:
+    dependencies:
+      '@quansync/fs': 1.0.0
+      defu: 6.1.7
+      jiti: 2.7.0
+      quansync: 1.0.0
+      unconfig-core: 7.5.0
+
   underscore@1.13.7: {}
 
   undici-types@7.16.0: {}
@@ -10070,6 +10086,13 @@ snapshots:
       '@types/unist': 3.0.3
       unist-util-is: 6.0.1
       unist-util-visit-parents: 6.0.2
+
+  unloader@0.9.0:
+    dependencies:
+      '@jridgewell/remapping': 2.3.5
+      obug: 2.1.1
+      picomatch: 4.0.4
+      unconfig: 7.5.0
 
   unplugin@3.0.0:
     dependencies:

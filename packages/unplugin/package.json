@@ -1,49 +1,59 @@
 {
   "name": "@gi-tcg/unplugin-gts",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "development": "./src/index.ts",
+      "development": ["./src/index.ts", "./dist/index.js"],
       "default": "./dist/index.js"
     },
     "./bun": {
       "types": "./dist/bun.d.ts",
-      "development": "./src/bun.ts",
+      "development": ["./src/bun.ts", "./dist/bun.js"],
       "default": "./dist/bun.js"
     },
     "./bun/preload": "./src/bun_preload.ts",
     "./esbuild": {
       "types": "./dist/esbuild.d.ts",
-      "development": "./src/esbuild.ts",
+      "development": ["./src/esbuild.ts", "./dist/esbuild.js"],
       "default": "./dist/esbuild.js"
     },
     "./rolldown": {
       "types": "./dist/rolldown.d.ts",
-      "development": "./src/rolldown.ts",
+      "development": ["./src/rolldown.ts", "./dist/rolldown.js"],
       "default": "./dist/rolldown.js"
     },
     "./rollup": {
       "types": "./dist/rollup.d.ts",
-      "development": "./src/rollup.ts",
+      "development": ["./src/rollup.ts", "./dist/rollup.js"],
       "default": "./dist/rollup.js"
     },
     "./rspack": {
       "types": "./dist/rspack.d.ts",
-      "development": "./src/rspack.ts",
+      "development": ["./src/rspack.ts", "./dist/rspack.js"],
       "default": "./dist/rspack.js"
+    },
+    "./unloader": {
+      "types": "./dist/unloader.d.ts",
+      "development": ["./src/unloader.ts", "./dist/unloader.js"],
+      "default": "./dist/unloader.js"
+    },
+    "./unplugin": {
+      "types": "./dist/unplugin.d.ts",
+      "development": ["./src/unplugin.ts", "./dist/unplugin.js"],
+      "default": "./dist/unplugin.js"
     },
     "./vite": {
       "types": "./dist/vite.d.ts",
-      "development": "./src/vite.ts",
+      "development": ["./src/vite.ts", "./dist/vite.js"],
       "default": "./dist/vite.js"
     },
     "./webpack": {
       "types": "./dist/webpack.d.ts",
-      "development": "./src/webpack.ts",
+      "development": ["./src/webpack.ts", "./dist/webpack.js"],
       "default": "./dist/webpack.js"
     },
     "./package.json": "./package.json"
@@ -61,6 +71,7 @@
     "rollup": ">=3",
     "rolldown": "*",
     "vite": "*",
+    "unloader": "*",
     "webpack": "^4 || ^5"
   },
   "peerDependenciesMeta": {
@@ -74,6 +85,9 @@
       "optional": true
     },
     "vite": {
+      "optional": true
+    },
+    "unloader": {
       "optional": true
     },
     "webpack": {

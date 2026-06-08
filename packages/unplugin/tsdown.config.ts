@@ -4,6 +4,7 @@ const nodeEntries: UserConfig = {
   entry: [
     "src/bun.ts",
     "src/esbuild.ts",
+    "src/unloader.ts",
     "src/vite.ts",
     "src/webpack.ts",
   ],
@@ -18,6 +19,7 @@ const neutralEntries: UserConfig = {
     "src/rollup.ts",
     "src/rolldown.ts",
     "src/rspack.ts",
+    "src/unplugin.ts",
   ],
   platform: "neutral",
   fixedExtension: false,
