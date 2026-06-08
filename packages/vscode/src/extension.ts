@@ -1,5 +1,11 @@
 import * as serverProtocol from "@volar/language-server/protocol.js";
-import { activateAutoInsertion, createLabsInfo, getTsdk } from "@volar/vscode";
+import {
+  activateAutoInsertion,
+  CloseAction,
+  createLabsInfo,
+  ErrorAction,
+  getTsdk,
+} from "@volar/vscode";
 import {
   BaseLanguageClient,
   LanguageClient,
@@ -19,7 +25,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // Check if we've already prompted for reload in this session
     const hasPromptedReload = context.globalState.get(
       "GamingTS.hasPromptedReload",
-      false
+      false,
     );
     if (!hasPromptedReload) {
       // Mark that we've prompted to avoid repeated prompts
@@ -29,12 +35,12 @@ export async function activate(context: vscode.ExtensionContext) {
         .showInformationMessage(
           "GamingTS extension needs to restart extensions to enable full TypeScript integration.",
           "Restart Extensions",
-          "Later"
+          "Later",
         )
         .then((selection) => {
           if (selection === "Restart Extensions") {
             vscode.commands.executeCommand(
-              "workbench.action.restartExtensionHost"
+              "workbench.action.restartExtensionHost",
             );
           }
         });
@@ -44,7 +50,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const serverModule = vscode.Uri.joinPath(
     context.extensionUri,
     "dist",
-    "server.js"
+    "server.js",
   );
   const runOptions = { execArgv: <string[]>[] };
   const debugOptions = { execArgv: ["--nolazy", "--inspect=" + 6009] };
@@ -67,17 +73,38 @@ export async function activate(context: vscode.ExtensionContext) {
         tsdk: (await getTsdk(context))!.tsdk,
       },
     },
+    errorHandler: {
+      error: (error, message, count) => {
+        console.error("Language server error:", error, message, count);
+        return { action: ErrorAction.Continue };
+      },
+      closed: () => {
+        console.warn("Language server connection closed");
+        return { action: CloseAction.Restart };
+      },
+    },
   };
   client = new LanguageClient(
     "gts-language-server",
     "GamingTS Language Server",
     serverOptions,
-    clientOptions
+    clientOptions,
   );
   await client.start();
 
-  // support for auto close tag
   activateAutoInsertion("gaming-ts", client);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("gaming-ts.restart-server", async () => {
+      await vscode.commands.executeCommand("typescript.restartTsServer");
+      await client.stop();
+      client.outputChannel.clear();
+      await client.start();
+      vscode.window.showInformationMessage(
+        "GamingTS language server restarted.",
+      );
+    }),
+  );
 
   // support for https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volarjs-labs
   // ref: https://twitter.com/johnsoncodehk/status/1656126976774791168

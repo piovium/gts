@@ -69,11 +69,17 @@
         ],
         "url": "./package-json-extra.schema.json"
       }
+    ],
+    "commands": [
+      {
+        "command": "gaming-ts.restart-server",
+        "title": "GamingTS: Restart Language Server"
+      }
     ]
   },
   "scripts": {
     "build": "tsdown",
-    "pack": "rimraf temp-deployment && pnpm --filter=. --legacy -P deploy temp-deployment && cd temp-deployment && vsce package"
+    "pack": "rimraf temp && pnpm pack --pack-destination temp/ && tar -xzf temp/*.tgz -C temp/ && cd temp/package && npm install --omit=dev && vsce package"
   },
   "dependencies": {
     "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*"
