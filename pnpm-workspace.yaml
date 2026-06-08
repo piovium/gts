@@ -8,6 +8,10 @@ allowBuilds:
   keytar: true
 
 nodeLinker: hoisted
+injectWorkspacePackages: true
+minimumReleaseAgeExclude:
+  - '@gi-tcg/*'
+  - espolar
 
 catalog:
   typescript: ^5.9.3

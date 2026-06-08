@@ -8,7 +8,7 @@
     "url": "https://github.com/volarjs/starter.git",
     "directory": "packages/vscode"
   },
-  "icon": "./assets/icon.webp",
+  "icon": "assets/icon.webp",
   "categories": [
     "Programming Languages"
   ],
@@ -16,8 +16,9 @@
   "description": "GamingTS Language Features",
   "author": "Piovium Labs",
   "publisher": "Guyutongxue",
+  "license": "Apache-2.0",
   "engines": {
-    "vscode": "^1.82.0"
+    "vscode": "^1.107.0"
   },
   "activationEvents": [
     "onLanguage:gaming-ts"
@@ -72,19 +73,19 @@
   },
   "scripts": {
     "build": "tsdown",
-    "pack": "pnpm build && vsce package --pre-release",
-    "release": "pnpm build && vsce publish --pre-release"
+    "pack": "rimraf temp-deployment && pnpm --filter=. --legacy -P deploy temp-deployment && cd temp-deployment && vsce package"
   },
   "dependencies": {
-    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*",
-    "@types/node": "^24.10.4"
+    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*"
   },
   "devDependencies": {
     "@gi-tcg/gts-language-server": "workspace:*",
-    "@types/vscode": "^1.82.0",
+    "@types/node": "^24.10.4",
+    "@types/vscode": "^1.107.0",
     "@volar/language-server": "~2.4.0",
     "@volar/vscode": "~2.4.0",
     "fast-plist": "^0.1.3",
+    "rimraf": "^6.1.3",
     "vsce": "latest"
   }
 }
