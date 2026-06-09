@@ -1,7 +1,7 @@
 import type { AttributeReturn } from "./attribute_return.ts";
 import type { Action, Meta, NamedDefinition } from "./symbols.ts";
 import { View } from "./view.ts";
-import  type { StandardJSONSchemaV1 } from "@standard-schema/spec";
+import type { StandardJSONSchemaV1 } from "@standard-schema/spec";
 
 export interface AttributeBlockDefinition {
   "~action"?: AttributeDefinition | undefined;
@@ -97,6 +97,17 @@ class ViewModel<
   }
 }
 
+interface SimpleAttributeOptions {
+  required?: true;
+  uniqueKey?: string;
+}
+
+type WithSimpleOptions<Base, Options extends SimpleAttributeOptions> = Base &
+  (Options["required"] extends true ? { required(): true } : {}) &
+  (Options["uniqueKey"] extends string
+    ? { uniqueKey(): Options["uniqueKey"] }
+    : {});
+
 class AttributeDefHelper<ModelT> {
   #viewModel: ViewModel<ModelT, any, any>;
   constructor(viewModel: ViewModel<ModelT, any, any>) {
@@ -109,7 +120,10 @@ class AttributeDefHelper<ModelT> {
   "~assignActions"(defResult: Partial<Record<string, unknown>>): void {
     for (const [name, value] of Object.entries(defResult)) {
       if (!value) {
-        console?.warn?.(`Attribute "${name}" is assigned a falsy value, which is not a valid attribute definition.`);
+        // @ts-expect-error no typing for console
+        console?.warn?.(
+          `Attribute "${name}" is assigned a falsy value, which is not a valid attribute definition.`,
+        );
         continue;
       }
       const actionDescriptor = Object.getOwnPropertyDescriptor(
@@ -180,30 +194,42 @@ class AttributeDefHelper<ModelT> {
     return returnValue;
   }
 
-  simpleAttribute<Args extends any[]>(
-    action: (this: ModelT, ...args: Args) => void,
-  ): {
-    (...args: Args): AttributeReturn.Done;
+  simpleAttribute(): {
+    <Args extends any[]>(
+      action: (this: ModelT, ...args: Args) => void,
+    ): { (...args: Args): AttributeReturn.Done };
+    <Args extends any[], U>(
+      action: (this: ModelT, ...args: Args) => void,
+      binder: (this: ModelT, ...args: Args) => U,
+    ): { (...args: Args): AttributeReturn.Done; as?(): U };
   };
-  simpleAttribute<Args extends any[], U>(
-    action: (this: ModelT, ...args: Args) => void,
-    binder: (this: ModelT, ...args: Args) => U,
+  simpleAttribute<const Options extends SimpleAttributeOptions>(
+    options: Options,
   ): {
-    (...args: Args): AttributeReturn.Done;
-    as?(): U;
+    <Args extends any[]>(
+      action: (this: ModelT, ...args: Args) => void,
+    ): WithSimpleOptions<{ (...args: Args): AttributeReturn.Done }, Options>;
+    <Args extends any[], U>(
+      action: (this: ModelT, ...args: Args) => void,
+      binder: (this: ModelT, ...args: Args) => U,
+    ): WithSimpleOptions<
+      { (...args: Args): AttributeReturn.Done; as?(): U },
+      Options
+    >;
   };
-  simpleAttribute<Args extends any[], U>(
-    action: (this: ModelT, ...args: Args) => void,
-    binder?: (this: ModelT, ...args: Args) => U,
-  ) {
-    const action2: AttributeAction<ModelT, any> = (model, positionals) =>
-      action.apply(model, positionals as Args);
-    let binder2: AttributeBinder<ModelT, any> | undefined;
-    if (binder) {
-      binder2 = (model, positionals) =>
-        binder.apply(model, positionals as Args);
-    }
-    return this.attribute<any>(action2, binder2);
+  simpleAttribute(options?: SimpleAttributeOptions) {
+    return (
+      action: (this: ModelT, ...args: any[]) => void,
+      binder?: (...args: any[]) => any,
+    ) => {
+      const action2: AttributeAction<ModelT, any> = (model, positionals) =>
+        action.apply(model, positionals);
+      let binder2: AttributeBinder<ModelT, any> | undefined;
+      if (binder) {
+        binder2 = (model, positionals) => binder.apply(model, positionals);
+      }
+      return this.attribute<any>(action2, binder2);
+    };
   }
 }
 
@@ -247,7 +273,7 @@ export function defineSimpleViewModel<const T extends StandardJSONSchemaV1>(
   const helper = new AttributeDefHelper(vm);
   const defResult: Record<string, any> = {};
   for (const key of Object.keys(jsonSchema.properties ?? {})) {
-    defResult[key] = helper.simpleAttribute(function (this: any, value) {
+    defResult[key] = helper.simpleAttribute()(function (this: any, value) {
       this[key] = value;
     });
   }

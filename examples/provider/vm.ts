@@ -56,11 +56,16 @@ const CharacterVM = defineViewModel(
       // model.setUntilVersion(untilVersion);
     }),
 
-    tags: helper.simpleAttribute(function (...tags: Tag[]) {}),
+    tags: helper.simpleAttribute()(function (...tags: Tag[]) {}),
 
-    health: helper.simpleAttribute(function (value: number) {}),
+    health: helper.simpleAttribute({
+      uniqueKey: "health",
+    })(function (value: number) {}),
 
-    energy: helper.simpleAttribute(function (value: number) {}),
+    energy: helper.simpleAttribute({
+      required: true,
+      uniqueKey: "energy",
+    })(function (value: number) {}),
 
     skills: helper.attribute<{
       (...skillHandles: CharacterSkillHandle[]): AR.Done;
@@ -110,12 +115,12 @@ interface SkillContext<TMeta extends BuilderMeta> {
   apply(type: number, query: Query): void;
   "~query"(
     queryFn: (querier: QueryBuilder) => unknown,
-    option: { star: boolean, context: any },
-  ): Query
+    option: { star: boolean; context: any },
+  ): Query;
   "~queryAll"(
     queryFn: (querier: QueryBuilder) => unknown,
-    option: { star: boolean, context: any },
-  ): Query
+    option: { star: boolean; context: any },
+  ): Query;
 }
 
 type SkillAction<TMeta extends BuilderMeta> = (
@@ -136,13 +141,16 @@ const SkillVM = defineViewModel(
         return id as CharacterSkillHandle;
       },
     ),
-    cost: helper.simpleAttribute(function (element: string, amount: number) {}),
+    cost: helper.simpleAttribute()(function (
+      element: string,
+      amount: number,
+    ) {}),
 
-    when: helper.simpleAttribute(function (
+    when: helper.simpleAttribute()(function (
       condition: (ctx: SkillContext<any>) => boolean,
     ) {}),
 
-    hint: helper.simpleAttribute(function (
+    hint: helper.simpleAttribute()(function (
       icon: "heal",
       text: string | number,
     ) {}),

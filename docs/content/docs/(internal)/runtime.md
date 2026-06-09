@@ -159,12 +159,12 @@ const CharacterVM = defineViewModel(
       (model, pos) => { /* action: set ID on model */ },
       (_, [id]) => id as CharacterHandle<any>,  // binder: return handle
     ),
-    since: helper.simpleAttribute(function (version: "v3.3.0" | "v3.4.0") {
+    since: helper.simpleAttribute()(function (version: "v3.3.0" | "v3.4.0") {
       this.setVersion(version);
     }),
-    tags: helper.simpleAttribute(function (...tags: Tag[]) {}),
-    health: helper.simpleAttribute(function (value: number) {}),
-    energy: helper.simpleAttribute(function (value: number) {}),
+    tags: helper.simpleAttribute()(function (...tags: Tag[]) {}),
+    health: helper.simpleAttribute()(function (value: number) {}),
+    energy: helper.simpleAttribute()(function (value: number) {}),
     skills: helper.attribute<{
       (...handles: CharacterSkillHandle[]): AR.Done;
     }>(() => {}),
@@ -184,9 +184,10 @@ The helper provides two methods for defining attributes:
   - A `ViewModel` — automatically calls `vm.parse(namedView)` as the binder
   - Omitted — no-op binder
 
-**`simpleAttribute(action, binder?)`** — convenience wrapper:
+**`simpleAttribute(options?)`** — returns a callable that takes `(action, binder?)`:
 - `action` receives `this: ModelT` and spread positional args
 - `binder` receives `this: ModelT` and spread positional args, returns the binding value
+- `options.required?: boolean` and `options.uniqueKey?: string` add corresponding typed methods to the returned attribute definition
 
 ### AttributeReturn Types
 
