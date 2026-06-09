@@ -14,15 +14,33 @@ export const createCompletionPlugin = (): LanguageServicePlugin => {
       },
     },
     create: (context) => {
-      let originalProvideCompletionItems: LanguageServicePluginInstance["provideCompletionItems"];
+      let tsProvideCompletionItems: LanguageServicePluginInstance["provideCompletionItems"];
 
       for (const [plugin, instance] of context.plugins) {
-        if (plugin.name === "typescript-semantic") {
-          originalProvideCompletionItems = instance.provideCompletionItems;
+        if (
+          plugin.name === "typescript-semantic" &&
+          instance.provideCompletionItems
+        ) {
+          let originalProvideCompletionItems = instance.provideCompletionItems;
+          tsProvideCompletionItems = instance.provideCompletionItems = async (
+            ...args
+          ) => {
+            const response = await originalProvideCompletionItems.apply(
+              instance,
+              args,
+            );
+            if (!response) {
+              return response;
+            }
+            const items = response.items.filter(
+              (item) => !item.label.startsWith("__gts_"),
+            );
+            return { ...response, items };
+          };
         }
       }
 
-      if (!originalProvideCompletionItems) {
+      if (!tsProvideCompletionItems) {
         console.warn(`TS's original provideCompletionItems not found`);
         return {};
       }
@@ -30,13 +48,12 @@ export const createCompletionPlugin = (): LanguageServicePlugin => {
         provideCompletionItems: async (document, position, context, token) => {
           if (context.triggerCharacter === ":") {
             context.triggerCharacter = ".";
-            const response = await originalProvideCompletionItems(
+            return await tsProvideCompletionItems(
               document,
               position,
               context,
               token,
             );
-            return response;
           }
           return null;
         },

@@ -1,4 +1,4 @@
-import { MelodyLoop, obj,  } from "./test.gts";
+import { MelodyLoop,  } from "./test.gts";
 
 declare global {
     var console: any;

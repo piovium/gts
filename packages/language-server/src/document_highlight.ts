@@ -2,7 +2,7 @@ import type {
   LanguageServicePluginInstance,
   LanguageServicePlugin,
 } from "@volar/language-server";
-import { getVirtualCode, getWordFromPosition } from "./utils";
+import { getVirtualCode, getWordFromPosition } from "./utils.ts";
 
 export function createDocumentHighlightService(): LanguageServicePlugin {
   return {

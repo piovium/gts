@@ -4,4 +4,4 @@ import type { TranspileOption } from "@gi-tcg/gts-transpiler";
 
 export default createVitePlugin(
   unpluginFactory,
-) as UnpluginInstance<TranspileOption | undefined>["vite"];
+) as UnpluginInstance<TranspileOption | undefined, false>["vite"];

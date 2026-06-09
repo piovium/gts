@@ -4,4 +4,4 @@ import type { TranspileOption } from "@gi-tcg/gts-transpiler";
 
 export default createBunPlugin(
   unpluginFactory,
-) as UnpluginInstance<TranspileOption | undefined>["bun"];
+) as UnpluginInstance<TranspileOption | undefined, false>["bun"];

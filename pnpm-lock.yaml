@@ -107,13 +107,16 @@ importers:
     devDependencies:
       '@gi-tcg/unplugin-gts':
         specifier: workspace:*
-        version: file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(unloader@0.9.0)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0))
+        version: file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(unloader@0.9.0)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0))
+      unloader:
+        specifier: ^0.9.0
+        version: 0.9.0
       vite:
-        specifier: ^7.3.1
-        version: 7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)
+        specifier: ^8.0.12
+        version: 8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)
       vitest:
         specifier: ^4.0.18
-        version: 4.1.6(@types/node@25.7.0)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))
+        version: 4.1.6(@types/node@25.7.0)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1))
 
   examples/provider:
     dependencies:
@@ -144,7 +147,7 @@ importers:
         version: 25.1.2
       '@gi-tcg/gts-language-server':
         specifier: workspace:*
-        version: link:../../packages/language-server
+        version: file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)
       monaco-languageclient:
         specifier: ~10.7.0
         version: 10.7.0
@@ -241,8 +244,8 @@ importers:
         specifier: ^1.7.2
         version: 1.7.2
       espolar:
-        specifier: ^0.5.1
-        version: 0.5.1(@types/estree@1.0.9)
+        specifier: ^0.5.2
+        version: 0.5.2(@types/estree@1.0.9)
       esrap:
         specifier: 2.2.1
         version: 2.2.1
@@ -332,11 +335,11 @@ importers:
     dependencies:
       '@gi-tcg/gts-typescript-language-service-plugin':
         specifier: workspace:*
-        version: file:packages/typescript-language-service-plugin(@types/estree@1.0.9)(typescript@5.9.3)
+        version: link:../typescript-language-service-plugin
     devDependencies:
       '@gi-tcg/gts-language-server':
         specifier: workspace:*
-        version: link:../language-server
+        version: file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)
       '@types/node':
         specifier: ^24.10.4
         version: 24.10.4
@@ -1003,11 +1006,12 @@ packages:
     peerDependencies:
       typescript: 'catalog:'
 
+  '@gi-tcg/gts-language-server@file:packages/language-server':
+    resolution: {directory: packages/language-server, type: directory}
+    hasBin: true
+
   '@gi-tcg/gts-transpiler@file:packages/transpiler':
     resolution: {directory: packages/transpiler, type: directory}
-
-  '@gi-tcg/gts-typescript-language-service-plugin@file:packages/typescript-language-service-plugin':
-    resolution: {directory: packages/typescript-language-service-plugin, type: directory}
 
   '@gi-tcg/unplugin-gts@file:packages/unplugin':
     resolution: {directory: packages/unplugin, type: directory}
@@ -3284,8 +3288,8 @@ packages:
     resolution: {integrity: sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==}
     engines: {node: '>=8.0.0'}
 
-  espolar@0.5.1:
-    resolution: {integrity: sha512-MO5ZKbMwLoizL1nvi+bAbuMBsOL5tqcJoiSLDLnznRuMAd0JtuZ2dAHmBvuaqL50lUXWPobZIthtAxxfq57j2A==}
+  espolar@0.5.2:
+    resolution: {integrity: sha512-LgFedE2q4uKtK5Z3v3EXFiTqFLSGZ6KLKSpRT/P5pOJtBCPxlYjH3tmoEYJ0/slkiM6BNyg5pt78lPazn5DJ+w==}
     engines: {node: '>= 26.0.0'}
     peerDependencies:
       '@types/estree': ^1.0.9
@@ -5019,46 +5023,6 @@ packages:
       '@testing-library/jest-dom':
         optional: true
 
-  vite@7.3.3:
-    resolution: {integrity: sha512-/4XH147Ui7OGTjg3HbdWe5arnZQSbfuRzdr9Ec7TQi5I7R+ir0Rlc9GIvD4v0XZurELqA035KVXJXpR61xhiTA==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    hasBin: true
-    peerDependencies:
-      '@types/node': ^20.19.0 || >=22.12.0
-      jiti: '>=1.21.0'
-      less: ^4.0.0
-      lightningcss: ^1.21.0
-      sass: ^1.70.0
-      sass-embedded: ^1.70.0
-      stylus: '>=0.54.8'
-      sugarss: ^5.0.0
-      terser: ^5.16.0
-      tsx: ^4.8.1
-      yaml: ^2.4.2
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-      jiti:
-        optional: true
-      less:
-        optional: true
-      lightningcss:
-        optional: true
-      sass:
-        optional: true
-      sass-embedded:
-        optional: true
-      stylus:
-        optional: true
-      sugarss:
-        optional: true
-      terser:
-        optional: true
-      tsx:
-        optional: true
-      yaml:
-        optional: true
-
   vite@8.0.0:
     resolution: {integrity: sha512-fPGaRNj9Zytaf8LEiBhY7Z6ijnFKdzU/+mL8EFBaKr7Vw1/FWcTBAMW0wLPJAGMPX38ZPVCVgLceWiEqeoqL2Q==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -5937,42 +5901,31 @@ snapshots:
       - '@types/estree'
       - babel-plugin-macros
 
+  '@gi-tcg/gts-language-server@file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)':
+    dependencies:
+      '@gi-tcg/gts-language-plugin': file:packages/language-plugin(@types/estree@1.0.9)(typescript@5.9.3)
+      '@gi-tcg/gts-transpiler': file:packages/transpiler(@types/estree@1.0.9)
+      '@volar/language-server': 2.4.27
+      '@zenfs/core': 2.5.0
+      path-browserify-esm: 1.0.6
+      volar-service-typescript: 0.0.68(@volar/language-service@2.4.27)
+      vscode-uri: 3.1.0
+    transitivePeerDependencies:
+      - '@types/estree'
+      - '@volar/language-service'
+      - babel-plugin-macros
+      - typescript
+
   '@gi-tcg/gts-transpiler@file:packages/transpiler(@types/estree@1.0.9)':
     dependencies:
       '@sveltejs/acorn-typescript': 1.0.8(acorn@8.16.0)
       acorn: 8.16.0
       dedent: 1.7.2
-      espolar: 0.5.1(@types/estree@1.0.9)
+      espolar: 0.5.2(@types/estree@1.0.9)
       esrap: 2.2.1
       magic-string: 0.30.21
       path-browserify-esm: 1.0.6
       zimmerframe: 1.1.4
-    transitivePeerDependencies:
-      - '@types/estree'
-      - babel-plugin-macros
-
-  '@gi-tcg/gts-typescript-language-service-plugin@file:packages/typescript-language-service-plugin(@types/estree@1.0.9)(typescript@5.9.3)':
-    dependencies:
-      '@gi-tcg/gts-language-plugin': file:packages/language-plugin(@types/estree@1.0.9)(typescript@5.9.3)
-      '@volar/typescript': 2.4.27
-    transitivePeerDependencies:
-      - '@types/estree'
-      - babel-plugin-macros
-      - typescript
-
-  '@gi-tcg/unplugin-gts@file:packages/unplugin(@rspack/core@1.7.11)(esbuild@0.28.0)(rolldown@1.0.1)(rollup@4.57.1)(unloader@0.9.0)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))(webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0))':
-    dependencies:
-      '@gi-tcg/gts-transpiler': file:packages/transpiler(@types/estree@1.0.9)
-      '@types/bun': 1.3.14
-      rollup: 4.57.1
-      unplugin: '@gytx/unplugin@3.1.0-patch.2'
-    optionalDependencies:
-      '@rspack/core': 1.7.11
-      esbuild: 0.28.0
-      rolldown: 1.0.1
-      unloader: 0.9.0
-      vite: 7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)
-      webpack: 5.106.2(esbuild@0.28.0)(lightningcss@1.32.0)
     transitivePeerDependencies:
       - '@types/estree'
       - babel-plugin-macros
@@ -7383,14 +7336,6 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.6(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))':
-    dependencies:
-      '@vitest/spy': 4.1.6
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)
-
   '@vitest/mocker@4.1.6(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1))':
     dependencies:
       '@vitest/spy': 4.1.6
@@ -8048,7 +7993,7 @@ snapshots:
       esrecurse: 4.3.0
       estraverse: 4.3.0
 
-  espolar@0.5.1(@types/estree@1.0.9):
+  espolar@0.5.2(@types/estree@1.0.9):
     dependencies:
       '@typescript-eslint/types': 8.60.0
       '@volar/source-map': 2.4.27
@@ -9905,18 +9850,6 @@ snapshots:
     optionalDependencies:
       esbuild: 0.27.3
 
-  terser-webpack-plugin@5.6.0(esbuild@0.28.0)(lightningcss@1.32.0)(webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0)):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.47.1
-      webpack: 5.106.2(esbuild@0.28.0)(lightningcss@1.32.0)
-    optionalDependencies:
-      esbuild: 0.28.0
-      lightningcss: 1.32.0
-    optional: true
-
   terser-webpack-plugin@5.6.0(esbuild@0.28.0)(webpack@5.106.2(esbuild@0.28.0)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -10184,21 +10117,6 @@ snapshots:
       - supports-color
     optional: true
 
-  vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1):
-    dependencies:
-      esbuild: 0.27.3
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
-      postcss: 8.5.8
-      rollup: 4.57.1
-      tinyglobby: 0.2.16
-    optionalDependencies:
-      '@types/node': 25.7.0
-      fsevents: 2.3.3
-      jiti: 2.7.0
-      lightningcss: 1.32.0
-      terser: 5.47.1
-
   vite@8.0.0(@types/node@24.10.4)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.47.1):
     dependencies:
       '@oxc-project/runtime': 0.115.0
@@ -10235,33 +10153,6 @@ snapshots:
   vitefu@1.1.3(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)):
     optionalDependencies:
       vite: 8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)
-
-  vitest@4.1.6(@types/node@25.7.0)(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)):
-    dependencies:
-      '@vitest/expect': 4.1.6
-      '@vitest/mocker': 4.1.6(vite@7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1))
-      '@vitest/pretty-format': 4.1.6
-      '@vitest/runner': 4.1.6
-      '@vitest/snapshot': 4.1.6
-      '@vitest/spy': 4.1.6
-      '@vitest/utils': 4.1.6
-      es-module-lexer: 2.1.0
-      expect-type: 1.3.0
-      magic-string: 0.30.21
-      obug: 2.1.1
-      pathe: 2.0.3
-      picomatch: 4.0.4
-      std-env: 4.1.0
-      tinybench: 2.9.0
-      tinyexec: 1.1.2
-      tinyglobby: 0.2.16
-      tinyrainbow: 3.1.0
-      vite: 7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@types/node': 25.7.0
-    transitivePeerDependencies:
-      - msw
 
   vitest@4.1.6(@types/node@25.7.0)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)):
     dependencies:
@@ -10430,47 +10321,6 @@ snapshots:
       schema-utils: 4.3.3
       tapable: 2.3.0
       terser-webpack-plugin: 5.6.0(esbuild@0.28.0)(webpack@5.106.2(esbuild@0.28.0))
-      watchpack: 2.5.1
-      webpack-sources: 3.4.1
-    transitivePeerDependencies:
-      - '@minify-html/node'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - clean-css
-      - cssnano
-      - csso
-      - esbuild
-      - html-minifier-terser
-      - lightningcss
-      - postcss
-      - uglify-js
-    optional: true
-
-  webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0):
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.8
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.16.0
-      acorn-import-phases: 1.0.4(acorn@8.16.0)
-      browserslist: 4.28.1
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.21.3
-      es-module-lexer: 2.1.0
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      loader-runner: 4.3.2
-      mime-db: 1.54.0
-      neo-async: 2.6.2
-      schema-utils: 4.3.3
-      tapable: 2.3.0
-      terser-webpack-plugin: 5.6.0(esbuild@0.28.0)(lightningcss@1.32.0)(webpack@5.106.2(esbuild@0.28.0)(lightningcss@1.32.0))
       watchpack: 2.5.1
       webpack-sources: 3.4.1
     transitivePeerDependencies:

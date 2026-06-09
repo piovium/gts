@@ -4,4 +4,4 @@ import type { TranspileOption } from "@gi-tcg/gts-transpiler";
 
 export default createRolldownPlugin(
   unpluginFactory,
-) as UnpluginInstance<TranspileOption | undefined>["rolldown"];
+) as UnpluginInstance<TranspileOption | undefined, false>["rolldown"];

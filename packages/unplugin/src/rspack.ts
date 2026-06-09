@@ -4,4 +4,4 @@ import type { TranspileOption } from "@gi-tcg/gts-transpiler";
 
 export default createRspackPlugin(
   unpluginFactory,
-) as UnpluginInstance<TranspileOption | undefined>["rspack"];
+) as UnpluginInstance<TranspileOption | undefined, false>["rspack"];

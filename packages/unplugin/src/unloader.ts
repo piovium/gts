@@ -1,7 +1,6 @@
 import { createUnloaderPlugin, type UnpluginInstance } from "unplugin";
-import { unpluginFactory } from "./unplugin.ts";
-import type { TranspileOption } from "@gi-tcg/gts-transpiler";
+import { unpluginSyncFactory, type TranspileSyncOption } from "./unplugin.ts";
 
 export default createUnloaderPlugin(
-  unpluginFactory,
-) as UnpluginInstance<TranspileOption | undefined>["unloader"];
+  unpluginSyncFactory,
+) as UnpluginInstance<TranspileSyncOption, false>["unloader"];

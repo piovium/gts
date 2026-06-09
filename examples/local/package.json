@@ -1,15 +1,18 @@
 {
   "name": "@example/local",
   "private": true,
+  "type": "module",
   "scripts": {
-    "test:vitest": "vitest --run"
+    "test": "vitest",
+    "test:native": "vitest -c ./vitest.config.native.ts"
   },
   "dependencies": {
     "@example/provider": "workspace:*"
   },
   "devDependencies": {
-    "vite": "^7.3.1",
+    "vite": "^8.0.12",
     "vitest": "^4.0.18",
+    "unloader": "^0.9.0",
     "@gi-tcg/unplugin-gts": "workspace:*"
   },
   "gamingTs": {

@@ -4,4 +4,4 @@ import type { TranspileOption } from "@gi-tcg/gts-transpiler";
 
 export default createEsbuildPlugin(
   unpluginFactory,
-) as UnpluginInstance<TranspileOption | undefined>["esbuild"];
+) as UnpluginInstance<TranspileOption | undefined, false>["esbuild"];
