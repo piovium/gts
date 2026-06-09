@@ -66,7 +66,9 @@ export async function resolveGtsConfig(
   let result = generator.next();
   while (!result.done) {
     const toRead = result.value;
-    const content = await toRead;
+    // return an invalid JSON if readFile fails, so that the generator
+    // can catch the error and try next one
+    const content = await Promise.resolve(toRead).catch(() => "");
     result = generator.next(content);
   }
   return result.value;
