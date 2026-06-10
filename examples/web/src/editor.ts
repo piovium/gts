@@ -97,6 +97,20 @@ const setupVscodeApiConfig = (): MonacoVscodeApiConfig => {
                 path: "/workspace/GamingTS.tmLanguage.json",
               },
             ],
+            semanticTokenModifiers: [
+              {
+                id: "gtsAttribute",
+                description: "Attribute name for GamingTS",
+              },
+            ],
+            semanticTokenScopes: [
+              {
+                language: "gaming-ts",
+                scopes: {
+                  "*.gtsAttribute": ["emphasis"],
+                },
+              },
+            ],
           },
         },
         filesOrContents: extensionFilesOrContents,
