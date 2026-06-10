@@ -17,6 +17,7 @@ import { createCompletionPlugin } from "./completion.ts";
 import { Dirent, fs as memfs } from "@zenfs/core";
 import type ts from "typescript";
 import zenFsProvider from "./zen_fs_provider.ts";
+import { createSemanticTokensPlugin } from "./semantic_tokens.ts";
 
 export interface GtsLanguageServerBrowserInitializationOptions {
   tsdkUrl?: string;
@@ -69,6 +70,7 @@ connection.onInitialize(
         ...createTypeScriptServices(tsdk.typescript),
         createDiagnosticsPlugin(),
         createCompletionPlugin(),
+        createSemanticTokensPlugin(),
       ],
     );
   },

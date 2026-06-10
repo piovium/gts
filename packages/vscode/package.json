@@ -29,6 +29,23 @@
     "./syntaxes": "./syntaxes/GamingTS.tmLanguage.json",
     "./language-configuration": "./language-configuration.json"
   },
+  "scripts": {
+    "build": "tsdown",
+    "pack": "rimraf temp && pnpm pack --pack-destination temp/ && tar -xzf temp/*.tgz -C temp/ && cd temp/package && npm install --omit=dev && vsce package"
+  },
+  "dependencies": {
+    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*"
+  },
+  "devDependencies": {
+    "@gi-tcg/gts-language-server": "workspace:*",
+    "@types/node": "^24.10.4",
+    "@types/vscode": "^1.107.0",
+    "@volar/language-server": "~2.4.0",
+    "@volar/vscode": "~2.4.0",
+    "fast-plist": "^0.1.3",
+    "rimraf": "^6.1.3",
+    "vsce": "latest"
+  },
   "contributes": {
     "languages": [
       {
@@ -75,23 +92,22 @@
         "command": "gaming-ts.restart-server",
         "title": "GamingTS: Restart Language Server"
       }
+    ],
+    "semanticTokenModifiers": [
+      {
+        "id": "gtsAttribute",
+        "description": "Attribute name for GamingTS"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "gaming-ts",
+        "scopes": {
+          "*.gtsAttribute": [
+            "emphasis"
+          ]
+        }
+      }
     ]
-  },
-  "scripts": {
-    "build": "tsdown",
-    "pack": "rimraf temp && pnpm pack --pack-destination temp/ && tar -xzf temp/*.tgz -C temp/ && cd temp/package && npm install --omit=dev && vsce package"
-  },
-  "dependencies": {
-    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*"
-  },
-  "devDependencies": {
-    "@gi-tcg/gts-language-server": "workspace:*",
-    "@types/node": "^24.10.4",
-    "@types/vscode": "^1.107.0",
-    "@volar/language-server": "~2.4.0",
-    "@volar/vscode": "~2.4.0",
-    "fast-plist": "^0.1.3",
-    "rimraf": "^6.1.3",
-    "vsce": "latest"
   }
 }

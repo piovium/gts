@@ -16,5 +16,10 @@ export function createTypeScriptServices(
       " ",
     );
   }
+  if (semanticService?.capabilities.semanticTokensProvider?.legend) {
+    semanticService.capabilities.semanticTokensProvider.legend.tokenModifiers.push(
+      "gtsAttribute",
+    );
+  }
   return services;
 }

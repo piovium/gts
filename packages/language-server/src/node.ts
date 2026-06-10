@@ -9,6 +9,7 @@ import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import { createDiagnosticsPlugin } from "./diagnostics.ts";
 import { createTypeScriptServices } from "./typescript.ts";
 import { createCompletionPlugin } from "./completion.ts";
+import { createSemanticTokensPlugin } from "./semantic_tokens.ts";
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -31,6 +32,7 @@ connection.onInitialize((params) => {
       ...createTypeScriptServices(tsdk.typescript),
       createDiagnosticsPlugin(),
       createCompletionPlugin(),
+      createSemanticTokensPlugin(),
     ],
   );
 });
