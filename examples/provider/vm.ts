@@ -225,6 +225,7 @@ const SummonVM = defineViewModel(
     }>(() => {}),
 
     on: helper.attribute<{
+      /** Add a triggered skill. */
       <Meta extends BuilderMeta>(
         this: AR.This<Meta>,
         eventName: "endPhase" | "actionPhase",

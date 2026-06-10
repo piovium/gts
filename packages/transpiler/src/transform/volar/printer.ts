@@ -11,7 +11,9 @@ import {
 } from "espolar";
 import type { CodeInformation } from "@volar/language-core";
 import {
+  ATTRIBUTE_NAME_MAPPING_DATA,
   DEFAULT_VOLAR_MAPPING_DATA,
+  LITERAL_FROM_ID_MAPPING_DATA,
   VERIFICATION_ONLY_MAPPING_DATA,
 } from "./mappings.ts";
 import type { TypingTranspileState } from "./walker.ts";
@@ -23,8 +25,11 @@ export function getPrintOptions(
   return {
     source,
     isUntouched: (node) => {
-      if (node.type === "Identifier" && (node as Identifier).isDummy) {
-        return false;
+      if (node.type === "Identifier") {
+        const identifier = node as Identifier;
+        if (identifier.isDummy || state.attributeNameNodes.has(identifier)) {
+          return false;
+        }
       }
       return state.sourceNodes.has(node as Node);
     },
@@ -52,8 +57,18 @@ export function getPrintOptions(
               ? context.source.length
               : identifier.range[1] + firstNonWhiteSpaceIndex;
           context.writeMapped(text, identifier.range[0], rangeEnd);
+        } else if (
+          identifier.range &&
+          state.attributeNameNodes.has(identifier)
+        ) {
+          context.writeMapped(
+            identifier.name,
+            identifier.range[0],
+            identifier.range[1],
+            ATTRIBUTE_NAME_MAPPING_DATA,
+          );
         } else {
-          return defaultPrinters.Identifier(node, context);
+          defaultPrinters.Identifier(node, context);
         }
       },
       Literal(node, context) {
@@ -61,7 +76,12 @@ export function getPrintOptions(
         if (state.literalFromIdentifier.has(node) && node.range) {
           const text = JSON.stringify(node.value);
           context.write('"');
-          context.writeMapped(text.slice(1, -1), node.range[0], node.range[1]);
+          context.writeMapped(
+            text.slice(1, -1),
+            node.range[0],
+            node.range[1],
+            LITERAL_FROM_ID_MAPPING_DATA,
+          );
           context.write('"');
         } else {
           defaultPrinters.Literal(node, context);

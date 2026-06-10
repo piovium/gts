@@ -54,8 +54,10 @@ export interface TypingTranspileState extends TranspileState {
   replacementTag: Identifier;
   /** untouched source nodes */
   sourceNodes: WeakSet<Node>;
+  /** GTS' attribute name nodes */
+  attributeNameNodes: WeakSet<Node>;
   /**
-   * The callee of typing source of GTS' attribute names. Map the character
+   * For each callee of typing source of GTS' attribute names, map the character
    * after the name (typically whitespace) as the lParen of CallExpression
    */
   namedAttributeCalleeLParenRange: WeakMap<Node, SourceRange>;
@@ -325,12 +327,14 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         state.diagnosticsOnTopNodes.add(specifier);
       }
     }
-    const lastImportDecl = importDecls.pop() ?? {
-      type: "ImportDeclaration",
-      specifiers: [],
-      source: { type: "Literal", value: "" },
-      attributes: [],
-    } satisfies ImportDeclaration;
+    const lastImportDecl =
+      importDecls.pop() ??
+      ({
+        type: "ImportDeclaration",
+        specifiers: [],
+        source: { type: "Literal", value: "" },
+        attributes: [],
+      } satisfies ImportDeclaration);
     body.unshift(
       ...importDecls,
       // Add an unrelated statement between system generated imports to make them unsorted,
@@ -342,7 +346,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         expression: {
           type: "Literal",
           value: 0,
-        }
+        },
       },
       lastImportDecl,
       createReplacementHolder(state, {
@@ -362,6 +366,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
   },
   GTSNamedAttributeDefinition(node, { visit, state }) {
     const { name, body, bindingName } = node;
+    state.attributeNameNodes.add(name);
     const attrName = JSON.stringify(
       name.type === "Literal" ? String(name.value) : name.name,
     );

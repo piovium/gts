@@ -1,6 +1,7 @@
 import {
   type LanguageServicePlugin,
   type LanguageServicePluginInstance,
+  type SemanticToken,
 } from "@volar/language-server";
 import { getVirtualCode } from "./utils.ts";
 
@@ -10,7 +11,7 @@ export const createSemanticTokensPlugin = (): LanguageServicePlugin => {
     capabilities: {
       semanticTokensProvider: {
         legend: {
-          tokenTypes: [],
+          tokenTypes: ["string"],
           tokenModifiers: [],
         },
       },
@@ -58,12 +59,9 @@ export const createSemanticTokensPlugin = (): LanguageServicePlugin => {
               }
               const offset = document.offsetAt({ line, character });
               const mapping = virtualCode.mappings.find(
-                (m) => m.generatedOffsets[0] === offset && m.data.semantic,
+                (m) => m.generatedOffsets[0] === offset && m.data.gtsAttribute,
               );
               if (mapping) {
-                console.log(
-                  `Mapping found for method token at line ${line}, character ${character}`,
-                );
                 response[i][4] |= 1 << gtsAttributeIndex;
               }
             }
@@ -74,7 +72,27 @@ export const createSemanticTokensPlugin = (): LanguageServicePlugin => {
       if (!tsSemanticTokens) {
         console.warn(`TS's original provideDocumentSemanticTokens not found`);
       }
-      return {};
+      return {
+        // Attribute value that is a string literal but no wrapping quotation with it,
+        // add a semantic token of type "string" to them so they show same color as string literal
+        provideDocumentSemanticTokens(document, range, legend, token) {
+          const [virtualCode] = getVirtualCode(document, context);
+          if (!virtualCode) {
+            return null;
+          }
+          const stringIdx = legend.tokenTypes.indexOf("string");
+          const result: SemanticToken[] = [];
+          for (const mapping of virtualCode.mappings) {
+            if (mapping.data.literalFromId) {
+              const offset = mapping.generatedOffsets[0];
+              const length = mapping.lengths[0];
+              const pos = document.positionAt(offset);
+              result.push([pos.line, pos.character, length, stringIdx, 0]);
+            }
+          }
+          return result;
+        },
+      };
     },
   };
 };
