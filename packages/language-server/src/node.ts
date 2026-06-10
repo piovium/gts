@@ -6,10 +6,7 @@ import {
   loadTsdkByPath,
 } from "@volar/language-server/node.js";
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
-import { createDiagnosticsPlugin } from "./diagnostics.ts";
-import { createTypeScriptServices } from "./typescript.ts";
-import { createCompletionPlugin } from "./completion.ts";
-import { createSemanticTokensPlugin } from "./semantic_tokens.ts";
+import { createLanguageServicePlugins } from "./services/index.ts";
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -28,12 +25,7 @@ connection.onInitialize((params) => {
         languagePlugins: [createGtsLanguagePlugin(tsdk.typescript)],
       };
     }),
-    [
-      ...createTypeScriptServices(tsdk.typescript),
-      createDiagnosticsPlugin(),
-      createCompletionPlugin(),
-      createSemanticTokensPlugin(),
-    ],
+    createLanguageServicePlugins(tsdk.typescript),
   );
 });
 

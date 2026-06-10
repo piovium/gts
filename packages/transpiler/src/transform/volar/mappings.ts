@@ -4,6 +4,7 @@ declare module "@volar/language-core" {
   export interface CodeInformation {
     gtsAttribute?: boolean;
     literalFromId?: boolean;
+    directActionStub?: boolean;
   }
 }
 
@@ -27,6 +28,10 @@ export const ATTRIBUTE_NAME_MAPPING_DATA: CodeInformation = {
 export const LITERAL_FROM_ID_MAPPING_DATA: CodeInformation = {
   ...DEFAULT_VOLAR_MAPPING_DATA,
   literalFromId: true,
+}
+export const DIRECT_ACTION_STUB_MAPPING_DATA: CodeInformation = {
+  ...DEFAULT_VOLAR_MAPPING_DATA,
+  directActionStub: true,
 }
 export const VERIFICATION_ONLY_MAPPING_DATA: CodeInformation = {
   verification: true,

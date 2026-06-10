@@ -105,7 +105,7 @@ const setupVscodeApiConfig = (): MonacoVscodeApiConfig => {
             ],
             semanticTokenScopes: [
               {
-                language: "gaming-ts",
+                language: GTS_LANGUAGE_ID,
                 scopes: {
                   "*.gtsAttribute": ["emphasis"],
                 },

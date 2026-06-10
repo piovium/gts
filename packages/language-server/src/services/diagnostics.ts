@@ -3,7 +3,7 @@ import {
   Range,
   type LanguageServicePlugin,
 } from "@volar/language-server";
-import { getVirtualCode } from "./utils.ts";
+import { getVirtualCode } from "../utils.ts";
 export const createDiagnosticsPlugin = (): LanguageServicePlugin => {
   return {
     name: "gts-diagnostics",

@@ -11,13 +11,10 @@ import {
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import path from "path-browserify-esm";
 import { type GtsConfig } from "@gi-tcg/gts-transpiler";
-import { createDiagnosticsPlugin } from "./diagnostics.ts";
-import { createTypeScriptServices } from "./typescript.ts";
-import { createCompletionPlugin } from "./completion.ts";
-import { Dirent, fs as memfs } from "@zenfs/core";
+import { fs as memfs } from "@zenfs/core";
 import type ts from "typescript";
 import zenFsProvider from "./zen_fs_provider.ts";
-import { createSemanticTokensPlugin } from "./semantic_tokens.ts";
+import { createLanguageServicePlugins } from "./services/index.ts";
 
 export interface GtsLanguageServerBrowserInitializationOptions {
   tsdkUrl?: string;
@@ -66,12 +63,7 @@ connection.onInitialize(
           };
         },
       ),
-      [
-        ...createTypeScriptServices(tsdk.typescript),
-        createDiagnosticsPlugin(),
-        createCompletionPlugin(),
-        createSemanticTokensPlugin(),
-      ],
+      createLanguageServicePlugins(tsdk.typescript),
     );
   },
 );
@@ -97,7 +89,9 @@ async function loadLibs(tsdkUrl: string) {
   memfs.mkdirSync("/node_modules/typescript/lib", { recursive: true });
   const libs = await Promise.all(
     ALL_LIBS.map((lib) =>
-      fetch(`${tsdkUrl}/${lib}`).then((res) => res.text()).then((content) => [lib, content] as const),
+      fetch(`${tsdkUrl}/${lib}`)
+        .then((res) => res.text())
+        .then((content) => [lib, content] as const),
     ),
   );
   for (const [lib, content] of libs) {

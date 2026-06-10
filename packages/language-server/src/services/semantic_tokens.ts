@@ -3,7 +3,7 @@ import {
   type LanguageServicePluginInstance,
   type SemanticToken,
 } from "@volar/language-server";
-import { getVirtualCode } from "./utils.ts";
+import { getVirtualCode } from "../utils.ts";
 
 export const createSemanticTokensPlugin = (): LanguageServicePlugin => {
   return {
@@ -12,7 +12,7 @@ export const createSemanticTokensPlugin = (): LanguageServicePlugin => {
       semanticTokensProvider: {
         legend: {
           tokenTypes: ["string"],
-          tokenModifiers: [],
+          tokenModifiers: ["gtsAttribute"],
         },
       },
     },
@@ -81,13 +81,36 @@ export const createSemanticTokensPlugin = (): LanguageServicePlugin => {
             return null;
           }
           const stringIdx = legend.tokenTypes.indexOf("string");
+          if (stringIdx === -1) {
+            return null;
+          }
+          const gtsAttributeIndex =
+            legend.tokenModifiers.indexOf("gtsAttribute");
           const result: SemanticToken[] = [];
+          const text = document.getText();
           for (const mapping of virtualCode.mappings) {
             if (mapping.data.literalFromId) {
               const offset = mapping.generatedOffsets[0];
-              const length = mapping.lengths[0];
+              const length = mapping.generatedLengths?.[0] ?? mapping.lengths[0];
               const pos = document.positionAt(offset);
               result.push([pos.line, pos.character, length, stringIdx, 0]);
+            }
+            if (gtsAttributeIndex >= 0 && mapping.data.gtsAttribute) {
+              const offset = mapping.generatedOffsets[0];
+              const length = mapping.generatedLengths?.[0] ??mapping.lengths[0];
+              const pos = document.positionAt(offset);
+              const char = text[offset];
+              if (char === '"' || char === "'") {
+                // A GTS attribute name with quotation, that will not have TS semantic token ("member")
+                // we add it as "string" with "gtsAttribute" modifier too.
+                result.push([
+                  pos.line,
+                  pos.character,
+                  length,
+                  stringIdx,
+                  1 << gtsAttributeIndex,
+                ]);
+              }
             }
           }
           return result;

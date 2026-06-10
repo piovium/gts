@@ -1,5 +1,6 @@
 import type {
   Identifier,
+  Literal,
   NewExpression,
   Node,
   SimpleCallExpression,
@@ -8,11 +9,13 @@ import {
   type PrintOptions,
   type AST as EspolarAST,
   defaultPrinters,
+  type SourceRange,
 } from "espolar";
 import type { CodeInformation } from "@volar/language-core";
 import {
   ATTRIBUTE_NAME_MAPPING_DATA,
   DEFAULT_VOLAR_MAPPING_DATA,
+  DIRECT_ACTION_STUB_MAPPING_DATA,
   LITERAL_FROM_ID_MAPPING_DATA,
   VERIFICATION_ONLY_MAPPING_DATA,
 } from "./mappings.ts";
@@ -25,11 +28,11 @@ export function getPrintOptions(
   return {
     source,
     isUntouched: (node) => {
-      if (node.type === "Identifier") {
-        const identifier = node as Identifier;
-        if (identifier.isDummy || state.attributeNameNodes.has(identifier)) {
-          return false;
-        }
+      if (node.type === "Identifier" && (node as Identifier).isDummy) {
+        return false;
+      }
+      if (state.attributeNameNodes.has(node as Identifier | Literal)) {
+        return false;
       }
       return state.sourceNodes.has(node as Node);
     },
@@ -37,13 +40,16 @@ export function getPrintOptions(
     getTrailingComments: (node) => (node as Node).trailingComments,
     getMappingData: () => DEFAULT_VOLAR_MAPPING_DATA,
     printers: {
-      // Make the print of dummy identifier print nothing.
-      // Exception: if GTS attribute list's last argument is dummy, e.g.
-      //     foo bar, ;
-      //             ^~ here
-      // Then the printed JS will be `foo(bar, )` which WILL NOT be syntax error in ES6.
-      // So we mark the lastArg manually and print an additional comma
-      // for this dummy identifier, i.e. `foo(bar,,)` and TypeScript will recognize the error.
+      // 1) Make the print of dummy identifier print nothing.
+      //    Exception: if GTS attribute list's last argument is dummy, e.g.
+      //        foo bar, ;
+      //                ^~ here
+      //    Then the printed JS will be `foo(bar, )` which WILL NOT be syntax error in ES6.
+      //    So we mark the lastArg manually and print an additional comma
+      //    for this dummy identifier, i.e. `foo(bar,,)` and TypeScript will recognize the error.
+      // 2) Add mapping data "gtsAttribute" to GTS attribute name identifiers and literals.
+      //    This will be recognized as "*.gtsAttribute" semantic token in language service plugin
+      //    and remapped to "emphasis" in the language client that rendered as italic.
       Identifier(node, context) {
         const identifier = node as Identifier;
         if (identifier.isDummy && identifier.range) {
@@ -73,7 +79,10 @@ export function getPrintOptions(
       },
       Literal(node, context) {
         const generatedStart = context.generatedOffset;
+        let directActionStubRange: SourceRange | undefined;
         if (state.literalFromIdentifier.has(node) && node.range) {
+          // For string literals generated from identifiers, add mappings from only the content of literal
+          // to the identifier, so the highlight, auto-complete, etc. will work correctly.
           const text = JSON.stringify(node.value);
           context.write('"');
           context.writeMapped(
@@ -83,6 +92,23 @@ export function getPrintOptions(
             LITERAL_FROM_ID_MAPPING_DATA,
           );
           context.write('"');
+        } else if (state.attributeNameNodes.has(node) && node.range) {
+          context.writeMapped(
+            node.raw ?? JSON.stringify((node as EspolarAST.Literal).value),
+            node.range[0],
+            node.range[1],
+            ATTRIBUTE_NAME_MAPPING_DATA,
+          );
+        } else if ((directActionStubRange = state.directActionStubRange.get(node))) {
+          // For direct action stubs, add mappings from this expression statement line to the
+          // start of original direct action start position. Add `directActionStub` data
+          // for recognizing them in language service plugin.
+          context.writeMapped(
+            node.raw ?? JSON.stringify((node as EspolarAST.Literal).value),
+            directActionStubRange.start,
+            directActionStubRange.start + 1,
+            DIRECT_ACTION_STUB_MAPPING_DATA,
+          )
         } else {
           defaultPrinters.Literal(node, context);
         }

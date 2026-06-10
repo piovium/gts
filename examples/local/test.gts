@@ -63,7 +63,7 @@ define summon {
   // oops 3;
   usage 2 {
     appendLimit 6;
-    appendCount 1;
+    "appendCount" 1;
   };
   on endPhase {
     when :( true )

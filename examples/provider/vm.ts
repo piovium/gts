@@ -113,14 +113,8 @@ interface SkillContext<TMeta extends BuilderMeta> {
   summon(type: SummonHandle<any>): void;
   heal(count: number, query: Query): void;
   apply(type: number, query: Query): void;
-  "~query"(
-    queryFn: (querier: QueryBuilder) => unknown,
-    option: { star: boolean; context: any },
-  ): Query;
-  "~queryAll"(
-    queryFn: (querier: QueryBuilder) => unknown,
-    option: { star: boolean; context: any },
-  ): Query;
+  "~query"(queryFn: (querier: QueryBuilder) => unknown): Query;
+  "~queryAll"(queryFn: (querier: QueryBuilder) => unknown): Query;
 }
 
 type SkillAction<TMeta extends BuilderMeta> = (

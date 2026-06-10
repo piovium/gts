@@ -41,8 +41,9 @@ export function transformForVolar(
     attrsOfCurrentVm: [],
 
     sourceNodes: new WeakSet(),
-    attributeNameNodes: new Set(),
+    attributeNameNodes: new WeakSet(),
     namedAttributeCalleeLParenRange: new WeakMap(),
+    directActionStubRange: new WeakMap(),
     literalFromIdentifier: new WeakSet(),
     lastArgNodes: new WeakSet(),
     lastImportDeclarationIfGen: null,

@@ -55,12 +55,18 @@ export interface TypingTranspileState extends TranspileState {
   /** untouched source nodes */
   sourceNodes: WeakSet<Node>;
   /** GTS' attribute name nodes */
-  attributeNameNodes: WeakSet<Node>;
+  attributeNameNodes: WeakSet<Identifier | Literal>;
   /**
    * For each callee of typing source of GTS' attribute names, map the character
    * after the name (typically whitespace) as the lParen of CallExpression
    */
   namedAttributeCalleeLParenRange: WeakMap<Node, SourceRange>;
+  /**
+   * For each GTSDirectFunction, map a generated stub statement to the range of
+   * GTSDirectFunction itself. This extra mapping is used to insert CodeLens that
+   * mark the start position of direct action body.
+   */
+  directActionStubRange: WeakMap<Node, SourceRange>;
   /**
    * String literal nodes that are derived from identifiers.
    * - sourceStart += 1
@@ -467,6 +473,11 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       visit(attr);
     }
     if (node.directAction) {
+      const stubStatement: ExpressionStatement = {
+        type: "ExpressionStatement",
+        expression: { type: "Literal", value: 0 },
+      };
+      state.typingPendingStatements.push(stubStatement);
       const attrName = JSON.stringify(state.ActionLit.value);
       const { lhsId } = enterAttr(state, attrName);
       const actionNotExistsReplacementStr = `${lhsId.name}[${attrName}]`;
@@ -475,6 +486,10 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           sourceOffset: node.directAction.range[0],
           length: node.directAction.range[1] - node.directAction.range[0],
           generatedNeedle: actionNotExistsReplacementStr,
+        });
+        state.directActionStubRange.set(stubStatement.expression, {
+          start: node.directAction.range[0],
+          end: node.directAction.range[1],
         });
       }
       const fn: ArrowFunctionExpression = {
