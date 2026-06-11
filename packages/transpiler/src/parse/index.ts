@@ -1,4 +1,4 @@
-import { Parser } from "acorn";
+import { Parser, type Options } from "acorn";
 import type { Position, Program } from "estree";
 import { tsPlugin } from "@sveltejs/acorn-typescript";
 import { gtsPlugin, type GtsPluginOption } from "./gts_plugin.ts";
@@ -9,7 +9,11 @@ import { recordCallLParenPlugin } from "./record_call_lparen_plugin.ts";
 
 const TsParser = Parser.extend(tsPlugin());
 
-export function parse(input: string, options?: GtsPluginOption): Program {
+export interface ParseOptions extends GtsPluginOption {
+  onComment: Options["onComment"];
+}
+
+export function parse(input: string, options?: ParseOptions): Program {
   try {
     const GtsParser = TsParser.extend(gtsPlugin(options));
     return GtsParser.parse(input, {
@@ -17,6 +21,7 @@ export function parse(input: string, options?: GtsPluginOption): Program {
       sourceType: "module",
       locations: true,
       ranges: true,
+      onComment: options?.onComment,
     }) as Program;
   } catch (e) {
     if (e instanceof SyntaxError && "loc" in e) {

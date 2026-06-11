@@ -1,4 +1,9 @@
-import { parse, parseLoose } from "./parse/index.ts";
+import {
+  parse,
+  parseLoose,
+  type ParseLooseOptions,
+  type ParseOptions,
+} from "./parse/index.ts";
 import {
   transform,
   transformForVolar,
@@ -34,7 +39,14 @@ export function transpileForVolar(
   });
 }
 
-export type { TranspileOption, TranspileResult, VolarMappingResult };
+export { parse, parseLoose };
+export type {
+  ParseOptions as GtsParseOptions,
+  ParseLooseOptions as GtsParseLooseOptions,
+  TranspileOption,
+  TranspileResult,
+  VolarMappingResult,
+};
 export {
   resolveGtsConfig,
   resolveGtsConfigSync,
