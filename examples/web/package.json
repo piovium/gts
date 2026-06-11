@@ -25,6 +25,7 @@
     "vite": "^8.0.0",
     "vite-plugin-solid": "^2.11.10",
     "@example/provider": "workspace:*",
-    "gts-vscode": "workspace:*"
+    "gts-vscode": "workspace:*",
+    "@gi-tcg/gts-language-client-code": "workspace:*"
   }
 }

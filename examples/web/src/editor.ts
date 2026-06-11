@@ -24,6 +24,8 @@ import GTS_SYNTAXES from "gts-vscode/syntaxes?raw";
 import PROVIDER_VM from "@example/provider/types/vm?raw";
 import GTS_RUNTIME from "@example/provider/types/runtime?raw";
 import type { GtsLanguageServerBrowserInitializationOptions } from "@gi-tcg/gts-language-server/browser";
+import type { RegisterLocalProcessExtensionResult } from "@codingame/monaco-vscode-api/extensions";
+import { registerDecorations } from "@gi-tcg/gts-language-client-code/decoration";
 
 const GTS_LANGUAGE_ID = "gaming-ts";
 const WORKSPACE_URI = vscode.Uri.file("/workspace");
@@ -75,8 +77,8 @@ const setupVscodeApiConfig = (): MonacoVscodeApiConfig => {
     extensions: [
       {
         config: {
-          name: "gts-extension",
-          publisher: "Piovium Labs",
+          name: "gts-monaco",
+          publisher: "Guyutongxue",
           version: "0.0.0",
           engines: {
             vscode: "*",
@@ -175,6 +177,17 @@ export async function setupEditor(container: HTMLElement) {
   const vscodeApiConfig = setupVscodeApiConfig();
   const apiWrapper = new MonacoVscodeApiWrapper(vscodeApiConfig);
   await apiWrapper.start();
+
+  const regResult = apiWrapper.getExtensionRegisterResult(`gts-monaco`) as
+    | RegisterLocalProcessExtensionResult
+    | undefined;
+  if (!regResult) {
+    console.error("Failed to register extension in MonacoVscodeApiWrapper");
+  } else {
+    const vscode = await regResult.getApi();
+    console.log({ vscode });
+    registerDecorations(vscode);
+  }
 
   const editorAppConfig: EditorAppConfig = {
     codeResources: {

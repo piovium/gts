@@ -7,6 +7,8 @@ allowBuilds:
   esbuild: true
   keytar: true
 
+autoInstallPeers: false
+
 nodeLinker: hoisted
 injectWorkspacePackages: true
 minimumReleaseAgeExclude:

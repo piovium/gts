@@ -44,7 +44,7 @@ define character {
  */
 define skill {
   id 12011 as private WhisperOfWater;
-  cost hydro, 3;
+  cost pyro, 3;
   variable foo, 2;
   const a = :getVariable("foo")
   :damage(hydro, 1);

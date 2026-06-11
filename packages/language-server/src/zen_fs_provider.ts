@@ -7,7 +7,7 @@ export default function zenFsProvider(
     stat(uri) {
       try {
         const stats = fs.statSync(uri.path);
-        console.log("stat", uri.path, stats);
+        // console.log("stat", uri.path, stats);
         return {
           type: stats.isFile()
             ? (1 satisfies FileType.File)
@@ -26,7 +26,7 @@ export default function zenFsProvider(
     },
     readFile(uri, encoding) {
       try {
-        console.log("readFile", uri.path);
+        // console.log("readFile", uri.path);
         return fs.readFileSync(uri.path, {
           encoding: (encoding as "utf-8") ?? "utf-8",
         });
@@ -37,7 +37,7 @@ export default function zenFsProvider(
     readDirectory(uri) {
       try {
         const files = fs.readdirSync(uri.path, { withFileTypes: true });
-        console.log("readDirectory", uri.path, files.map((f) => f.name));
+        // console.log("readDirectory", uri.path, files.map((f) => f.name));
         return files.map<[string, FileType]>((file) => {
           return [
             file.name,

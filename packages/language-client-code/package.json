@@ -1,0 +1,16 @@
+{
+  "name": "@gi-tcg/gts-language-client-code",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./decoration": "./src/decoration.ts"
+  },
+  "scripts": {},
+  "peerDependencies": {
+    "vscode": "*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.120.0"
+  }
+}

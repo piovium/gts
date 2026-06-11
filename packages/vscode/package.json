@@ -5,7 +5,7 @@
   "type": "commonjs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/volarjs/starter.git",
+    "url": "https://github.com/piovium/gts.git",
     "directory": "packages/vscode"
   },
   "icon": "assets/icon.webp",
@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@gi-tcg/gts-language-server": "workspace:*",
+    "@gi-tcg/gts-language-client-code": "workspace:*",
     "@types/node": "^24.10.4",
     "@types/vscode": "^1.107.0",
     "@volar/language-server": "~2.4.0",

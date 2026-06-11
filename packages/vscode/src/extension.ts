@@ -15,6 +15,7 @@ import {
 } from "@volar/vscode/node";
 import * as vscode from "vscode";
 import { patchTypeScriptExtension } from "./patch";
+import { registerDecorations } from "@gi-tcg/gts-language-client-code/decoration";
 
 let client: BaseLanguageClient;
 
@@ -105,6 +106,8 @@ export async function activate(context: vscode.ExtensionContext) {
       );
     }),
   );
+
+  context.subscriptions.push(...registerDecorations(vscode));
 
   // support for https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volarjs-labs
   // ref: https://twitter.com/johnsoncodehk/status/1656126976774791168
