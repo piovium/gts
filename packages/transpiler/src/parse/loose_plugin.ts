@@ -1,7 +1,7 @@
 import { tokTypes, type Parser } from "acorn";
 import type { AST, Parse } from "../types.js";
 
-export const DUMMY_PLACEHOLDER = '✖';
+export const DUMMY_PLACEHOLDER = "✖";
 
 export function loosePlugin() {
   return function loosePluginTransformer(parser: typeof Parser): typeof Parser {
@@ -9,10 +9,10 @@ export function loosePlugin() {
       private readonly _patchedParseIdent = (
         liberal?: boolean,
       ): AST.Identifier => {
-        if (this.type !== tokTypes.name) {
-          return this.createDummyIdentifier();
-        } else {
+        if (this.type === tokTypes.name || this.type.keyword) {
           return super.parseIdent(liberal);
+        } else {
+          return this.createDummyIdentifier();
         }
       };
       readonly #proxiedThis = new Proxy(this, {
@@ -29,7 +29,10 @@ export function loosePlugin() {
       });
 
       createDummyIdentifier() {
-        const dummy = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc) as AST.Identifier;
+        const dummy = this.startNodeAt(
+          this.lastTokEnd,
+          this.lastTokEndLoc,
+        ) as AST.Identifier;
         dummy.name = DUMMY_PLACEHOLDER;
         dummy.isDummy = true;
         return this.finishNode(dummy, "Identifier");

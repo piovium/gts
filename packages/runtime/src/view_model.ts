@@ -201,7 +201,7 @@ class AttributeDefHelper<ModelT> {
     <Args extends any[], U>(
       action: (this: ModelT, ...args: Args) => void,
       binder: (this: ModelT, ...args: Args) => U,
-    ): { (...args: Args): AttributeReturn.Done; as?(): U };
+    ): { (...args: Args): AttributeReturn.Done; as(): U };
   };
   simpleAttribute<const Options extends SimpleAttributeOptions>(
     options: Options,
@@ -213,14 +213,14 @@ class AttributeDefHelper<ModelT> {
       action: (this: ModelT, ...args: Args) => void,
       binder: (this: ModelT, ...args: Args) => U,
     ): WithSimpleOptions<
-      { (...args: Args): AttributeReturn.Done; as?(): U },
+      { (...args: Args): AttributeReturn.Done; as(): U },
       Options
     >;
   };
   simpleAttribute(options?: SimpleAttributeOptions) {
     return (
       action: (this: ModelT, ...args: any[]) => void,
-      binder?: (...args: any[]) => any,
+      binder?: (this: ModelT, ...args: any[]) => any,
     ) => {
       const action2: AttributeAction<ModelT, any> = (model, positionals) =>
         action.apply(model, positionals);

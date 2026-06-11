@@ -1,6 +1,6 @@
 {
   "name": "@gi-tcg/gts-runtime",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "type": "module",
