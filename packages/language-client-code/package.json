@@ -6,7 +6,11 @@
   "exports": {
     "./decoration": "./src/decoration.ts"
   },
-  "scripts": {},
+  "files": ["src"],
+  "scripts": {
+    "build:svg": "node ./scripts/build_svg.ts",
+    "build": "pnpm build:svg"
+  },
   "peerDependencies": {
     "vscode": "*"
   },
