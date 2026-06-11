@@ -30,6 +30,12 @@ export interface IViewModel<
     view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>,
     ...args: CtorArgs
   ): ModelT;
+  /**
+   * Creates a new ViewModel with the same actions and binders, but with a different constructor 
+   * that accepts the specified arguments. This is useful for creating binding ViewModels directly
+   * that forwards the binding logic to inner ViewModels.
+   */
+  bind(...args: CtorArgs): ViewModel<ModelT, BlockDef, []>;
   "~namedDefinition": BlockDef;
 }
 
@@ -94,6 +100,25 @@ class ViewModel<
       }
     }
     return model;
+  }
+
+  #clone() {
+    const newVM = new ViewModel(this.#Ctor);
+    newVM.#registeredActions = new Map(this.#registeredActions);
+    newVM.#registeredBinders = new Map(this.#registeredBinders);
+    return newVM;
+  }
+
+  bind(...args: CtorArgs): ViewModel<ModelT, BlockDef, []> {
+    const newModel = this.#clone() as ViewModel<any, BlockDef, any>;
+    newModel.#Ctor = class extends (
+      (this.#Ctor as new (...args: CtorArgs) => any)
+    ) {
+      constructor() {
+        super(...args);
+      }
+    };
+    return newModel;
   }
 }
 

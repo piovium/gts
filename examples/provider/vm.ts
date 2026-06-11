@@ -179,30 +179,27 @@ const VariableVM = defineSimpleViewModel(
   }),
 );
 
-class SummonBuilder {}
+class EntityBuilder {
+  constructor(type: "summon" | "status") {}
+}
 
 type SummonHandle<VarNames extends string> = number & {
   readonly _summon: unique symbol;
   readonly varNames: VarNames;
 };
 
-const SummonVM = defineViewModel(
-  SummonBuilder,
+const EntityVM = defineViewModel(
+  EntityBuilder,
   (helper) => ({
-    id: helper.attribute<{
-      (id: number): AR.Done;
-      required(): true;
-      as<TMeta extends BuilderMeta>(
-        this: AR.This<TMeta>,
-      ): SummonHandle<TMeta["varNames"]>;
-    }>(
-      (model, pos) => {
-        // model.setId(id);
-      },
-      (_, [id]) => {
-        return id as SummonHandle<any>;
-      },
-    ),
+    id: helper.simpleAttribute({
+    required: true,
+    uniqueKey: "id",
+  })(
+    function (id: number) {
+      // this.id = id;
+    },
+    (id: number) => id as SummonHandle<any>,
+  ),
 
     oops: undefined,
 
@@ -247,9 +244,9 @@ export default defineViewModel(RootBuilder, (helper) => ({
     registered.push(skill);
   }, SkillVM),
   summon: helper.attribute<{
-    (): AR.With<typeof SummonVM, { varNames: never }>;
+    (): AR.With<typeof EntityVM, { varNames: never }>;
   }>((model, _, named) => {
-    const summon = SummonVM.parse(named);
+    const summon = EntityVM.parse(named, "summon");
     registered.push(summon);
-  }, SummonVM),
+  }, EntityVM.bind("summon")),
 }));

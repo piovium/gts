@@ -92,6 +92,17 @@ export function getPrintOptions(
             LITERAL_FROM_ID_MAPPING_DATA,
           );
           context.write('"');
+          const generatedEnd = context.generatedOffset;
+          // Map error squiggle at quotation mark to the inner content
+          context.createExtraMapping(
+            {
+              start: node.range[0],
+              end: node.range[1],
+            },
+            generatedStart,
+            generatedEnd,
+            VERIFICATION_ONLY_MAPPING_DATA,
+          )
         } else if (state.attributeNameNodes.has(node) && node.range) {
           context.writeMapped(
             node.raw ?? JSON.stringify((node as EspolarAST.Literal).value),

@@ -2,24 +2,49 @@ import { Parser } from "acorn";
 import { DUMMY_PLACEHOLDER, loosePlugin } from "../src/parse/loose_plugin.js";
 import { describe, test, expect } from "vitest";
 import { parseLoose } from "../src/parse/index.js";
+import type {
+  BlockStatement,
+  ExpressionStatement,
+  MemberExpression,
+  Identifier,
+} from "estree";
+import { tsPlugin } from "@sveltejs/acorn-typescript";
 
-const LooseParser = Parser.extend(loosePlugin());
+const LooseParser = Parser.extend(tsPlugin(), loosePlugin());
 
 describe("loosePlugin", () => {
   test("should parse incomplete dot property access in block", () => {
     const code = "{ foo. }";
-    const ast: any = LooseParser.parse(code, { ecmaVersion: "latest" });
+    const ast = LooseParser.parse(code, { ecmaVersion: "latest" });
     expect(ast).toBeDefined();
 
     const block = ast.body[0];
     expect(block.type).toBe("BlockStatement");
-    const exprStmt = block.body[0];
+    const exprStmt = (block as BlockStatement).body[0];
     expect(exprStmt.type).toBe("ExpressionStatement");
-    const memberExpr = exprStmt.expression;
+    const memberExpr = (exprStmt as ExpressionStatement).expression;
     expect(memberExpr.type).toBe("MemberExpression");
-    expect(memberExpr.property.type).toBe("Identifier");
-    expect(memberExpr.property.name).toBe(DUMMY_PLACEHOLDER);
+    expect((memberExpr as MemberExpression).property.type).toBe("Identifier");
+    expect(((memberExpr as MemberExpression).property as Identifier).name).toBe(
+      DUMMY_PLACEHOLDER,
+    );
   });
+
+  test.each(["x.do", "x.type"])(
+    "should parse .keyword as identifier",
+    (code) => {
+      const ast = LooseParser.parse(code, { ecmaVersion: "latest" });
+      expect(ast).toBeDefined();
+      const exprStmt = ast.body[0];
+      expect(exprStmt.type).toBe("ExpressionStatement");
+      const memberExpr = (exprStmt as ExpressionStatement).expression;
+      expect(memberExpr.type).toBe("MemberExpression");
+      expect((memberExpr as MemberExpression).property.type).toBe("Identifier");
+      expect(
+        ((memberExpr as MemberExpression).property as Identifier).name,
+      ).toBe(code.slice(2));
+    },
+  );
 
   test("should parse incomplete dot property access in if condition", () => {
     const code = "if (a.) {}";

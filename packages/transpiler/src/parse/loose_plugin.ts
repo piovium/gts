@@ -9,7 +9,7 @@ export function loosePlugin() {
       private readonly _patchedParseIdent = (
         liberal?: boolean,
       ): AST.Identifier => {
-        if (this.type === tokTypes.name || this.type.keyword) {
+        if (this.type.label === "name" || this.type.keyword) {
           return super.parseIdent(liberal);
         } else {
           return this.createDummyIdentifier();
