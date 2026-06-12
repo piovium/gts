@@ -12,15 +12,15 @@ test("basic transpile pipeline", async () => {
   const output = transform(
     parsed,
     {},
-    { content: SOURCE, filename: "test.ts" },
+    { content: SOURCE, filename: "test.gts" },
   );
 
   expect(output.sourceMap?.mappings).toBeDefined();
-  expect(output.sourceMap?.sources).toEqual(["test.ts"]);
+  expect(output.sourceMap?.sources).toEqual(["test.gts"]);
 
   // console.log(output.code);
-  await writeFile(
-    path.resolve(import.meta.dirname, `../../../temp/test.js`),
-    `${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`,
-  );
+  // await writeFile(
+  //   path.resolve(import.meta.dirname, `../../../temp/test.js`),
+  //   `${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`,
+  // );
 });
