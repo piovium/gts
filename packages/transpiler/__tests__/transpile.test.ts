@@ -18,9 +18,10 @@ test("basic transpile pipeline", async () => {
   expect(output.sourceMap?.mappings).toBeDefined();
   expect(output.sourceMap?.sources).toEqual(["test.gts"]);
 
+  expect(`${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`).toMatchSnapshot();
   // console.log(output.code);
   // await writeFile(
   //   path.resolve(import.meta.dirname, `../../../temp/test.js`),
-  //   `${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`,
+  //   ,
   // );
 });

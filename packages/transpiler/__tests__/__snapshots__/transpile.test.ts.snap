@@ -1,0 +1,183 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`basic transpile pipeline 1`] = `
+"import {
+  createDefine as __gts_createDefine,
+  createBinding as __gts_createBinding
+} from '@gi-tcg/gts-runtime';
+
+import __gts_rootVm from '@gi-tcg/core/gts/vm';
+
+const __gts_node_0 = {
+  name: 'character',
+  positionals: () => [],
+
+  named: {
+    attributes: [
+      {
+        name: 'id',
+        positionals: () => [1201],
+        named: null,
+        binding: 'public'
+      },
+
+      { name: 'since', positionals: () => ["v3.3.0"], named: null },
+
+      {
+        name: 'tags',
+        positionals: () => ['hydro', 'catalyst', 'mondstadt'],
+        named: null
+      },
+
+      { name: 'health', positionals: () => [10], named: null },
+      { name: 'energy', positionals: () => [3], named: null },
+
+      {
+        name: 'skills',
+        positionals: () => [WhisperOfWater],
+        named: null
+      }
+    ]
+  }
+};
+
+const __gts_bindings_0 = __gts_createBinding(__gts_rootVm, __gts_node_0);
+
+export const Barbara = __gts_bindings_0[0];
+
+const __gts_node_1 = {
+  name: 'skill',
+  positionals: () => [],
+
+  named: {
+    attributes: [
+      {
+        name: 'id',
+        positionals: () => [12011],
+        named: null,
+        binding: 'private'
+      },
+
+      { name: 'cost', positionals: () => ['hydro', 3], named: null },
+      { name: 'variable', positionals: () => ['foo', 2], named: null },
+
+      {
+        name: '~action',
+
+        positionals: () => [
+          (
+            __gts_fnArg,
+            { cryo, hydro, pyro, electro, anemo, geo, dendro, omni } = __gts_fnArg['~prelude']
+          ) => {
+            const a = __gts_fnArg.getVariable("foo");
+
+            __gts_fnArg.damage(hydro, 1);
+            __gts_fnArg.summon(MelodyLoop);
+          }
+        ],
+
+        named: null
+      }
+    ]
+  }
+};
+
+const __gts_bindings_1 = __gts_createBinding(__gts_rootVm, __gts_node_1);
+const WhisperOfWater = __gts_bindings_1[0];
+
+const __gts_node_2 = {
+  name: 'summon',
+  positionals: () => [],
+
+  named: {
+    attributes: [
+      {
+        name: 'id',
+        positionals: () => [112011],
+        named: null,
+        binding: 'public'
+      },
+
+      {
+        name: 'usage',
+        positionals: () => [2],
+
+        named: {
+          attributes: [
+            { name: 'appendLimit', positionals: () => [6], named: null },
+            { name: "appendCount", positionals: () => [1], named: null }
+          ]
+        }
+      },
+
+      {
+        name: 'on',
+        positionals: () => ['endPhase'],
+
+        named: {
+          attributes: [
+            {
+              name: 'when',
+
+              positionals: () => [
+                (
+                  __gts_fnArg,
+                  { cryo, hydro, pyro, electro, anemo, geo, dendro, omni } = __gts_fnArg['~prelude']
+                ) => true
+              ],
+
+              named: null
+            },
+
+            { name: 'hint', positionals: () => ['heal', 1], named: null },
+
+            {
+              name: '~action',
+
+              positionals: () => [
+                (
+                  __gts_fnArg,
+                  { cryo, hydro, pyro, electro, anemo, geo, dendro, omni } = __gts_fnArg['~prelude']
+                ) => {
+                  __gts_fnArg.heal(1, __gts_fnArg['~queryAll'](({ my, opp }) => my.character));
+
+                  const currentUsage = __gts_fnArg.getVariable("usage");
+
+                  void (1 + 1);
+
+                  class A {
+                    x = () => void __gts_fnArg.heal;
+                  }
+
+                  __gts_fnArg.apply(hydro, __gts_fnArg['~query'](({ my, opp }) => my.active));
+                }
+              ],
+
+              named: null
+            }
+          ]
+        }
+      }
+    ]
+  }
+};
+
+const __gts_bindings_2 = __gts_createBinding(__gts_rootVm, __gts_node_2);
+
+export const MelodyLoop = __gts_bindings_2[0];
+
+import { A } from "./test2.gts";
+
+__gts_createDefine(__gts_rootVm, __gts_node_0);
+__gts_createDefine(__gts_rootVm, __gts_node_1);
+__gts_createDefine(__gts_rootVm, __gts_node_2);
+
+const sub = (a, b) => {
+  return a - b;
+};
+
+A;
+
+const obj = { sub, foo: 0 };
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6W10sInNvdXJjZXMiOlsidGVzdC5ndHMiXSwic291cmNlc0NvbnRlbnQiOlsiIyEvdXNyL2Jpbi9lbnYgbm9kZVxuLy8gQ29weXJpZ2h0IChDKSAyMDI2IFBpb3ZpdW0gTGFic1xuLy9cbi8vIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOiB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5XG4vLyBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBBZmZlcm8gR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhc1xuLy8gcHVibGlzaGVkIGJ5IHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb24sIGVpdGhlciB2ZXJzaW9uIDMgb2YgdGhlXG4vLyBMaWNlbnNlLCBvciAoYXQgeW91ciBvcHRpb24pIGFueSBsYXRlciB2ZXJzaW9uLlxuLy9cbi8vIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLFxuLy8gYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2Zcbi8vIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGVcbi8vIEdOVSBBZmZlcm8gR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLlxuLy9cbi8vIFlvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBBZmZlcm8gR2VuZXJhbCBQdWJsaWMgTGljZW5zZVxuLy8gYWxvbmcgd2l0aCB0aGlzIHByb2dyYW0uICBJZiBub3QsIHNlZSA8aHR0cDovL3d3dy5nbnUub3JnL2xpY2Vuc2VzLz4uXG5pbXBvcnQgeyBBIH0gZnJvbSBcIi4vdGVzdDIuZ3RzXCI7XG5cbi8vIGV4cG9ydCBjb25zdCBhZGQgPSAoYTogbnVtYmVyLCBiOiBudW1iZXIpID0+IHtcbi8vICAgcmV0dXJuIGEgKyBiO1xuLy8gfVxuXG4vKipcbiAqIEBpZCAxMjAxXG4gKiBAbmFtZSDoiq3oiq3mi4lcbiAqIEBkZXNjcmlwdGlvblxuICog5peg6K665L2V5pe26YO96IO95rK75oSI5Lq65b+D44CCXG4gKi9cbmRlZmluZSBjaGFyYWN0ZXIge1xuICBpZCAxMjAxIGFzIEJhcmJhcmE7XG4gIHNpbmNlIFwidjMuMy4wXCI7XG4gIC8vIHVudGlsIFwidjMuNC4wXCI7XG4gIHRhZ3MgaHlkcm8sIGNhdGFseXN0LCBtb25kc3RhZHQ7XG4gIGhlYWx0aCAxMDtcbiAgZW5lcmd5IDM7XG4gIHNraWxscyBXaGlzcGVyT2ZXYXRlcjtcbiAgLy8gdmFyaWFibGUgXCJmb29cIiwgMztcbn1cblxuLyoqXG4gKiBAaWQgMTIwMTJcbiAqIEBuYW1lIOa8lOWUse+8jOW8gOWni+KZqlxuICogQGRlc2NyaXB0aW9uXG4gKiDpgKDmiJAx54K55rC05YWD57Sg5Lyk5a6z77yM5Y+s5ZSk5q2M5aOw5LmL546v44CCXG4gKi9cbmRlZmluZSBza2lsbCB7XG4gIGlkIDEyMDExIGFzIHByaXZhdGUgV2hpc3Blck9mV2F0ZXI7XG4gIGNvc3QgaHlkcm8sIDM7XG4gIHZhcmlhYmxlIGZvbywgMjtcbiAgY29uc3QgYSA9IDpnZXRWYXJpYWJsZShcImZvb1wiKVxuICA6ZGFtYWdlKGh5ZHJvLCAxKTtcbiAgOnN1bW1vbihNZWxvZHlMb29wKTtcbn1cblxuLyoqXG4gKiBAaWQgMTEyMDExXG4gKiBAbmFtZSDmrYzlo7DkuYvnjq9cbiAqIEBkZXNjcmlwdGlvblxuICog57uT5p2f6Zi25q6177ya5rK755aX5omA5pyJ5oiR5pa56KeS6ImyMeeCue+8jOeEtuWQjuWvueaIkeaWueWHuuaImOinkuiJsumZhOedgOawtOWFg+e0oOOAglxuICog5Y+v55So5qyh5pWw77yaMlxuICovXG5kZWZpbmUgc3VtbW9uIHtcbiAgaWQgMTEyMDExIGFzIE1lbG9keUxvb3A7XG4gIC8vIG9vcHMgMztcbiAgdXNhZ2UgMiB7XG4gICAgYXBwZW5kTGltaXQgNjtcbiAgICBcImFwcGVuZENvdW50XCIgMTtcbiAgfTtcbiAgb24gZW5kUGhhc2Uge1xuICAgIHdoZW4gOiggdHJ1ZSApXG4gICAgaGludCBoZWFsLCAxO1xuICAgIDpoZWFsKDEsIHF1ZXJ5KiBteS5jaGFyYWN0ZXIpO1xuICAgIGNvbnN0IGN1cnJlbnRVc2FnZSA9IDpnZXRWYXJpYWJsZShcInVzYWdlXCIpO1xuICAgIHZvaWQgKDEgKzEpO1xuICAgIGNsYXNzIEEge1xuICAgICAgLy8gVGhpcyBjb21tZW50IHNob3VsZCBiZSB2aXNpYmxlXG4gICAgICB4ID0gKCkgPT4gdm9pZCA6aGVhbDtcbiAgICB9XG4gICAgOmFwcGx5KGh5ZHJvLCBxdWVyeSBteS5hY3RpdmUpO1xuICB9XG59XG5cblxuY29uc3Qgc3ViID0gKGE6IG51bWJlciwgYjogbnVtYmVyKSA9PiB7XG4gIHJldHVybiBhIC0gYjtcbn1cblxuLy8gZ3l0eFxuQVxuY29uc3Qgb2JqID0geyBzdWIsIGZvbzogMCB9O1xuXG4vLyBvYmouc3ViKFwidGVzdFwiKTtcbi8vICgwLCBvYmopLnN1YihcInRlc3RcIik7XG4vLyBvYmouZm9vID8gJ2EnIDogJ2InO1xuLy8gbmV3IERhdGUoKS4gICAgICAgICBcbi8vIHN1YlxuXG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7O1FBMkJPLFdBQVM7Ozs7OztjQUNkLElBQUU7NEJBQUMsSUFBSTs7Ozs7Y0FDUCxPQUFLLHNCQUFDLFFBQVE7OztjQUVkLE1BQUk7NEJBQUMsT0FBSyxFQUFFLFVBQVEsRUFBRSxXQUFTOzs7O2NBQy9CLFFBQU0sc0JBQUMsRUFBRTtjQUNULFFBQU0sc0JBQUMsQ0FBQzs7O2NBQ1IsUUFBTTs0QkFBQyxjQUFjOzs7Ozs7Ozs7YUFOVixPQUFPOzs7UUFnQmIsT0FBSzs7Ozs7O2NBQ1YsSUFBRTs0QkFBQyxLQUFLOzs7OztjQUNSLE1BQUksc0JBQUMsT0FBSyxFQUFFLENBQUM7Y0FDYixVQUFRLHNCQUFDLEtBQUcsRUFBRSxDQUFDOzs7Ozs7Ozs7O2tCQUNULENBQUMsZUFBSSxXQUFXLENBQUMsS0FBSzs7d0JBQzNCLE1BQU0sQ0FBQyxLQUFLLEVBQUUsQ0FBQzt3QkFDZixNQUFNLENBQUMsVUFBVTs7Ozs7Ozs7Ozs7TUFMRSxjQUFjOzs7UUFlN0IsUUFBTTs7Ozs7O2NBQ1gsSUFBRTs0QkFBQyxNQUFNOzs7Ozs7Y0FFVCxPQUFLOzRCQUFDLENBQUM7Ozs7b0JBQ0wsYUFBVyxzQkFBQyxDQUFDO29CQUNiLGFBQWEsc0JBQUMsQ0FBQzs7Ozs7O2NBRWpCLElBQUU7NEJBQUMsVUFBUTs7Ozs7b0JBQ1QsTUFBSTs7Ozs7O3FCQUFJLElBQUk7Ozs7OztvQkFDWixNQUFJLHNCQUFDLE1BQUksRUFBRSxDQUFDOzs7Ozs7Ozs7OzhCQUNYLElBQUksQ0FBQyxDQUFDLDRDQUFTLEVBQUUsQ0FBQyxTQUFTOzt3QkFDdEIsWUFBWSxlQUFJLFdBQVcsQ0FBQyxPQUFPOzt3QkFDbkMsQ0FBQyxHQUFFLENBQUM7O3dCQUNKLENBQUMsQ0FBQyxDQUFDO29CQUVQLENBQUMsMEJBQWUsSUFBSTtrQkFDdEIsQ0FBQzs7OEJBQ0EsS0FBSyxDQUFDLEtBQUsseUNBQVEsRUFBRSxDQUFDLE1BQU07Ozs7Ozs7Ozs7Ozs7OzthQWhCbEIsVUFBVTs7U0E5Q2hCLENBQUMsUUFBUSxhQUFhOzs7Ozs7TUFtRXpCLEdBQUcsSUFBSSxDQUFTLEVBQUUsQ0FBUyxLQUFLLENBQUM7U0FDOUIsQ0FBQyxHQUFHLENBQUM7QUFDZCxDQUFDOztBQUdELENBQUM7O01BQ0ssR0FBRyxLQUFLLEdBQUcsRUFBRSxHQUFHLEVBQUUsQ0FBQyJ9"
+`;

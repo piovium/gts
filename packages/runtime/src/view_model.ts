@@ -339,9 +339,28 @@ interface AttributePositionalReturnBase {
   namedDefinition: AttributeBlockDefinition;
 }
 
+type OverloadedParameters<T extends (...args: any[]) => any> = T extends {
+  (...args: infer A1): any;
+  (...args: infer A2): any;
+  (...args: infer A3): any;
+  (...args: infer A4): any;
+}
+  ? A1 | A2 | A3 | A4
+  : T extends {
+        (...args: infer A1): any;
+        (...args: infer A2): any;
+        (...args: infer A3): any;
+      }
+    ? A1 | A2 | A3
+    : T extends { (...args: infer A1): any; (...args: infer A2): any }
+      ? A1 | A2
+      : T extends (...args: infer A) => any
+        ? A
+        : never;
+
 export type AttributeAction<Model, T extends AttributeDefinition> = (
   model: Model,
-  positional: Parameters<T>,
+  positional: OverloadedParameters<T>,
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]
@@ -351,7 +370,7 @@ export type AttributeAction<Model, T extends AttributeDefinition> = (
 
 export type AttributeBinder<Model, T extends AttributeDefinition> = (
   model: Model,
-  positional: Parameters<T>,
+  positional: OverloadedParameters<T>,
   named: View<
     ReturnType<T>["namedDefinition"] extends AttributeBlockDefinition
       ? ReturnType<T>["namedDefinition"]

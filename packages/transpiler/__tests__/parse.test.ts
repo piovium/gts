@@ -6,6 +6,7 @@ test("basic test", () => {
 
 define entity {
   id 211011 as MyEntity;
+  "type" passive;
   on endPhase {
     usage 3 { appendTo 5 };
     hint Cryo, 2;

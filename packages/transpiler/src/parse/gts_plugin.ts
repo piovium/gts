@@ -197,7 +197,8 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         while (this.type !== tokTypes.braceR && this.type !== tokTypes.eof) {
           // Check for DirectShortcutFunction
           if (
-            (specialIdentifiers as unknown[]).includes(this.value) ||
+            (this.type !== tokTypes.string &&
+              (specialIdentifiers as unknown[]).includes(this.value)) ||
             this.type === tokTypes.colon
           ) {
             node.directAction = this.gts_parseDirectFunction();
@@ -251,7 +252,10 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
             this.isContextual("as"))
         ) {
           // Allow omitting the attribute expression for language tooling
-          const dummy = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc) as AST.Identifier;
+          const dummy = this.startNodeAt(
+            this.lastTokEnd,
+            this.lastTokEndLoc,
+          ) as AST.Identifier;
           dummy.name = DUMMY_PLACEHOLDER;
           dummy.isDummy = true;
           return this.finishNode(dummy, "Identifier");
@@ -297,7 +301,10 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
             this.type !== tokTypes.name
           ) {
             // Allow omitting the identifier after ':' for language tooling
-            const dummy = this.startNodeAt(this.lastTokEnd, this.lastTokEndLoc) as AST.Identifier;
+            const dummy = this.startNodeAt(
+              this.lastTokEnd,
+              this.lastTokEndLoc,
+            ) as AST.Identifier;
             dummy.name = DUMMY_PLACEHOLDER;
             dummy.isDummy = true;
             node.property = this.finishNode(dummy, "Identifier");
