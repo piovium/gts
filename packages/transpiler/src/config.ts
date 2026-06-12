@@ -2,11 +2,11 @@ import type { TranspileOption } from "./transform/gts.ts";
 import path from "path-browserify-esm";
 
 function normalizePosixPath(p: string): string {
-  p = p.replace(/\\/g, "/");
-  if (/^[a-zA-Z]:/.test(p)) {
-    p = "/" + p;
-  }
-  return p;
+  return p.replace(/\\/g, "/");
+}
+
+function isPathAbsolute(p: string): boolean {
+  return p.startsWith("/") || /^[a-zA-Z]:[\\/]/.test(p);
 }
 
 export interface GtsConfig extends TranspileOption {}
@@ -52,7 +52,7 @@ function* resolveGtsConfigImpl(
   options: ResolveGtsConfigAsyncOptions | ResolveGtsConfigSyncOptions,
 ): Generator<string | Promise<string>, Required<GtsConfig>, string> {
   const startDir = normalizeStartDir(filePath, options.cwd);
-  const stopDir = options.stopDir ? normalizePosixPath(path.resolve(options.stopDir)) : void 0;
+  const stopDir = options.stopDir ? path.resolve(normalizePosixPath(options.stopDir)) : void 0;
   const pkgConfig = yield* findNearestPackageConfig(
     options.readFileFn,
     startDir,
@@ -105,7 +105,7 @@ export function resolveGtsConfigSync(
 function normalizeStartDir(sourceFile: string, cwd?: string): string {
   const normalizedFile = normalizePosixPath(sourceFile);
   const normalizedCwd = cwd ? normalizePosixPath(cwd) : void 0;
-  const absolute = path.isAbsolute(normalizedFile)
+  const absolute = isPathAbsolute(normalizedFile)
     ? normalizedFile
     : path.resolve(normalizedCwd || ".", normalizedFile);
   return path.dirname(absolute);
