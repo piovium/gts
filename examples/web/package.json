@@ -13,8 +13,7 @@
     "@codingame/monaco-vscode-theme-defaults-default-extension": "~25.1.2",
     "@codingame/monaco-vscode-keybindings-service-override": "~25.1.2",
     "vscode": "npm:@codingame/monaco-vscode-extension-api@~25.1.2",
-    "vscode-languageclient": "~9.0.1",
-    "@gi-tcg/gts-language-server": "workspace:*"
+    "vscode-languageclient": "~9.0.1"
   },
   "overrides": {
     "vscode": "npm:@codingame/monaco-vscode-extension-api@~25.1.2"
@@ -26,6 +25,7 @@
     "vite-plugin-solid": "^2.11.10",
     "@example/provider": "workspace:*",
     "gts-vscode": "workspace:*",
+    "@gi-tcg/gts-language-server": "workspace:*",
     "@gi-tcg/gts-language-client-code": "workspace:*"
   }
 }

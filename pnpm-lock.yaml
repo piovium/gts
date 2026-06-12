@@ -145,9 +145,6 @@ importers:
       '@codingame/monaco-vscode-theme-defaults-default-extension':
         specifier: ~25.1.2
         version: 25.1.2
-      '@gi-tcg/gts-language-server':
-        specifier: workspace:*
-        version: file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)
       monaco-languageclient:
         specifier: ~10.7.0
         version: 10.7.0
@@ -164,6 +161,9 @@ importers:
       '@gi-tcg/gts-language-client-code':
         specifier: workspace:*
         version: file:packages/language-client-code(@codingame/monaco-vscode-extension-api@25.1.2)
+      '@gi-tcg/gts-language-server':
+        specifier: workspace:*
+        version: link:../../packages/language-server
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.4
@@ -317,14 +317,14 @@ importers:
     dependencies:
       '@gi-tcg/gts-typescript-language-service-plugin':
         specifier: workspace:*
-        version: file:packages/typescript-language-service-plugin(typescript@5.9.3)
+        version: link:../typescript-language-service-plugin
     devDependencies:
       '@gi-tcg/gts-language-client-code':
         specifier: workspace:*
         version: link:../language-client-code
       '@gi-tcg/gts-language-server':
         specifier: workspace:*
-        version: file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)
+        version: link:../language-server
       '@types/node':
         specifier: ^24.10.4
         version: 24.10.4
@@ -840,15 +840,8 @@ packages:
     peerDependencies:
       typescript: 'catalog:'
 
-  '@gi-tcg/gts-language-server@file:packages/language-server':
-    resolution: {directory: packages/language-server, type: directory}
-    hasBin: true
-
   '@gi-tcg/gts-transpiler@file:packages/transpiler':
     resolution: {directory: packages/transpiler, type: directory}
-
-  '@gi-tcg/gts-typescript-language-service-plugin@file:packages/typescript-language-service-plugin':
-    resolution: {directory: packages/typescript-language-service-plugin, type: directory}
 
   '@gi-tcg/gtsc@file:packages/tsc':
     resolution: {directory: packages/tsc, type: directory}
@@ -5198,21 +5191,6 @@ snapshots:
       - '@types/estree'
       - babel-plugin-macros
 
-  '@gi-tcg/gts-language-server@file:packages/language-server(@volar/language-service@2.4.27)(typescript@5.9.3)':
-    dependencies:
-      '@gi-tcg/gts-language-plugin': file:packages/language-plugin(@types/estree@1.0.9)(typescript@5.9.3)
-      '@gi-tcg/gts-transpiler': file:packages/transpiler(@types/estree@1.0.9)
-      '@volar/language-server': 2.4.27
-      '@zenfs/core': 2.5.0
-      path-browserify-esm: 1.0.6
-      volar-service-typescript: 0.0.68(@volar/language-service@2.4.27)
-      vscode-uri: 3.1.0
-    transitivePeerDependencies:
-      - '@types/estree'
-      - '@volar/language-service'
-      - babel-plugin-macros
-      - typescript
-
   '@gi-tcg/gts-transpiler@file:packages/transpiler(@types/estree@1.0.9)':
     dependencies:
       '@sveltejs/acorn-typescript': 1.0.8(acorn@8.16.0)
@@ -5226,15 +5204,6 @@ snapshots:
     transitivePeerDependencies:
       - '@types/estree'
       - babel-plugin-macros
-
-  '@gi-tcg/gts-typescript-language-service-plugin@file:packages/typescript-language-service-plugin(typescript@5.9.3)':
-    dependencies:
-      '@gi-tcg/gts-language-plugin': file:packages/language-plugin(@types/estree@1.0.9)(typescript@5.9.3)
-      '@volar/typescript': 2.4.27
-    transitivePeerDependencies:
-      - '@types/estree'
-      - babel-plugin-macros
-      - typescript
 
   '@gi-tcg/gtsc@file:packages/tsc(typescript@5.9.3)':
     dependencies:
