@@ -10,7 +10,7 @@ allowBuilds:
 autoInstallPeers: false
 
 nodeLinker: hoisted
-injectWorkspacePackages: true
+
 minimumReleaseAgeExclude:
   - '@gi-tcg/*'
   - espolar
