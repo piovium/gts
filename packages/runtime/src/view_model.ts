@@ -31,11 +31,21 @@ export interface IViewModel<
     ...args: CtorArgs
   ): ModelT;
   /**
-   * Creates a new ViewModel with the same actions and binders, but with a different constructor 
-   * that accepts the specified arguments. This is useful for creating binding ViewModels directly
-   * that forwards the binding logic to inner ViewModels.
+   * Creates a new ViewModel with the same actions and binders, but with
+   * - a different constructor that accepts the specified arguments, and/or
+   * - a different initial Meta.
+   *
+   * This is useful for creating binding ViewModels directly that forwards
+   * the binding logic to inner ViewModels.
    */
-  bind(...args: CtorArgs): ViewModel<ModelT, BlockDef, []>;
+  bind<NewMeta = BlockDef[Meta]>(): ViewModel<
+    ModelT,
+    BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
+    CtorArgs
+  >;
+  bind<NewMeta = BlockDef[Meta]>(
+    ...args: CtorArgs
+  ): ViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
   "~namedDefinition": BlockDef;
 }
 
@@ -109,11 +119,22 @@ class ViewModel<
     return newVM;
   }
 
-  bind(...args: CtorArgs): ViewModel<ModelT, BlockDef, []> {
-    const newModel = this.#clone() as ViewModel<any, BlockDef, any>;
-    newModel.#Ctor = class extends (
-      (this.#Ctor as new (...args: CtorArgs) => any)
-    ) {
+  bind<NewMeta = BlockDef[Meta]>(): ViewModel<
+    ModelT,
+    BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
+    CtorArgs
+  >;
+  bind<NewMeta = BlockDef[Meta]>(
+    ...args: CtorArgs
+  ): ViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
+  bind<NewMeta = BlockDef[Meta]>(
+    ...args: any[]
+  ): ViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, any> {
+    if (args.length === 0) {
+      return this as any;
+    }
+    const newModel = this.#clone() as ViewModel<any, any, any>;
+    newModel.#Ctor = class extends (this.#Ctor as new (...args: any[]) => any) {
       constructor() {
         super(...args);
       }
@@ -303,7 +324,7 @@ export function defineSimpleViewModel<const T extends StandardJSONSchemaV1>(
     });
   }
   helper["~assignActions"](defResult);
-  return vm;
+  return vm as any;
 }
 
 export interface AttributeDefinition {
