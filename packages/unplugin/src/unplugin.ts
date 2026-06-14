@@ -3,6 +3,7 @@ import {
   type TranspileOption,
   resolveGtsConfig,
   resolveGtsConfigSync,
+  type PathModule,
 } from "@gi-tcg/gts-transpiler";
 import type { UnpluginFactory } from "unplugin";
 
@@ -29,6 +30,7 @@ export const unpluginFactory: UnpluginFactory<TranspileOption | undefined> = (
 };
 
 export interface TranspileSyncOption extends TranspileOption {
+  pathModule?: PathModule;
   readFileFn: (path: string, encoding: "utf8") => string;
 }
 
@@ -49,9 +51,10 @@ export const unpluginSyncFactory: UnpluginFactory<TranspileSyncOption> = (
     transform: {
       filter: { id: /\.gts$/ },
       handler(source, id) {
-        const { readFileFn, ...restOption } = option;
+        const { readFileFn, pathModule, ...restOption } = option;
         const resolvedOption = resolveGtsConfigSync(id, restOption, {
           readFileFn,
+          pathModule,
         });
         const { code, sourceMap } = transpile(source, id, resolvedOption);
         return {

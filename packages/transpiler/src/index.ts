@@ -51,4 +51,7 @@ export {
   resolveGtsConfig,
   resolveGtsConfigSync,
   type GtsConfig,
+  type ResolveGtsConfigAsyncOptions,
+  type ResolveGtsConfigSyncOptions,
+  type PathModule,
 } from "./config.ts";

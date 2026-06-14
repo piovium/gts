@@ -1,13 +1,5 @@
 import type { TranspileOption } from "./transform/gts.ts";
-import path from "path-browserify-esm";
-
-function normalizePosixPath(p: string): string {
-  return p.replace(/\\/g, "/");
-}
-
-function isPathAbsolute(p: string): boolean {
-  return p.startsWith("/") || /^[a-zA-Z]:[\\/]/.test(p);
-}
+import browserPath from "path-browserify-esm";
 
 export interface GtsConfig extends TranspileOption {}
 
@@ -18,16 +10,24 @@ export interface PackageJson {
 type ReadFileFn = (path: string, encoding: "utf8") => string;
 type ReadFileAsyncFn = (path: string, encoding: "utf8") => Promise<string>;
 
-export interface ResolveGtsConfigSyncOptions {
-  readFileFn: ReadFileFn;
+export interface PathModule {
+  resolve(...paths: string[]): string;
+  dirname(path: string): string;
+  isAbsolute(path: string): boolean;
+}
+
+interface ResolveGtsConfigBaseOptions {
   cwd?: string;
+  pathModule?: PathModule;
   stopDir?: string;
 }
 
-export interface ResolveGtsConfigAsyncOptions {
+export interface ResolveGtsConfigSyncOptions extends ResolveGtsConfigBaseOptions {
+  readFileFn: ReadFileFn;
+}
+
+export interface ResolveGtsConfigAsyncOptions extends ResolveGtsConfigBaseOptions {
   readFileFn: ReadFileAsyncFn;
-  cwd?: string;
-  stopDir?: string;
 }
 
 const DEFAULT_GTS_CONFIG: Required<GtsConfig> = {
@@ -51,10 +51,14 @@ function* resolveGtsConfigImpl(
   inlineConfig: GtsConfig = {},
   options: ResolveGtsConfigAsyncOptions | ResolveGtsConfigSyncOptions,
 ): Generator<string | Promise<string>, Required<GtsConfig>, string> {
-  const startDir = normalizeStartDir(filePath, options.cwd);
-  const stopDir = options.stopDir ? path.resolve(normalizePosixPath(options.stopDir)) : void 0;
+  const pathModule = options.pathModule || browserPath;
+  const startDir = normalizeStartDir(filePath, pathModule, options.cwd);
+  const stopDir = options.stopDir
+    ? pathModule.resolve(options.stopDir)
+    : void 0;
   const pkgConfig = yield* findNearestPackageConfig(
     options.readFileFn,
+    pathModule,
     startDir,
     stopDir,
   );
@@ -70,6 +74,7 @@ export async function resolveGtsConfig(
   inlineConfig: GtsConfig,
   options: ResolveGtsConfigAsyncOptions,
 ): Promise<Required<GtsConfig>> {
+  options.pathModule ??= await import("node:path").then((mod) => mod.default);
   const generator = resolveGtsConfigImpl(filePath, inlineConfig, options);
   let result = generator.next();
   while (!result.done) {
@@ -102,28 +107,31 @@ export function resolveGtsConfigSync(
   return result.value;
 }
 
-function normalizeStartDir(sourceFile: string, cwd?: string): string {
-  const normalizedFile = normalizePosixPath(sourceFile);
-  const normalizedCwd = cwd ? normalizePosixPath(cwd) : void 0;
-  const absolute = isPathAbsolute(normalizedFile)
-    ? normalizedFile
-    : path.resolve(normalizedCwd || ".", normalizedFile);
-  return path.dirname(absolute);
+function normalizeStartDir(
+  sourceFile: string,
+  pathModule: PathModule,
+  cwd?: string,
+): string {
+  const absolute = pathModule.isAbsolute(sourceFile)
+    ? sourceFile
+    : pathModule.resolve(cwd || ".", sourceFile);
+  return pathModule.dirname(absolute);
 }
 
 function* findNearestPackageConfig(
   readFileFn: ReadFileFn | ReadFileAsyncFn,
+  pathModule: PathModule,
   startDir: string,
   stopDir?: string,
 ): Generator<string | Promise<string>, GtsConfig, string> {
   let currentDir = startDir;
   while (true) {
-    const pkgPath = path.resolve(currentDir, "package.json");
+    const pkgPath = pathModule.resolve(currentDir, "package.json");
     const config = yield* readPackageConfig(readFileFn, pkgPath);
     if (config) {
       return config;
     }
-    const parentDir = path.dirname(currentDir);
+    const parentDir = pathModule.dirname(currentDir);
     if (parentDir === currentDir) {
       break;
     }

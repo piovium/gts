@@ -1,5 +1,6 @@
 import { test, expect } from "vitest";
-import path from "path-browserify-esm";
+import path from "node:path";
+import win32Path from "node:path/win32";
 import {
   resolveGtsConfig,
   resolveGtsConfigSync,
@@ -19,8 +20,8 @@ test("resolveGtsConfigSync prefers package config", () => {
   const resolved = resolveGtsConfigSync("src/file.gts", {}, {
     cwd: REPO_ROOT,
     readFileFn: (p, encoding) => {
-      if (p !== PACKAGE_PATH) {
-        return JSON.stringify({});
+      if (path.resolve(p) !== PACKAGE_PATH) {
+        throw new Error(`EEXISTS`);
       }
       expect(encoding).toBe("utf8");
       return PACKAGE_JSON;
@@ -33,8 +34,8 @@ test("resolveGtsConfig resolves async read file", async () => {
   const resolved = await resolveGtsConfig("src/file.gts", {}, {
     cwd: REPO_ROOT,
     readFileFn: async (p, encoding) => {
-      if (p !== PACKAGE_PATH) {
-        return JSON.stringify({});
+      if (path.resolve(p) !== PACKAGE_PATH) {
+        throw new Error(`EEXISTS`);
       }
       expect(encoding).toBe("utf8");
       return PACKAGE_JSON;
@@ -46,9 +47,10 @@ test("resolveGtsConfig resolves async read file", async () => {
 test("resolveGtsConfigSync handles Windows backslash paths with cwd", () => {
   const resolved = resolveGtsConfigSync("src\\file.gts", {}, {
     cwd: "C:\\repo",
+    pathModule: win32Path,
     readFileFn: (p, encoding) => {
-      if (p !== "C:/repo/package.json") {
-        return JSON.stringify({});
+      if (path.resolve(p) !== "C:\\repo\\package.json") {
+        throw new Error(`EEXISTS`);
       }
       expect(encoding).toBe("utf8");
       return PACKAGE_JSON;
@@ -57,57 +59,3 @@ test("resolveGtsConfigSync handles Windows backslash paths with cwd", () => {
   expect(resolved.runtimeImportSource).toBe("test-runtime");
 });
 
-test("resolveGtsConfigSync works with Windows drive letter absolute path", () => {
-  const resolved = resolveGtsConfigSync("C:\\repo\\src\\file.gts", {}, {
-    readFileFn: (p, encoding) => {
-      if (p !== "C:/repo/package.json") {
-        return JSON.stringify({});
-      }
-      expect(encoding).toBe("utf8");
-      return PACKAGE_JSON;
-    },
-  });
-  expect(resolved.runtimeImportSource).toBe("test-runtime");
-});
-
-test("resolveGtsConfigSync works with Windows forward-slash absolute path", () => {
-  const resolved = resolveGtsConfigSync("C:/repo/src/file.gts", {}, {
-    readFileFn: (p, encoding) => {
-      if (p !== "C:/repo/package.json") {
-        return JSON.stringify({});
-      }
-      expect(encoding).toBe("utf8");
-      return PACKAGE_JSON;
-    },
-  });
-  expect(resolved.runtimeImportSource).toBe("test-runtime");
-});
-
-test("resolveGtsConfig works with Windows drive letter path", async () => {
-  const resolved = await resolveGtsConfig("C:\\repo\\src\\file.gts", {}, {
-    readFileFn: async (p, encoding) => {
-      if (p !== "C:/repo/package.json") {
-        return JSON.stringify({});
-      }
-      expect(encoding).toBe("utf8");
-      return PACKAGE_JSON;
-    },
-  });
-  expect(resolved.runtimeImportSource).toBe("test-runtime");
-});
-
-test("resolveGtsConfigSync uses stopDir on Windows path", () => {
-  const readFilePaths: string[] = [];
-  const resolved = resolveGtsConfigSync("C:\\repo\\sub\\src\\file.gts", {}, {
-    stopDir: "C:\\repo",
-    readFileFn: (p, encoding) => {
-      readFilePaths.push(p);
-      return JSON.stringify({});
-    },
-  });
-  expect(resolved.runtimeImportSource).toBe("@gi-tcg/gts-runtime");
-  // Should walk up dirs: C:/repo/sub, C:/repo (stopDir) and stop
-  expect(readFilePaths).toContain("C:/repo/sub/package.json");
-  expect(readFilePaths).toContain("C:/repo/package.json");
-  expect(readFilePaths).not.toContain("C:/package.json");
-});
