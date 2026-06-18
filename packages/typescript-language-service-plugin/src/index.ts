@@ -6,6 +6,10 @@ const { createGtsLanguagePlugin } =
 // Use CommonJS export to be compatible with TypeScript Language Service Plugin system
 module.exports = createLanguageServicePlugin((ts, info) => {
   return {
-    languagePlugins: [createGtsLanguagePlugin(ts)],
+    languagePlugins: [
+      createGtsLanguagePlugin(ts, {
+        pathModule: require("node:path"),
+      }),
+    ],
   };
 });

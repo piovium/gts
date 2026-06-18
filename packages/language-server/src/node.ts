@@ -7,13 +7,14 @@ import {
 } from "@volar/language-server/node.js";
 import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import { createLanguageServicePlugins } from "./services/index.ts";
+import path from "node:path";
 
 const connection = createConnection();
 const server = createServer(connection);
 
 connection.listen();
 
-connection.onInitialize((params) => {
+connection.onInitialize(async (params) => {
   const tsdk = loadTsdkByPath(
     params.initializationOptions.typescript.tsdk,
     params.locale,
@@ -22,7 +23,11 @@ connection.onInitialize((params) => {
     params,
     createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => {
       return {
-        languagePlugins: [createGtsLanguagePlugin(tsdk.typescript)],
+        languagePlugins: [
+          createGtsLanguagePlugin(tsdk.typescript, {
+            pathModule: path,
+          }),
+        ],
       };
     }),
     createLanguageServicePlugins(tsdk.typescript),
