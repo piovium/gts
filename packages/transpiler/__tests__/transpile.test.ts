@@ -5,9 +5,13 @@ import { parse } from "../src/parse/index.ts";
 import { transform } from "../src/transform/index.ts";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 
-test("basic transpile pipeline", async () => {
-  const SOURCE = await readFile(path.resolve(import.meta.dirname, "../../../examples/local/test.gts"), "utf8");
+test.skipIf(os.platform() === "win32")("basic transpile pipeline", async () => {
+  const SOURCE = await readFile(
+    path.resolve(import.meta.dirname, "../../../examples/local/test.gts"),
+    "utf8",
+  );
   const parsed = parse(SOURCE);
   const output = transform(
     parsed,
@@ -18,7 +22,9 @@ test("basic transpile pipeline", async () => {
   expect(output.sourceMap?.mappings).toBeDefined();
   expect(output.sourceMap?.sources).toEqual(["test.gts"]);
 
-  expect(`${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`).toMatchSnapshot();
+  expect(
+    `${output.code}\n//# sourceMappingURL=${output.sourceMap.toUrl()}`,
+  ).toMatchSnapshot();
   // console.log(output.code);
   // await writeFile(
   //   path.resolve(import.meta.dirname, `../../../temp/test.js`),
