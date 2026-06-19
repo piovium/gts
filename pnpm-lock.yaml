@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     typescript:
-      specifier: ^5.9.3
-      version: 5.9.3
+      specifier: npm:@typescript/typescript6@^6.0.1
+      version: 6.0.1
 
 importers:
 
@@ -26,13 +26,13 @@ importers:
         version: link:packages/unplugin
       bunup:
         specifier: ^0.16.26
-        version: 0.16.26(typescript@5.9.3)
+        version: 0.16.26(@typescript/typescript6@6.0.1)
       tsdown:
         specifier: ^0.22.0
-        version: 0.22.0(oxc-resolver@11.17.0)(typescript@5.9.3)
+        version: 0.22.0(@typescript/typescript6@6.0.1)(oxc-resolver@11.17.0)
       typescript:
         specifier: 'catalog:'
-        version: 5.9.3
+        version: '@typescript/typescript6@6.0.1'
 
   docs:
     dependencies:
@@ -2232,6 +2232,10 @@ packages:
   '@typescript-eslint/types@8.60.0':
     resolution: {integrity: sha512-AsE7x2XaAK+CVbeih0Fvbn+r1qHxtpLDJ3XUuFcIinT318T90yHMJC+Zgv+jUuDjQQd06HKwxnDu6sz1IcTilA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@typescript/typescript6@6.0.1':
+    resolution: {integrity: sha512-JbesA1Y3wSOYpcw4b4XvG8KCk9AaStATxk1Vmc1qY0Y30fjovvcuRXX2fJ8eC2JRycKQi7V1VYKUljSVBJUzZA==}
+    hasBin: true
 
   '@ungap/structured-clone@1.3.1':
     resolution: {integrity: sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ==}
@@ -4786,7 +4790,7 @@ snapshots:
       '@babel/helper-string-parser': 8.0.0-rc.5
       '@babel/helper-validator-identifier': 8.0.0-rc.5
 
-  '@bunup/dts@0.14.52(typescript@5.9.3)':
+  '@bunup/dts@0.14.52(@typescript/typescript6@6.0.1)':
     dependencies:
       '@babel/parser': 7.29.0
       coffi: 0.1.37
@@ -4795,13 +4799,13 @@ snapshots:
       oxc-transform: 0.93.0
       picocolors: 1.1.1
       std-env: 3.10.0
-      ts-import-resolver: 0.1.23(typescript@5.9.3)
+      ts-import-resolver: 0.1.23(@typescript/typescript6@6.0.1)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: '@typescript/typescript6@6.0.1'
 
-  '@bunup/shared@0.16.23(typescript@5.9.3)':
+  '@bunup/shared@0.16.23(@typescript/typescript6@6.0.1)':
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: '@typescript/typescript6@6.0.1'
 
   '@codingame/monaco-vscode-api@25.1.2':
     dependencies:
@@ -6327,6 +6331,10 @@ snapshots:
 
   '@typescript-eslint/types@8.60.0': {}
 
+  '@typescript/typescript6@6.0.1':
+    dependencies:
+      typescript: 6.0.3
+
   '@ungap/structured-clone@1.3.1': {}
 
   '@vitejs/plugin-react@6.0.1(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0))':
@@ -6565,19 +6573,19 @@ snapshots:
     dependencies:
       '@types/node': 24.10.4
 
-  bunup@0.16.26(typescript@5.9.3):
+  bunup@0.16.26(@typescript/typescript6@6.0.1):
     dependencies:
-      '@bunup/dts': 0.14.52(typescript@5.9.3)
-      '@bunup/shared': 0.16.23(typescript@5.9.3)
+      '@bunup/dts': 0.14.52(@typescript/typescript6@6.0.1)
+      '@bunup/shared': 0.16.23(@typescript/typescript6@6.0.1)
       chokidar: 5.0.0
       coffi: 0.1.37
       lightningcss: 1.32.0
       picocolors: 1.1.1
       tinyexec: 1.0.2
       tree-kill: 1.2.2
-      zlye: 0.4.4(typescript@5.9.3)
+      zlye: 0.4.4(@typescript/typescript6@6.0.1)
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: '@typescript/typescript6@6.0.1'
 
   cac@7.0.0: {}
 
@@ -8388,7 +8396,7 @@ snapshots:
     transitivePeerDependencies:
       - oxc-resolver
 
-  rolldown-plugin-dts@0.25.0(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript@5.9.3):
+  rolldown-plugin-dts@0.25.0(@typescript/typescript6@6.0.1)(oxc-resolver@11.17.0)(rolldown@1.0.1):
     dependencies:
       '@babel/generator': 8.0.0-rc.4
       '@babel/helper-validator-identifier': 8.0.0-rc.4
@@ -8400,7 +8408,7 @@ snapshots:
       obug: 2.1.1
       rolldown: 1.0.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: '@typescript/typescript6@6.0.1'
     transitivePeerDependencies:
       - oxc-resolver
 
@@ -8642,11 +8650,11 @@ snapshots:
 
   trough@2.2.0: {}
 
-  ts-import-resolver@0.1.23(typescript@5.9.3):
+  ts-import-resolver@0.1.23(@typescript/typescript6@6.0.1):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: '@typescript/typescript6@6.0.1'
 
-  tsdown@0.22.0(oxc-resolver@11.17.0)(typescript@5.9.3):
+  tsdown@0.22.0(@typescript/typescript6@6.0.1)(oxc-resolver@11.17.0):
     dependencies:
       ansis: 4.3.0
       cac: 7.0.0
@@ -8657,14 +8665,14 @@ snapshots:
       obug: 2.1.1
       picomatch: 4.0.4
       rolldown: 1.0.1
-      rolldown-plugin-dts: 0.25.0(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript@5.9.3)
+      rolldown-plugin-dts: 0.25.0(@typescript/typescript6@6.0.1)(oxc-resolver@11.17.0)(rolldown@1.0.1)
       semver: 7.8.0
       tinyexec: 1.1.2
       tinyglobby: 0.2.16
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: '@typescript/typescript6@6.0.1'
     transitivePeerDependencies:
       - '@ts-macro/tsc'
       - '@typescript/native-preview'
@@ -9043,11 +9051,11 @@ snapshots:
 
   zimmerframe@1.1.4: {}
 
-  zlye@0.4.4(typescript@5.9.3):
+  zlye@0.4.4(@typescript/typescript6@6.0.1):
     dependencies:
       picocolors: 1.1.1
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: '@typescript/typescript6@6.0.1'
 
   zod@3.25.76: {}
 
