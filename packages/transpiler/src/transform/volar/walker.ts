@@ -389,7 +389,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           state.literalFromIdentifier.add(lit);
           return lit;
         } else {
-          return { ...(visit(attr) as Expression) };
+          return visit(attr) as Expression;
         }
       },
     );

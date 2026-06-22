@@ -42,6 +42,7 @@ const DEFAULT_GTS_CONFIG: Required<GtsConfig> = {
     "geo",
     "dendro",
     "omni",
+    "$",
   ],
   queryBindings: ["my", "opp"],
 };

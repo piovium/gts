@@ -107,6 +107,7 @@ interface SkillContext<TMeta extends BuilderMeta> {
     geo: number;
     dendro: number;
     omni: number;
+    $: QueryBuilder;
   };
   getVariable<TVarName extends TMeta["varNames"]>(name: TVarName): number;
   damage(type: number, count: number): void;

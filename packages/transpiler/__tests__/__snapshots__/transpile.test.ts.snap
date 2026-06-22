@@ -67,7 +67,7 @@ const __gts_node_1 = {
         positionals: () => [
           (
             __gts_fnArg,
-            { cryo, hydro, pyro, electro, anemo, geo, dendro, omni } = __gts_fnArg['~prelude']
+            { cryo, hydro, pyro, electro, anemo, geo, dendro, omni, $ } = __gts_fnArg['~prelude']
           ) => {
             const a = __gts_fnArg.getVariable("foo");
 
@@ -122,7 +122,7 @@ const __gts_node_2 = {
               positionals: () => [
                 (
                   __gts_fnArg,
-                  { cryo, hydro, pyro, electro, anemo, geo, dendro, omni } = __gts_fnArg['~prelude']
+                  { cryo, hydro, pyro, electro, anemo, geo, dendro, omni, $ } = __gts_fnArg['~prelude']
                 ) => true
               ],
 
@@ -137,7 +137,7 @@ const __gts_node_2 = {
               positionals: () => [
                 (
                   __gts_fnArg,
-                  { cryo, hydro, pyro, electro, anemo, geo, dendro, omni } = __gts_fnArg['~prelude']
+                  { cryo, hydro, pyro, electro, anemo, geo, dendro, omni, $ } = __gts_fnArg['~prelude']
                 ) => {
                   __gts_fnArg.heal(1, __gts_fnArg['~queryAll'](({ my, opp }) => my.character));
 

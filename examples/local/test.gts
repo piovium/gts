@@ -51,6 +51,12 @@ define skill {
   :summon(MelodyLoop);
 }
 
+const getLimit = (usage: number) => {
+  return {
+    value: usage + 1
+  };
+}
+
 /**
  * @id 112011
  * @name 歌声之环
@@ -62,15 +68,15 @@ define summon {
   id 112011 as MelodyLoop;
   // oops 3;
   usage 2 {
-    appendLimit 6;
+    appendLimit getLimit(5)?.value;
     "appendCount" 1;
   };
   on endPhase {
-    when :( true )
+    when :( !$.my )
     hint heal, 1;
     :heal(1, query* my.character);
     const currentUsage = :getVariable("usage");
-    void (1 +1);
+    void (1 +currentUsage);
     class A {
       // This comment should be visible
       x = () => void :heal;

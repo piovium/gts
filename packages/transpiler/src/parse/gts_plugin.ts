@@ -1,4 +1,4 @@
-import { tokTypes, type Parser as ParserClass } from "acorn";
+import { tokTypes, type Parser as ParserClass, type Node } from "acorn";
 import type { Parse, AST } from "../types.ts";
 import { specialIdentifiers } from "../keywords.ts";
 import { DUMMY_PLACEHOLDER } from "./loose_plugin.ts";
@@ -46,7 +46,8 @@ AttributeExpression:
     # foo bar { baz = 1 };
     # foo bar, { baz: 1 };   // If allowed, hard to distinguish
     # foo bar, ({ baz: 1 }); // OK
-    [lookahead != "{"] PrimaryExpression
+    [lookahead != "{"] CallExpression OptionalChain?
+    [lookahead != "{"] MemberExpression OptionalChain?
 
 DirectShortcutFunction:
     [lookahead = one of ":", ReservedWord]
@@ -260,7 +261,7 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           dummy.isDummy = true;
           return this.finishNode(dummy, "Identifier");
         }
-        return this.parseExprAtom();
+        return this.parseExprSubscripts(void 0, false);
       }
 
       gts_parseShortcutFunction() {

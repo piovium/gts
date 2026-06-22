@@ -1,6 +1,105 @@
 import { parse, parseLoose } from "../src/parse/index.ts";
 import { test, expect } from "vitest";
 
+test("member expression in attribute value", () => {
+  const source = `define foo bar.baz;`;
+  const ast = parse(source);
+  expect(ast.body[0].type as string).toBe("GTSDefineStatement");
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("MemberExpression");
+  expect(attrs[0].object.name).toBe("bar");
+  expect(attrs[0].property.name).toBe("baz");
+});
+
+test("call expression in attribute value", () => {
+  const source = `define foo bar();`;
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("CallExpression");
+  expect(attrs[0].callee.name).toBe("bar");
+  expect(attrs[0].arguments).toHaveLength(0);
+});
+
+test("call expression with arguments in attribute value", () => {
+  const source = `define foo bar(1, "two", three);`;
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("CallExpression");
+  expect(attrs[0].arguments).toHaveLength(3);
+});
+
+test("optional chain expression in attribute value", () => {
+  const source = `define foo bar?.baz;`;
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("ChainExpression");
+  expect(attrs[0].expression.type).toBe("MemberExpression");
+  expect(attrs[0].expression.optional).toBe(true);
+});
+
+test("computed member expression in attribute value", () => {
+  const source = `define foo bar[baz];`;
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("MemberExpression");
+  expect(attrs[0].computed).toBe(true);
+});
+
+test("tagged template in attribute value", () => {
+  const source = "define foo bar`baz`;";
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("TaggedTemplateExpression");
+});
+
+test("chained member expression in attribute value", () => {
+  const source = `define foo bar.baz.qux;`;
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("MemberExpression");
+  expect(attrs[0].object.type).toBe("MemberExpression");
+  expect(attrs[0].object.property.name).toBe("baz");
+  expect(attrs[0].property.name).toBe("qux");
+});
+
+test("call on member expression in attribute value", () => {
+  const source = `define foo bar.baz();`;
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("CallExpression");
+  expect(attrs[0].callee.type).toBe("MemberExpression");
+  expect(attrs[0].callee.property.name).toBe("baz");
+});
+
+test("multiple mixed attribute values with subscripts", () => {
+  const source = `define foo bar, baz.qux, fn(), 42;`;
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs).toHaveLength(4);
+  expect(attrs[0].type).toBe("Identifier");
+  expect(attrs[1].type).toBe("MemberExpression");
+  expect(attrs[2].type).toBe("CallExpression");
+  expect(attrs[3].type).toBe("Literal");
+});
+
+test("attribute value with subscript followed by named block", () => {
+  const source = `define foo bar.baz { qux 1; };`;
+  const ast = parse(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs[0].type).toBe("MemberExpression");
+  expect(def.body.body.namedAttributes.attributes[0].name.name).toBe("qux");
+});
+
 test("basic test", () => {
   const source = `
 
