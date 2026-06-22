@@ -180,6 +180,10 @@ importers:
         version: 2.11.12(vite@8.0.0(@types/node@24.10.4)(esbuild@0.28.0)(jiti@2.7.0))
 
   packages/language-client-code:
+    dependencies:
+      remeda:
+        specifier: ^2.39.0
+        version: 2.39.0
     devDependencies:
       '@types/vscode':
         specifier: ^1.120.0
@@ -3851,6 +3855,10 @@ packages:
 
   remark@15.0.1:
     resolution: {integrity: sha512-Eht5w30ruCXgFmxVUSlNWQ9iiimq07URKeFS3hNc8cUWy1llX4KDWfyEDZRycMc+znsN9Ux5/tJ/BFdgdOwA3A==}
+
+  remeda@2.39.0:
+    resolution: {integrity: sha512-3Ki8dU1o3OVu4dwIQ2Pj+yiuP7OnEbmWAGmJ3yDRqopily5jsj8NWzPvbS89H85d6UdONKEcUnrfuHY6jN9vyw==}
+    engines: {node: '>=18.0.0'}
 
   request-light@0.7.0:
     resolution: {integrity: sha512-lMbBMrDoxgsyO+yB3sDcrDuX85yYt7sS8BfQd11jtbW/z5ZWgLZRcEGLsLoYw7I0WSUGQBs8CC8ScIxkTX1+6Q==}
@@ -8369,6 +8377,8 @@ snapshots:
       unified: 11.0.5
     transitivePeerDependencies:
       - supports-color
+
+  remeda@2.39.0: {}
 
   request-light@0.7.0: {}
 

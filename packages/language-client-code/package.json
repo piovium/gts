@@ -5,7 +5,9 @@
   "exports": {
     "./decoration": "./src/decoration.ts"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "scripts": {
     "build:svg": "node ./scripts/build_svg.ts",
     "build": "pnpm build:svg"
@@ -15,5 +17,8 @@
   },
   "devDependencies": {
     "@types/vscode": "^1.120.0"
+  },
+  "dependencies": {
+    "remeda": "^2.39.0"
   }
 }
