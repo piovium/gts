@@ -48,6 +48,9 @@ export function registerDecorations(
     if (!activeEditor) {
       return;
     }
+    if (activeEditor.document.languageId !== "gaming-ts") {
+      return;
+    }
     const text = activeEditor.document.getText();
     let match;
     const regex = new RegExp(`\\b(${Object.keys(SVG).join("|")})\\b`, "ig");
