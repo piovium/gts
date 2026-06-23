@@ -1,5 +1,6 @@
 import type * as vscode from "vscode";
 import * as SVG from "./svg.ts";
+import { funnel } from "remeda";
 
 declare global {
   function btoa(str: string): string;
@@ -42,10 +43,12 @@ export function registerDecorations(
     );
   }
   let activeEditor = vscode.window.activeTextEditor;
-  // TODO: throttle
-  const triggerUpdateDecorations = (throttle: boolean) => {
-    void throttle;
+
+  const updateDecorations = () => {
     if (!activeEditor) {
+      return;
+    }
+    if (activeEditor.document.languageId !== "gaming-ts") {
       return;
     }
     const text = activeEditor.document.getText();
@@ -57,7 +60,7 @@ export function registerDecorations(
       const endPos = activeEditor.document.positionAt(
         match.index + match[0].length,
       );
-      const element = match[1] as ElementType;
+      const element = match[1].toLowerCase() as ElementType;
       if (!decorations.has(element)) {
         decorations.set(element, []);
       }
@@ -67,6 +70,17 @@ export function registerDecorations(
     }
     for (const [element, decType] of decorationTypes) {
       activeEditor.setDecorations(decType, decorations.get(element) ?? []);
+    }
+  };
+  const throttledUpdateDecorations = funnel(updateDecorations, {
+    minGapMs: 100,
+    triggerAt: "start",
+  });
+  const triggerUpdateDecorations = (throttle: boolean) => {
+    if (throttle) {
+      throttledUpdateDecorations.call();
+    } else {
+      updateDecorations();
     }
   };
   if (activeEditor) {
