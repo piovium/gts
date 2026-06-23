@@ -137,7 +137,7 @@ const SkillVM = defineViewModel(
       },
     ),
     cost: helper.simpleAttribute()(function (
-      element: string,
+      element: number,
       amount: number,
     ) {}),
 
@@ -146,7 +146,7 @@ const SkillVM = defineViewModel(
     ) {}),
 
     hint: helper.simpleAttribute()(function (
-      icon: "heal",
+      icon: number,
       text: string | number,
     ) {}),
 

@@ -121,7 +121,7 @@ export function applyReplacements(
         const lhs = `${payload.finalMetaType}_lhs`;
         const requiredAttrsNs = `${payload.finalMetaType}_rans`;
         const collectedAttrsExpr = `${payload.collectedAttrs.join(" | ") || "never"}`;
-        const needleString = `"${requiredAttrsNs}_NeedleString" as any as "required attributes are missing"`;
+        const needleString = `"${requiredAttrsNs}_NeedleString" as string as ${requiredAttrsNs}.DiagMsg`;
         if (payload.errorRange) {
           state.extraMappings.push({
             sourceOffset: payload.errorRange[0],
@@ -135,7 +135,13 @@ export function applyReplacements(
         type ${lhs} = typeof ${lhs};
         namespace ${requiredAttrsNs} {
           export type Collected = ${collectedAttrsExpr};
-          export type Expected = { [K in keyof ${payload.defType}]: ${lhs}[K] extends { required(this: ${lhs}): true } ? K : never }[keyof ${payload.defType}];
+          export type Expected = {
+            [K in keyof ${payload.defType}]: ${lhs}[K] extends { required(this: ${lhs}): true } ? K : never;
+          }[keyof ${payload.defType}];
+          type DiagObj = {
+            [K in Expected]: K extends Collected ? never : \`'\${K}' is a required attribute but not provided\`;
+          }
+          export type DiagMsg = DiagObj[Expected];
         };
         ((_: ${requiredAttrsNs}.Expected extends ${requiredAttrsNs}.Collected ? string : ${requiredAttrsNs}.Expected) => 0)(${needleString});
       `;

@@ -13,7 +13,9 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import { A } from "./test2.gts";
+import { DamageType, DiceType } from "./enums";
 
 // export const add = (a: number, b: number) => {
 //   return a + b;
@@ -44,10 +46,10 @@ define character {
  */
 define skill {
   id 12011 as private WhisperOfWater;
-  cost hydro, 3;
+  cost DiceType.Hydro, 3;
   variable foo, 2;
   const a = :getVariable("foo")
-  :damage(hydro, 1);
+  :damage(DamageType.Hydro, 1);
   :summon(MelodyLoop);
 }
 
@@ -73,7 +75,7 @@ define summon {
   };
   on endPhase {
     when :( !$.my )
-    hint heal, 1;
+    hint DamageType.Heal, 1;
     :heal(1, query* my.character);
     const currentUsage = :getVariable("usage");
     void (1 +currentUsage);
@@ -81,7 +83,7 @@ define summon {
       // This comment should be visible
       x = () => void :heal;
     }
-    :apply(hydro, query my.active);
+    :apply(DamageType.Hydro, query my.active);
   }
 }
 

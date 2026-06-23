@@ -30,8 +30,8 @@ define character {
  */
 define skill {
   id 12011 as WhisperOfWater;
-  cost hydro, 3;
-  :damage(hydro, 1);
+  cost DiceType.Hydro, 3;
+  :damage(DamageType.Hydro, 1);
   :summon(MelodyLoop);
 }
 
@@ -46,9 +46,9 @@ define summon {
   id 112011 as MelodyLoop;
   on endPhase {
     usage 2;
-    hint heal, 1;
+    hint DamageType.Heal, 1;
     :heal(1, query* my.character);
-    :apply(hydro, query my.active);
+    :apply(DamageType.Hydro, query my.active);
   }
 }
 ```
