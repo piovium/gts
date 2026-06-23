@@ -121,11 +121,15 @@ export function applyReplacements(
         const lhs = `${payload.finalMetaType}_lhs`;
         const requiredAttrsNs = `${payload.finalMetaType}_rans`;
         const collectedAttrsExpr = `${payload.collectedAttrs.join(" | ") || "never"}`;
-        const needleString = `"${requiredAttrsNs}_NeedleString" as string as ${requiredAttrsNs}.DiagMsg`;
+        const length = payload.errorRange
+          ? payload.errorRange[1] - payload.errorRange[0]
+          : 0;
+        // Ensure that generated needle string is longer than error range so that error squiggle can cover all
+        const needleString = `"${requiredAttrsNs}_NeedleString${"0".repeat(length)}" as string as ${requiredAttrsNs}.DiagMsg`;
         if (payload.errorRange) {
           state.extraMappings.push({
             sourceOffset: payload.errorRange[0],
-            length: payload.errorRange[1] - payload.errorRange[0],
+            length,
             generatedNeedle: needleString,
           });
         }
