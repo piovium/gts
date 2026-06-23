@@ -434,10 +434,12 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         },
       ],
     });
+    enterVMFromAttr(state, returnValue);
     if (body.namedAttributes) {
-      enterVMFromAttr(state, returnValue);
       visit(body.namedAttributes);
       exitVM(state, body.namedAttributes.range);
+    } else {
+      exitVM(state, name.range);
     }
     if (bindingName) {
       const export_ = node.bindingAccessModifier !== "private";
