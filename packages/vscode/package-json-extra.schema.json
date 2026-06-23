@@ -20,14 +20,7 @@
             "type": "string"
           },
           "default": [
-            "cryo",
-            "hydro",
-            "pyro",
-            "electro",
-            "anemo",
-            "geo",
-            "dendro",
-            "omni"
+            "$"
           ],
           "description": "A list of identifier that will be declared inside shortcut function for direct use."
         },
@@ -38,7 +31,8 @@
           },
           "default": [
             "my",
-            "opp"
+            "opp",
+            "macros"
           ],
           "description": "A list of identifier that will be declared inside `query` function for direct use."
         }

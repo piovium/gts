@@ -18,8 +18,8 @@ Defaults  <  package.json "gamingTs" field  <  Inline options (plugin/API)
 const DEFAULT_GTS_CONFIG: Required<GtsConfig> = {
   runtimeImportSource: "@gi-tcg/gts-runtime",
   providerImportSource: "@gi-tcg/core/gts",
-  shortcutFunctionPreludes: ["cryo", "hydro", "pyro", "electro", "anemo", "geo", "dendro", "omni"],
-  queryBindings: ["my", "opp"],
+  shortcutFunctionPreludes: ["$"],
+  queryBindings: ["my", "opp", "macros"],
 };
 ```
 
@@ -82,7 +82,7 @@ The provider must export:
 ### `shortcutFunctionPreludes`
 
 **Type:** `string[]`  
-**Default:** `["cryo", "hydro", "pyro", "electro", "anemo", "geo", "dendro", "omni"]`
+**Default:** `["$"]`
 
 Names destructured from the `Prelude` symbol in shortcut functions. These become available as variables inside `:()` and `:{}` blocks:
 
@@ -98,7 +98,7 @@ Names destructured from the `Prelude` symbol in shortcut functions. These become
 ### `queryBindings`
 
 **Type:** `string[]`  
-**Default:** `["my", "opp"]`
+**Default:** `["my", "opp", "macros"]`
 
 Names destructured in query expression callbacks:
 

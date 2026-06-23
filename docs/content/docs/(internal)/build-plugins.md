@@ -146,7 +146,7 @@ All build plugins accept an optional `TranspileOption`:
 interface TranspileOption {
   runtimeImportSource?: string;      // Default: "@gi-tcg/gts-runtime"
   providerImportSource?: string;     // Default: "@gi-tcg/core/gts"
-  shortcutFunctionPreludes?: string[]; // Default: element names
+  shortcutFunctionPreludes?: string[]; // Default: ["$"]
   queryBindings?: string[];          // Default: ["my", "opp"]
 }
 ```
