@@ -1,7 +1,6 @@
 import type { AttributeReturn } from "./attribute_return.ts";
 import type { Action, Meta, NamedDefinition } from "./symbols.ts";
 import { View } from "./view.ts";
-import type { StandardJSONSchemaV1 } from "@standard-schema/spec";
 
 export interface AttributeBlockDefinition {
   "~action"?: AttributeDefinition | undefined;
@@ -55,7 +54,7 @@ type LazyAttributeActionOrBinder<ModelT> = (
   named: View<any>,
 ) => unknown;
 
-class ViewModel<
+export class ViewModel<
   ModelT,
   BlockDef extends AttributeBlockDefinition,
   CtorArgs extends any[],
@@ -154,7 +153,7 @@ type WithSimpleOptions<Base, Options extends SimpleAttributeOptions> = Base &
     ? { uniqueKey(): Options["uniqueKey"] }
     : {});
 
-class AttributeDefHelper<ModelT> {
+export class AttributeDefHelper<ModelT> {
   #viewModel: ViewModel<ModelT, any, any>;
   constructor(viewModel: ViewModel<ModelT, any, any>) {
     this.#viewModel = viewModel;
@@ -294,37 +293,6 @@ export function defineViewModel<
   const defResult = modelDefFn(helper);
   helper["~assignActions"](defResult);
   return vm;
-}
-
-export type SimpleViewModel<T> = IViewModel<
-  T,
-  {
-    [K in keyof T]-?: {
-      (value: T[K]): AttributeReturn.Done;
-      uniqueKey(): K;
-      required(): {} extends Pick<T, K> ? false : true;
-    };
-  } & { "~meta": undefined },
-  []
->;
-
-export function defineSimpleViewModel<const T extends StandardJSONSchemaV1>(
-  schema: T,
-): SimpleViewModel<StandardJSONSchemaV1.InferInput<T>> {
-  const jsonSchema = schema["~standard"].jsonSchema.input({
-    target: "draft-2020-12",
-  });
-  const Ctor = class SimpleViewModel {};
-  const vm = new ViewModel<any, any, []>(Ctor);
-  const helper = new AttributeDefHelper(vm);
-  const defResult: Record<string, any> = {};
-  for (const key of Object.keys(jsonSchema.properties ?? {})) {
-    defResult[key] = helper.simpleAttribute()(function (this: any, value) {
-      this[key] = value;
-    });
-  }
-  helper["~assignActions"](defResult);
-  return vm as any;
 }
 
 export interface AttributeDefinition {
