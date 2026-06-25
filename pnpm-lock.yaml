@@ -253,8 +253,8 @@ importers:
         specifier: ^1.7.2
         version: 1.7.2
       espolar:
-        specifier: ^0.6.0
-        version: 0.6.0(@types/estree@1.0.9)
+        specifier: ^0.6.1
+        version: 0.6.1(@types/estree@1.0.9)
       esrap:
         specifier: 2.2.1
         version: 2.2.1
@@ -2760,8 +2760,8 @@ packages:
     resolution: {integrity: sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw==}
     engines: {node: '>=12'}
 
-  espolar@0.6.0:
-    resolution: {integrity: sha512-02VHsAX//ZFbH0FhTYpGEVSoKyDs5RmqO641f85qhYBSZosuQasDoldRqxgFgBUQZ5YjP1xUvvk2ME3ltp2Azw==}
+  espolar@0.6.1:
+    resolution: {integrity: sha512-ElWKuqwVU/omMU82Msg5G/izP4IH5n7WZEpaYXqG1Cw2SxZhnUgoWnzsK3vMwdeLWwavoBFZxRFrxCanz/qNzA==}
     engines: {node: '>= 26.0.0'}
     peerDependencies:
       '@types/estree': ^1.0.9
@@ -6874,7 +6874,7 @@ snapshots:
 
   escape-string-regexp@5.0.0: {}
 
-  espolar@0.6.0(@types/estree@1.0.9):
+  espolar@0.6.1(@types/estree@1.0.9):
     dependencies:
       '@typescript-eslint/types': 8.60.0
       '@volar/source-map': 2.4.27

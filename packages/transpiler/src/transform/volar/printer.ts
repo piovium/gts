@@ -36,6 +36,7 @@ export function getPrintOptions(
       }
       return state.sourceNodes.has(node as Node);
     },
+    printCommentsOnUntouchedNodes: true,
     getLeadingComments: (node) => (node as Node).leadingComments,
     getTrailingComments: (node) => (node as Node).trailingComments,
     getMappingData: () => DEFAULT_VOLAR_MAPPING_DATA,

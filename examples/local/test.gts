@@ -53,6 +53,10 @@ define skill {
   :summon(MelodyLoop);
 }
 
+/**
+ * I should be visible when hovering over the function
+ * @param usage I should be visible when providing signature help
+ */
 const getLimit = (usage: number) => {
   return {
     value: usage + 1
