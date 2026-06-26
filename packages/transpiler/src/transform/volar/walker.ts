@@ -273,7 +273,7 @@ const insertHintStatement = (
     type: "Identifier",
     name: `__gts_attrRet_hint_${state.idCounter++}`,
   };
-  exitAttr(state, returnValue);
+  // do NOT exitAttr (rewrite meta) since hint is a incomplete structure
 };
 
 export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
@@ -512,7 +512,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     // Insert hint statement around each attribute name:
     // ```
     // define foo {
-    //   // (1) hidden hint 
+    //   // (1) hidden hint
     //   bar 1; // (2a) hidden hint
     //   baz 2; // (2b) hidden hint
     // }
@@ -594,7 +594,8 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           },
         ],
       });
-      exitAttr(state, returnValue);
+      // rewriting meta is unnecessary since direct action must be the last attribute
+      // exitAttr(state, returnValue);
     }
     return EMPTY;
   },
