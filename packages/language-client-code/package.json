@@ -1,6 +1,6 @@
 {
   "name": "@gi-tcg/gts-language-client-code",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "type": "module",
   "exports": {
     "./decoration": "./src/decoration.ts"
