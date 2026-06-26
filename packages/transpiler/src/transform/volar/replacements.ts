@@ -38,6 +38,7 @@ type ReplacementPayload =
       metaType: string;
       lhs: string;
       attrName: string;
+      hintOnly: boolean;
     }
   | {
       type: "createBindingTyping";
@@ -179,7 +180,7 @@ export function applyReplacements(
                 ? ${payload.attrName}                             /* have duplicate, disable this */
                 : never
         );
-        let ${payload.lhs}!: { ${Meta}: ${payload.metaType} } & Omit<${payload.defType}, ${omittedKeys}>;
+        let ${payload.lhs}!: ${payload.hintOnly ? `{}` : `{ ${Meta}: ${payload.metaType} }`} & Omit<${payload.defType}, ${omittedKeys}>;
       `;
       } else if (payload.type === "createBindingTyping") {
         const typingIdLhs = `${payload.typingId}_lhs`;

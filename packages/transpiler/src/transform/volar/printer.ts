@@ -10,6 +10,7 @@ import {
   type AST as EspolarAST,
   defaultPrinters,
   type SourceRange,
+  type PrinterContext,
 } from "espolar";
 import type { CodeInformation } from "@volar/language-core";
 import {
@@ -19,7 +20,7 @@ import {
   LITERAL_FROM_ID_MAPPING_DATA,
   VERIFICATION_ONLY_MAPPING_DATA,
 } from "./mappings.ts";
-import type { TypingTranspileState } from "./walker.ts";
+import type { TypingTranspileState, GTSAttributeNameHintStatement } from "./walker.ts";
 
 export function getPrintOptions(
   source: string,
@@ -187,6 +188,14 @@ export function getPrintOptions(
           );
         }
       },
+      // @ts-expect-error This is a custom node type that don't have typing.
+      // @see `GTSAttributeNameHintStatement`
+      GTSAttributeNameHintStatement(node: GTSAttributeNameHintStatement, context: PrinterContext<CodeInformation>) {
+        context.writeNode(node.object as EspolarAST.Node);
+        context.write(".");
+        context.writeSource(node.whiteSpaceStart, node.whiteSpaceEnd);
+        context.write(";");
+      }
     },
     // Enable triggering signature completion
     experimentalGetLeftParenSourceRange: (node) => {

@@ -92,7 +92,25 @@ export interface TypingTranspileState extends TranspileState {
   contentStartOffset: number;
 }
 
+/**
+ * Map whitespaces inside named attribute blocks to include a "NameHintStatement", which printed
+ * as following:
+ * ```ts
+ * __gts_attr_obj.      ;
+ * //             ^~~~~~ these whitespaces are mapped from source
+ * ```
+ * so that when user press Ctrl+Space inside whitespace characters, they can get hint of available
+ * attribute names inside this block.
+ */
+export interface GTSAttributeNameHintStatement {
+  type: "GTSAttributeNameHintStatement";
+  object: Identifier;
+  whiteSpaceStart: number;
+  whiteSpaceEnd: number;
+}
+
 const EMPTY: EmptyStatement = { type: "EmptyStatement" };
+const ATTR_HINT_ATTR_NAME = JSON.stringify("~attrNameHint");
 
 const enterVMFromRoot = (state: TypingTranspileState) => {
   let defTypeId: Identifier = {
@@ -174,7 +192,7 @@ const enterAttr = (
   const defTypeId = state.vmDefTypeIdStack.at(-1);
   const metaTypeId = state.metaTypeIdStack.at(-1);
   if (!defTypeId || !metaTypeId) {
-    // TODO error handling?
+    // FIXME error handling?
     return { lhsId: { type: "Identifier", name: "__gts_invalid_attr_obj" } };
   }
   state.attrsOfCurrentVm.at(-1)!.push(attrName);
@@ -189,6 +207,7 @@ const enterAttr = (
       metaType: metaTypeId.name,
       lhs: lhsId.name,
       attrName,
+      hintOnly: attrName === ATTR_HINT_ATTR_NAME,
     }),
   );
   return { lhsId: lhsId };
@@ -236,6 +255,25 @@ const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
       returnType: returningId.name,
     }),
   );
+};
+
+const insertHintStatement = (
+  state: TypingTranspileState,
+  whiteSpaceStart: number,
+  whiteSpaceEnd: number,
+) => {
+  const { lhsId } = enterAttr(state, ATTR_HINT_ATTR_NAME);
+  state.typingPendingStatements.push({
+    type: "GTSAttributeNameHintStatement",
+    object: lhsId,
+    whiteSpaceStart,
+    whiteSpaceEnd,
+  } satisfies GTSAttributeNameHintStatement as any);
+  const returnValue: Identifier = {
+    type: "Identifier",
+    name: `__gts_attrRet_hint_${state.idCounter++}`,
+  };
+  exitAttr(state, returnValue);
 };
 
 export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
@@ -471,8 +509,35 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
     return EMPTY;
   },
   GTSNamedAttributeBlock(node, { state, visit }) {
-    for (const attr of node.attributes) {
-      visit(attr);
+    // Insert hint statement around each attribute name:
+    // ```
+    // define foo {
+    //   // (1) hidden hint 
+    //   bar 1; // (2a) hidden hint
+    //   baz 2; // (2b) hidden hint
+    // }
+    // ```
+    const attributeListEnd =
+      node.directAction?.range?.[0] ?? node.range?.[1] ?? -1;
+    const attributeListStart =
+      node.attributes[0]?.range?.[0] ?? attributeListEnd;
+    // (1)
+    if (node.range && attributeListStart > node.range[0] + 1) {
+      insertHintStatement(state, node.range[0] + 1, attributeListStart - 1);
+    }
+    for (let i = 0; i < node.attributes.length; i++) {
+      const attribute = node.attributes[i];
+      visit(attribute);
+      let nextTokenStart: number;
+      if (i < node.attributes.length - 1) {
+        nextTokenStart = node.attributes[i + 1].range?.[0] ?? -1;
+      } else {
+        nextTokenStart = attributeListEnd;
+      }
+      // (2)
+      if (attribute.range && nextTokenStart > attribute.range[1]) {
+        insertHintStatement(state, attribute.range[1], nextTokenStart - 1);
+      }
     }
     if (node.directAction) {
       const stubStatement: ExpressionStatement = {
@@ -529,6 +594,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
           },
         ],
       });
+      exitAttr(state, returnValue);
     }
     return EMPTY;
   },
