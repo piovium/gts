@@ -78,7 +78,7 @@ define summon {
       limit getLimit(5)?.value;
       value 1;
     };
-    visible true;
+    "visible";
   };
   on endPhase {
     when :( !$.my )
