@@ -244,6 +244,7 @@ The `gtsToTypingsWalker` visitor generates type information by maintaining stack
 - `exitVM(state)` — validates that all required attributes have been provided. Emits a type check that produces an error if required attributes are missing.
 - `enterAttr(state, attrName)` — prepares to call an attribute. Creates a typed variable that combines the current meta with the VM definition.
 - `exitAttr(state, returningId)` — updates the meta type based on the attribute's return type (some attributes can rewrite the meta, e.g., adding variable names).
+- `insertHintStatement(state, whiteSpaceStart, whiteSpaceEnd)` — inserts a synthetic `GTSAttributeNameHintStatement` node that maps whitespace regions inside `define` blocks to virtual code. When printed, this becomes `__gts_attr_obj.  ;` where the whitespace is source-mapped. This enables Volar to provide attribute name completions when the user's cursor is in whitespace areas between attributes in a `define` block.
 - `genBindingTyping(state, info)` — generates a type for a binding export (the `as` clause).
 
 ### Replacement System (`volar/replacements.ts`)
@@ -273,6 +274,23 @@ namespace __rans {
 
 This produces a TypeScript error if required attributes are missing.
 
+### Attribute Name Hints (`GTSAttributeNameHintStatement`)
+
+When editing inside a `define` block, users often need completions for available attribute names in whitespace areas. For example, after typing a semicolon or inside an empty block body:
+
+```
+define Foo {      // cursor here -> need attr name completions
+  id 1;           // cursor here -> need attr name completions
+}
+```
+
+The typing walker inserts synthetic `GTSAttributeNameHintStatement` nodes in `GTSNamedAttributeBlock` at two positions:
+
+1. **After the block opening `{`:** Maps whitespace between `{` and the first attribute to `__gts_attr_obj.  ;`.
+2. **After each attribute's semicolon:** Maps whitespace between an attribute's end and the next token to `__gts_attr_obj.  ;`.
+
+These hint statements reuse the `enterAttr`/`exitAttr` mechanism with a special attribute name `"~attrNameHint"`, but generate `hintOnly: true` replacements (producing `{}` instead of `{ Meta: ... }` in the type variable), avoiding unnecessary meta-type accumulation. The dedicated printer outputs `object.` followed by `context.writeSource()` for the whitespace range and a trailing `";"`, creating a source-to-generated mapping so Volar can trigger completions at those positions.
+
 ### Printing & Mappings (`volar/printer.ts`, `volar/mappings.ts`)
 
 The Volar pipeline uses **`espolar`** (instead of `esrap`) for printing. `espolar` generates Volar `CodeMapping[]` directly alongside the code output, eliminating the need for a separate source-map-to-mapping conversion step.
@@ -287,6 +305,7 @@ Configures `espolar`'s `PrintOptions<CodeInformation>` with:
   - **`Identifier`** — dummy identifiers print as `""` (or `","` if the node is the last argument of a `CallExpression`, to preserve TypeScript error detection). Uses `context.writeMapped()` to create inline mappings with correct source ranges.
   - **`Literal`** — identifiers wrapped as string literals (lowercase positional args like `cryo`) are printed with quote mapping: the source maps to the content between the quotes. Import sources (`"..."` in generated import statements) with `diagnosticsOnTop` get a verification-only mapping to the top of the source file for missing-import diagnostics.
   - **`ImportDefaultSpecifier` / `ImportSpecifier`** — generated import specifiers also get top-of-file diagnostic mappings via `context.createExtraMapping()`.
+  - **`GTSAttributeNameHintStatement`** — prints as `object.` followed by source-mapped whitespace and a trailing `";"`. The whitespace region is emitted via `context.writeSource()` so the cursor position maps back to the source, enabling attribute name completions in whitespace areas inside `define` blocks.
 - **`experimentalGetLeftParenSourceRange`** — maps `(` tokens in `CallExpression`/`NewExpression` to their original source position for signature help support.
 
 #### Mappings (`volar/mappings.ts`)
