@@ -16,9 +16,12 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown --platform neutral"
+    "build": "tsdown --platform neutral",
+    "test": "vitest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "ajv": "^8.20.0"
+  },
   "devDependencies": {
     "@standard-schema/spec": "^1.1.0",
     "json-schema-typed": "^8.0.2"

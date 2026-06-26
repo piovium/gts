@@ -1,35 +1,160 @@
-
 import type { StandardJSONSchemaV1 } from "@standard-schema/spec";
-import { AttributeDefHelper, ViewModel, type IViewModel } from "./view_model.ts";
+import {
+  AttributeDefHelper,
+  ViewModel,
+  type IViewModel,
+  type AttributeAction,
+} from "./view_model.ts";
 import type { AttributeReturn } from "./attribute_return.ts";
+import { Ajv2020 } from "ajv/dist/2020.js";
+import type { IsSingleton } from "./utilts.ts";
 
-export type SimpleViewModel<T> = IViewModel<
+export interface SimpleViewModelOptions {
+  /**
+   * Recursively parse nested objects as sub-view models.
+   */
+  recursive?: boolean;
+  /**
+   * Treat boolean-compatible properties as switches, i.e. the presence
+   * of the attribute without a value sets the property to `true`.
+   *
+   * Ignored if the `recursive` option is enabled and a object value is acceptable.
+   */
+  booleanSwitch?: boolean;
+}
+
+type ExtractObject<T> = T extends object ? T : never;
+
+type SimpleViewModelAttribute<
+  ValueT,
+  Options extends SimpleViewModelOptions,
+> = {
+  (value: ValueT): AttributeReturn.Done;
+} & (Options["recursive"] extends true
+  ? IsSingleton<ExtractObject<ValueT>> extends true
+    ? {
+        (): AttributeReturn.With<
+          SimpleViewModel<ExtractObject<ValueT>, Options>
+        >;
+      }
+    : Options["booleanSwitch"] extends true
+      ? [true] extends [ValueT]
+        ? { (): AttributeReturn.Done }
+        : {}
+      : {}
+  : {});
+
+export type SimpleViewModel<
+  T,
+  Options extends SimpleViewModelOptions = {},
+> = IViewModel<
   T,
   {
-    [K in keyof T]-?: {
-      (value: T[K]): AttributeReturn.Done;
+    [K in keyof T]-?: SimpleViewModelAttribute<T[K], Options> & {
       uniqueKey(): K;
       required(): {} extends Pick<T, K> ? false : true;
     };
-  } & { "~meta": undefined },
+  } & {
+    "~meta": undefined;
+  },
   []
 >;
 
-export function defineSimpleViewModel<const T extends StandardJSONSchemaV1>(
-  schema: T,
-): SimpleViewModel<StandardJSONSchemaV1.InferInput<T>> {
-  const jsonSchema = schema["~standard"].jsonSchema.input({
-    target: "draft-2020-12",
-  });
+const ajv = new Ajv2020({ strict: false });
+
+function isBooleanCompatible(propSchema: Record<string, unknown>): boolean {
+  try {
+    const validate = ajv.compile(propSchema);
+    return validate(true);
+  } catch {
+    return false;
+  }
+}
+
+function extractObjectSchema(
+  propSchema: Record<string, unknown>,
+): Record<string, unknown> | null {
+  if (propSchema.type === "object") {
+    return propSchema;
+  }
+  if (Array.isArray(propSchema.anyOf)) {
+    const objectBranches = propSchema.anyOf.filter(
+      (s: any) => s && typeof s === "object" && s.type === "object",
+    );
+    if (objectBranches.length === 1) {
+      return objectBranches[0] as Record<string, unknown>;
+    }
+  }
+  return null;
+}
+
+function createSimpleViewModelFromJsonSchema(
+  jsonSchema: Record<string, unknown>,
+  options: SimpleViewModelOptions,
+): IViewModel<any, any, []> {
   const Ctor = class SimpleViewModel {};
   const vm = new ViewModel<any, any, []>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult: Record<string, any> = {};
   for (const key of Object.keys(jsonSchema.properties ?? {})) {
-    defResult[key] = helper.simpleAttribute()(function (this: any, value) {
-      this[key] = value;
-    });
+    const propSchema = (jsonSchema.properties as Record<string, unknown>)[key];
+    if (!propSchema) {
+      continue;
+    }
+    defResult[key] = registerAttribute(
+      helper,
+      key,
+      propSchema as Record<string, unknown>,
+      options,
+    );
   }
   helper["~assignActions"](defResult);
   return vm as any;
+}
+
+function registerAttribute(
+  helper: AttributeDefHelper<any>,
+  key: string,
+  propSchema: Record<string, unknown>,
+  options: SimpleViewModelOptions,
+): unknown {
+  let objectSchema: Record<string, unknown> | null = null;
+  if (options.recursive && (objectSchema = extractObjectSchema(propSchema))) {
+    const subVM = createSimpleViewModelFromJsonSchema(objectSchema, options);
+    return helper.attribute((model, positionals, named) => {
+      if (positionals.length > 0) {
+        model[key] = positionals[0];
+      } else {
+        model[key] = subVM.parse(named);
+      }
+    });
+  }
+
+  if (options.booleanSwitch && isBooleanCompatible(propSchema)) {
+    return helper.simpleAttribute()(function (this: any, ...args: any[]) {
+      this[key] = args.length > 0 ? args[0] : true;
+    });
+  }
+
+  return helper.simpleAttribute()(function (this: any, value) {
+    this[key] = value;
+  });
+}
+
+export function defineSimpleViewModel<
+  const T extends StandardJSONSchemaV1,
+  const Options extends SimpleViewModelOptions = {},
+>(
+  schema: T,
+  options?: Options,
+): SimpleViewModel<StandardJSONSchemaV1.InferInput<T>, Options> {
+  const resolvedOptions: SimpleViewModelOptions = {
+    booleanSwitch: false,
+    recursive: false,
+    ...options,
+  };
+  const jsonSchema = schema["~standard"].jsonSchema.input({
+    target: "draft-2020-12",
+  });
+  return createSimpleViewModelFromJsonSchema(jsonSchema, resolvedOptions);
 }

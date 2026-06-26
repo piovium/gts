@@ -74,8 +74,11 @@ define summon {
   id 112011 as MelodyLoop;
   // oops 3;
   usage 2 {
-    appendLimit getLimit(5)?.value;
-    "appendCount" 1;
+    append {
+      limit getLimit(5)?.value;
+      value 1;
+    };
+    visible true;
   };
   on endPhase {
     when :( !$.my )

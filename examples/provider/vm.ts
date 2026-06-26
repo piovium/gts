@@ -99,14 +99,6 @@ export type Query = { readonly _query: unique symbol };
 
 interface SkillContext<TMeta extends BuilderMeta> {
   "~prelude": {
-    cryo: number;
-    hydro: number;
-    pyro: number;
-    electro: number;
-    anemo: number;
-    geo: number;
-    dendro: number;
-    omni: number;
     $: QueryBuilder;
   };
   getVariable<TVarName extends TMeta["varNames"]>(name: TVarName): number;
@@ -175,9 +167,20 @@ const SkillVM = defineViewModel(
 
 const VariableVM = defineSimpleViewModel(
   type({
-    appendLimit: "number?",
-    appendCount: "number?",
+    "append?": [
+      {
+        "limit?": "number",
+        "value?": "number",
+      },
+      "|",
+      "boolean",
+    ],
+    "visible?": "boolean",
   }),
+  {
+    booleanSwitch: true,
+    recursive: true,
+  },
 );
 
 class EntityBuilder {
@@ -193,14 +196,14 @@ const EntityVM = defineViewModel(
   EntityBuilder,
   (helper) => ({
     id: helper.simpleAttribute({
-    required: true,
-    uniqueKey: "id",
-  })(
-    function (id: number) {
-      // this.id = id;
-    },
-    (id: number) => id as SummonHandle<any>,
-  ),
+      required: true,
+      uniqueKey: "id",
+    })(
+      function (id: number) {
+        // this.id = id;
+      },
+      (id: number) => id as SummonHandle<any>,
+    ),
 
     oops: undefined,
 
