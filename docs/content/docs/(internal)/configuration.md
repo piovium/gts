@@ -2,7 +2,7 @@
 title: Configuration
 ---
 
-GTS configuration determines how `.gts` files are transpiled — which runtime and provider packages to import, which symbols are available in shortcut functions, and which query bindings exist.
+GTS configuration determines how `.gts` files are transpiled — which runtime and provider packages to import.
 
 ## Configuration Sources
 
@@ -18,8 +18,6 @@ Defaults  <  package.json "gamingTs" field  <  Inline options (plugin/API)
 const DEFAULT_GTS_CONFIG: Required<GtsConfig> = {
   runtimeImportSource: "@gi-tcg/gts-runtime",
   providerImportSource: "@gi-tcg/core/gts",
-  shortcutFunctionPreludes: ["$"],
-  queryBindings: ["my", "opp", "macros"],
 };
 ```
 
@@ -62,7 +60,7 @@ const plugin = gts({
 The module from which runtime functions are imported. The transpiler generates:
 
 ```ts
-import { createDefine, createBinding, Action, Prelude } from "<runtimeImportSource>";
+import { createDefine, createBinding } from "<runtimeImportSource>";
 ```
 
 ### `providerImportSource`
@@ -78,36 +76,6 @@ import __gts_rootVm from "<providerImportSource>/vm";
 
 The provider must export:
 - `./vm` — default export of the root `ViewModel`
-
-### `shortcutFunctionPreludes`
-
-**Type:** `string[]`  
-**Default:** `["$"]`
-
-Names destructured from the `Prelude` symbol in shortcut functions. These become available as variables inside `:()` and `:{}` blocks:
-
-```gts
-// With default preludes:
-:damage(hydro, 1);
-
-// Transpiles to:
-(__gts_fnArg, { cryo, hydro, pyro, electro, anemo, geo, dendro, omni } = __gts_fnArg[Prelude]) =>
-  __gts_fnArg.damage(hydro, 1)
-```
-
-### `queryBindings`
-
-**Type:** `string[]`  
-**Default:** `["my", "opp", "macros"]`
-
-Names destructured in query expression callbacks:
-
-```gts
-query my.character
-
-// Transpiles to:
-__gts_fnArg["~query"](({ my, opp }) => my.character)
-```
 
 ## Resolution Algorithm
 

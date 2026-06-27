@@ -561,7 +561,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       }
       const fn: ArrowFunctionExpression = {
         type: "ArrowFunctionExpression",
-        params: state.shortcutFunctionParameters,
+        params: [state.fnArgId],
         body: {
           type: "BlockStatement",
           body: node.directAction.body.map((stmt) => visit(stmt) as Statement),

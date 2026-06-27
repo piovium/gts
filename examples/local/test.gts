@@ -81,16 +81,16 @@ define summon {
     "visible";
   };
   on endPhase {
-    when :( !$.my )
+    when :( !:$.my )
     hint DamageType.Heal, 1;
-    :heal(1, query* my.character);
+    :heal(1, :queryAll(:$.my.character));
     const currentUsage = :getVariable("usage");
     void (1 +currentUsage);
     class A {
       // This comment should be visible
       x = () => void :heal;
     }
-    :apply(DamageType.Hydro, query my.active);
+    :apply(DamageType.Hydro, :query(:$.my.active));
   }
 }
 

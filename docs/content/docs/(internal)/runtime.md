@@ -16,31 +16,9 @@ When a `.gts` file is transpiled and executed, the generated JavaScript calls ru
 ```ts
 // src/index.ts
 export { defineViewModel, type AttributeDefinition, type IViewModel, type AttributeReturn } from "./view_model";
-export { Action, Prelude, Meta, NamedDefinition } from "./symbols";
+export { Action, Meta, NamedDefinition } from "./symbols";
 export { createBinding, createDefine } from "./view";
 ```
-
-## Symbols (`src/symbols.ts`)
-
-GTS uses unique symbols as special property keys:
-
-| Symbol | Purpose |
-|--------|---------|
-| `Meta` | Carries accumulated type-level metadata through attribute chains |
-| `Action` | Identifies the direct action handler in a named attribute block |
-| `NamedDefinition` | Stores the ViewModel's block definition type (attribute schema) |
-| `Prelude` | Provides shortcut function context (element constants, etc.) |
-
-```ts
-export const Meta: unique symbol = Symbol("Meta");
-export const Action: unique symbol = Symbol("Action");
-export const NamedDefinition: unique symbol = Symbol("NamedDefinition");
-export const Prelude: unique symbol = Symbol("Prelude");
-```
-
-These symbols serve dual purposes:
-- **At runtime** — used as property keys on objects (e.g., `ctx[Prelude]` to access element constants)
-- **At type level** — used as index types for type-level computation (e.g., `VM[NamedDefinition]` to get the attribute type schema)
 
 ## View System (`src/view.ts`)
 
@@ -232,7 +210,7 @@ define character {
 The transpiler generates:
 
 ```js
-import { createDefine, createBinding, Action, Prelude } from "@gi-tcg/gts-runtime";
+import { createDefine, createBinding } from "@gi-tcg/gts-runtime";
 import __gts_rootVm from "@example/provider/vm";
 
 const __gts_node_0 = {
@@ -260,7 +238,6 @@ At runtime:
 The runtime is designed to be used with a **provider** — a separate package that defines the ViewModels for a specific game domain. The provider exports:
 
 - `./vm` — the root ViewModel (default export)
-- `./query` — the query function (default export)
 - `./runtime` — re-exports from `@gi-tcg/gts-runtime`
 
 This separation allows GTS files to be written against a stable language interface while the game implementation evolves independently.

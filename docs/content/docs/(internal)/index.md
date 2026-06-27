@@ -13,7 +13,7 @@ title: Introduction
 | [Architecture](/docs/architecture) | Monorepo structure, package map, dependency graph, and build system |
 | [GTS Syntax](/docs/gts-syntax) | Language syntax reference with formal grammar and examples |
 | [Transpiler](/docs/transpiler) | Transpiler internals: parsing, AST, transformation pipeline |
-| [Runtime](/docs/runtime) | Runtime system: ViewModel, bindings, define/query execution |
+| [Runtime](/docs/runtime) | Runtime system: ViewModel, bindings, define execution |
 | [Language Tooling](/docs/language-tooling) | Volar integration, language server, VS Code extension, and TypeScript plugin |
 | [Build Plugins](/docs/build-plugins) | Build plugins (vite, esbuild, rollup, webpack, and more) plus `gtsc` CLI compiler |
 | [Configuration](/docs/configuration) | Configuration resolution, `package.json` fields, and defaults |

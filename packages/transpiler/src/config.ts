@@ -33,8 +33,6 @@ export interface ResolveGtsConfigAsyncOptions extends ResolveGtsConfigBaseOption
 const DEFAULT_GTS_CONFIG: Required<GtsConfig> = {
   runtimeImportSource: "@gi-tcg/gts-runtime",
   providerImportSource: "@gi-tcg/core/gts",
-  shortcutFunctionPreludes: ["$"],
-  queryBindings: ["my", "opp", "macros"],
 };
 
 function* resolveGtsConfigImpl(

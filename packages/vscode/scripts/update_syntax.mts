@@ -105,18 +105,6 @@ patched.repository["expression-operators"].patterns.unshift(
       },
     },
   },
-  {
-    match:
-      "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(query)(?![_$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))(?:\\s*(\\*))?",
-    captures: {
-      "1": {
-        name: "keyword.control.query.gts",
-      },
-      "2": {
-        name: "keyword.control.query.asterisk.gts",
-      },
-    },
-  }
 );
 
 await writeFile(

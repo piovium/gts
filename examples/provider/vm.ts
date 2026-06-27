@@ -98,16 +98,14 @@ export interface QueryBuilder {
 export type Query = { readonly _query: unique symbol };
 
 interface SkillContext<TMeta extends BuilderMeta> {
-  "~prelude": {
-    $: QueryBuilder;
-  };
+  $: QueryBuilder;
   getVariable<TVarName extends TMeta["varNames"]>(name: TVarName): number;
   damage(type: number, count: number): void;
   summon(type: SummonHandle<any>): void;
   heal(count: number, query: Query): void;
   apply(type: number, query: Query): void;
-  "~query"(queryFn: (querier: QueryBuilder) => unknown): Query;
-  "~queryAll"(queryFn: (querier: QueryBuilder) => unknown): Query;
+  query(query: QueryBuilder): Query;
+  queryAll(query: QueryBuilder): Query;
 }
 
 type SkillAction<TMeta extends BuilderMeta> = (

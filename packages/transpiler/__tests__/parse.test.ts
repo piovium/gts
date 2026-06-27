@@ -113,11 +113,11 @@ define entity {
   on useSkill {
     when :( :player.hands.length > 0 )
     usagePerRound 1
-    :damage(Cryo, 1, query opp.next)
+    :damage(Cryo, 1, :query(opp.next))
   } as private _;
   on selfDispose {
     when :{
-      const chs = query* my.character;
+      const chs = :queryAll(my.character);
       return chs.length >= 2;
     }
     if (add(1, 2) > 2) {

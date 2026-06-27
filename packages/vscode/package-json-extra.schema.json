@@ -12,29 +12,7 @@
         "providerImportSource": {
           "type": "string",
           "default": "@gi-tcg/core/gts",
-          "description": "Where to import semantic providers, including `rootVM`, `binder` and `query`."
-        },
-        "shortcutFunctionPreludes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "$"
-          ],
-          "description": "A list of identifier that will be declared inside shortcut function for direct use."
-        },
-        "queryBindings": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "my",
-            "opp",
-            "macros"
-          ],
-          "description": "A list of identifier that will be declared inside `query` function for direct use."
+          "description": "Where to import semantic providers, including `rootVM` and `binder`."
         }
       }
     }

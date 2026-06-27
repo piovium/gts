@@ -21,7 +21,6 @@ declare module "estree" {
   interface ExpressionMap {
     GTSShortcutArgumentExpression: GTSShortcutArgumentExpression;
     GTSShortcutFunctionExpression: GTSShortcutFunctionExpression;
-    GTSQueryExpression: GTSQueryExpression;
   }
   
   interface SimpleCallExpression {
@@ -77,11 +76,6 @@ declare module "estree" {
     expression: boolean;
   }
 
-  interface GTSQueryExpression extends BaseExpression {
-    type: "GTSQueryExpression";
-    star?: boolean;
-    argument: Expression;
-  }
 }
 
 declare module "acorn" {

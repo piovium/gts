@@ -59,5 +59,4 @@ export const specialIdentifiers: string[] = [
   "type",
   // Our DSL Keywords
   "define",
-  "query",
 ];

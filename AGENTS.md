@@ -65,7 +65,7 @@ GamingTS (GTS) is a TypeScript-based DSL toolchain for Genshin Impact TCG card d
 
 ### Key patterns:
 - **Transpiler pipeline:** `parse(source)` → AST → `transform(ast, options, context)` → `{ code, sourceMap }`. The public API is `transpile()` and `transpileForVolar()` in `packages/transpiler/src/index.ts`.
-- **Config:** GTS options are resolved from the nearest `package.json`'s `gamingTs` field. See `packages/transpiler/src/config.ts`. Defaults include `runtimeImportSource`, `providerImportSource`, and `shortcutFunctionPreludes`.
+- **Config:** GTS options are resolved from the nearest `package.json`'s `gamingTs` field. See `packages/transpiler/src/config.ts`. Defaults include `runtimeImportSource` and `providerImportSource`.
 - **Volar integration:** The language plugin, language server, and tsc all depend on `@volar/*` packages for `.gts` language support in editors.
 
 ## 5. Workflow

@@ -2,7 +2,7 @@
 title: GTS Syntax Reference
 ---
 
-GamingTS (GTS) is a superset of TypeScript. A `.gts` file can contain any valid TypeScript, plus GTS-specific `define` statements and `query` expressions.
+GamingTS (GTS) is a superset of TypeScript. A `.gts` file can contain any valid TypeScript, plus GTS-specific `define` statements.
 
 ## Formal Grammar
 
@@ -61,9 +61,6 @@ PrimaryExpression:
 
 ShortcutArgumentExpression:
     ":" Identifier
-
-UnaryExpression:
-+   "query" "*"? UnaryExpression
 ```
 
 ## Define Statement
@@ -122,14 +119,14 @@ The colon (`:`) prefix creates shortcut functions — concise syntax for calling
 
 ```gts
 when :( true )
-// transpiles to: when((__gts_fnArg, { cryo, hydro, ... } = __gts_fnArg[Prelude]) => true)
+// transpiles to: when(__gts_fnArg => true)
 ```
 
 ### Shortcut Block (`:{ stmts }`)
 
 ```gts
 :{ console.log("hello"); return 42; }
-// transpiles to: ((__gts_fnArg, { cryo, hydro, ... } = __gts_fnArg[Prelude]) => { ... })
+// transpiles to: (__gts_fnArg => { ... })
 ```
 
 ### Shortcut Argument (`:identifier`)
@@ -142,9 +139,8 @@ Inside a shortcut function, `:identifier` accesses a property on the function ar
 //   (inside an arrow function with __gts_fnArg as the first parameter)
 ```
 
-The shortcut function parameters are:
+The shortcut function receives a single parameter:
 1. `__gts_fnArg` — the context object
-2. `{ cryo, hydro, pyro, electro, anemo, geo, dendro, omni } = __gts_fnArg[Prelude]` — destructured prelude symbols (element constants)
 
 ### Direct Shortcut Function
 
@@ -161,16 +157,6 @@ define skill {
 
 This is equivalent to having an `[Action]` attribute with the function body.
 
-## Query Expressions
-
-The `query` keyword creates a query expression for accessing game state:
-
-```gts
-query my.character       // calls __gts_fnArg["~query"](({ my, opp }) => my.character)
-query* my.character      // calls __gts_fnArg["~queryAll"](({ my, opp }) => my.character)
-```
-
-The `*` after `query` switches between `"~query"` and `"~queryAll"` on the `__gts_fnArg` object. Query expressions are transformed into calls on `__gts_fnArg` with an arrow function capturing destructured bindings (default: `my`, `opp`).
 
 ## Binding Exports
 
@@ -209,8 +195,7 @@ The transpiler preserves all TypeScript code and only transforms GTS-specific co
 
 ## Reserved Words
 
-GTS adds two keywords to the language:
+GTS adds one keyword to the language:
 - **`define`** — starts a define statement (top-level only)
-- **`query`** — creates a query expression (inside shortcut functions)
 
-These are contextual keywords — `define` is only recognized at the start of a top-level statement (with no line break after it), and `query` is only recognized in unary expression position.
+This is a contextual keyword — `define` is only recognized at the start of a top-level statement (with no line break after it).

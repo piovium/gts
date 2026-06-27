@@ -16,11 +16,6 @@ import type {
 } from "estree";
 import { walk, type Visitors } from "zimmerframe";
 import { GtsTranspilerError } from "../error.ts";
-import {
-  DEFAULT_QUERY_BINDINGS,
-  DEFAULT_SHORTCUT_FUNCTION_PRELUDES,
-} from "./constants.ts";
-
 export interface ExternalizedBinding {
   bindingName: Identifier;
   export: boolean;
@@ -30,13 +25,8 @@ export interface TranspileState {
   readonly createDefineFnId: Identifier;
   readonly createBindingFnId: Identifier;
   readonly ActionLit: Literal;
-  readonly PreludeLit: Literal;
   readonly fnArgId: Identifier;
-  readonly shortcutFunctionParameters: Pattern[];
   readonly rootVmId: Identifier;
-  readonly queryParameters: Pattern[];
-  readonly QueryLit: Literal;
-  readonly QueryAllLit: Literal;
 
   readonly runtimeImportSource: string;
   readonly providerImportSource: string;
@@ -80,7 +70,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
               elements: [
                 {
                   type: "ArrowFunctionExpression",
-                  params: state.shortcutFunctionParameters,
+                  params: [state.fnArgId],
                   body: {
                     type: "BlockStatement",
                     body: node.body.map((stmt) => visit(stmt) as Statement),
@@ -115,7 +105,7 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
   ): ArrowFunctionExpression {
     return {
       type: "ArrowFunctionExpression",
-      params: state.shortcutFunctionParameters,
+      params: [state.fnArgId],
       body: visit(node.body) as Expression | BlockStatement,
       expression: node.expression,
       loc: node.loc,
@@ -131,30 +121,6 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
       property: visit(node.property) as Identifier,
       loc: node.loc,
       range: node.range,
-    };
-  },
-  GTSQueryExpression(node, { state, visit }) {
-    return {
-      ...node,
-      type: "CallExpression",
-      optional: false,
-      callee: {
-        type: "MemberExpression",
-        object: state.fnArgId,
-        property: node.star ? state.QueryAllLit : state.QueryLit,
-        computed: true,
-        optional: false,
-      },
-      arguments: [
-        {
-          type: "ArrowFunctionExpression",
-          body: visit(node.argument) as Expression,
-          params: state.queryParameters,
-          expression: true,
-          loc: node.argument.loc,
-          range: node.argument.range,
-        },
-      ],
     };
   },
 };
@@ -446,71 +412,18 @@ const gtsVisitor: Visitors<Node, TranspileState> = {
 export interface TranspileOption {
   runtimeImportSource?: string;
   providerImportSource?: string;
-  shortcutFunctionPreludes?: string[];
-  queryBindings?: string[];
 }
 
 export const initialTranspileState = (
   option: TranspileOption = {}
 ): TranspileState => {
-  const shortcutFunctionPreludes =
-    option.shortcutFunctionPreludes ?? DEFAULT_SHORTCUT_FUNCTION_PRELUDES;
-  const queryBindings = option.queryBindings ?? DEFAULT_QUERY_BINDINGS;
   const fnArgId: Identifier = { type: "Identifier", name: "__gts_fnArg" };
-  const PreludeLit: Literal = {
-    type: "Literal",
-    value: "~prelude",
-  };
-  const shortcutFunctionParameters: Pattern[] = [
-    fnArgId,
-    {
-      type: "AssignmentPattern",
-      left: {
-        type: "ObjectPattern",
-        properties: shortcutFunctionPreludes.map((name) => ({
-          type: "Property",
-          computed: false,
-          key: { type: "Identifier", name },
-          value: { type: "Identifier", name },
-          kind: "init",
-          method: false,
-          shorthand: true,
-        })),
-      },
-      right: {
-        type: "MemberExpression",
-        object: fnArgId,
-        property: PreludeLit,
-        computed: true,
-        optional: false,
-      },
-    },
-  ];
-  const queryParameters: Pattern[] = [
-    {
-      type: "ObjectPattern",
-      properties: queryBindings.map((name) => ({
-        type: "Property",
-        computed: false,
-        key: { type: "Identifier", name },
-        value: { type: "Identifier", name },
-        kind: "init",
-        method: false,
-        shorthand: true,
-      })),
-    },
-  ];
   return {
     createDefineFnId: { type: "Identifier", name: "__gts_createDefine" },
     createBindingFnId: { type: "Identifier", name: "__gts_createBinding" },
     ActionLit: { type: "Literal", value: "~action" },
-    PreludeLit,
     fnArgId,
-    shortcutFunctionParameters,
     rootVmId: { type: "Identifier", name: "__gts_rootVm" },
-    queryParameters,
-    QueryLit: { type: "Literal", value: "~query" },
-    QueryAllLit: { type: "Literal", value: "~queryAll" },
 
     runtimeImportSource: option.runtimeImportSource ?? "@gi-tcg/gts-runtime",
     providerImportSource: option.providerImportSource ?? "@gi-tcg/core/gts",

@@ -70,7 +70,7 @@ const __gts_node_1 = {
         name: '~action',
 
         positionals: () => [
-          (__gts_fnArg, { $ } = __gts_fnArg['~prelude']) => {
+          __gts_fnArg => {
             const a = __gts_fnArg.getVariable("foo");
 
             __gts_fnArg.damage(DamageType.Hydro, 1);
@@ -136,7 +136,7 @@ const __gts_node_2 = {
           attributes: [
             {
               name: 'when',
-              positionals: () => [(__gts_fnArg, { $ } = __gts_fnArg['~prelude']) => !$.my],
+              positionals: () => [__gts_fnArg => __gts_fnArg.player.my],
               named: null
             },
 
@@ -150,8 +150,8 @@ const __gts_node_2 = {
               name: '~action',
 
               positionals: () => [
-                (__gts_fnArg, { $ } = __gts_fnArg['~prelude']) => {
-                  __gts_fnArg.heal(1, __gts_fnArg['~queryAll'](({ my, opp, macros }) => my.character));
+                __gts_fnArg => {
+                  __gts_fnArg.heal(1, __gts_fnArg.queryAll(my.character));
 
                   const currentUsage = __gts_fnArg.getVariable("usage");
 
@@ -161,7 +161,7 @@ const __gts_node_2 = {
                     x = () => void __gts_fnArg.heal;
                   }
 
-                  __gts_fnArg.apply(DamageType.Hydro, __gts_fnArg['~query'](({ my, opp, macros }) => my.active));
+                  __gts_fnArg.apply(DamageType.Hydro, __gts_fnArg.query(my.active));
                 }
               ],
 

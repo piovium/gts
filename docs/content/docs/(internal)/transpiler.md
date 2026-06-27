@@ -84,7 +84,7 @@ Extends the Acorn parser class (`GtsParser`) with GTS-specific grammar:
 
 - `parseStatement()` — intercepts `define` at top level to parse `GTSDefineStatement`
 - `parseExprAtom()` — handles `:identifier` for `GTSShortcutArgumentExpression`
-- `parseMaybeUnary()` — handles `query` keyword for `GTSQueryExpression`
+
 
 **New methods:**
 
@@ -96,7 +96,6 @@ Extends the Acorn parser class (`GtsParser`) with GTS-specific grammar:
 - `gts_parseDirectFunction()` — statements inside a block that starts with `:` or a reserved word
 - `gts_parseAttributeExpression()` — either `:ShortcutFunction` or a primary expression
 - `gts_parseShortcutFunction()` — `:(expr)` or `:{stmts}`
-- `gts_parseQueryExpression()` — `query *? UnaryExpression`
 
 **Plugin options:**
 
@@ -127,7 +126,6 @@ The parser produces these custom AST nodes (extending estree):
 | `GTSDirectFunction`             | Function body inside a named block (starts with `:`) |
 | `GTSShortcutFunctionExpression` | `:(expr)` or `:{stmts}`                              |
 | `GTSShortcutArgumentExpression` | `:identifier` inside shortcuts                       |
-| `GTSQueryExpression`            | `query *? expr`                                      |
 
 ## Transformation (`src/transform/`)
 
@@ -140,8 +138,6 @@ The `gtsToTs()` function walks the AST with `zimmerframe` and replaces GTS nodes
 The visitor maintains a `TranspileState` that tracks:
 
 - Generated identifiers (`__gts_createDefine`, `__gts_createBinding`, `__gts_Action`, etc.)
-- Shortcut function parameters (destructured prelude symbols)
-- Query parameters (destructured query bindings)
 - Externalized bindings (variables to export from `as` clauses)
 - A counter for generating unique node variable names
 
@@ -175,11 +171,9 @@ __gts_createDefine(__gts_rootVm, __gts_node_0);
 
 **`GTSDirectFunction`** → Object with `name: Action`, `positionals: () => [arrow function]`, `named: null`.
 
-**`GTSShortcutFunctionExpression`** → Arrow function with shortcut parameters.
+**`GTSShortcutFunctionExpression`** → Arrow function with `__gts_fnArg` parameter.
 
 **`GTSShortcutArgumentExpression`** → `__gts_fnArg.property` member expression.
-
-**`GTSQueryExpression`** → `__gts_fnArg["~query"](<arrow>)` or `__gts_fnArg["~queryAll"](<arrow>)` depending on whether the `*` syntax is used.
 
 ### TypeScript Erasure (`transform/erase_ts.ts`)
 

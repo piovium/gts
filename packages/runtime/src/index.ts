@@ -9,7 +9,7 @@ export {
   type SimpleViewModelOptions,
 } from "./simple_view_model.ts";
 export type { AttributeReturn, AR } from "./attribute_return.ts";
-export type { Action, Prelude, Meta, NamedDefinition } from "./symbols.ts";
+export type { Action, Meta, NamedDefinition } from "./symbols.ts";
 
 export {
   createBinding,

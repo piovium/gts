@@ -167,7 +167,7 @@ This patching ensures that VS Code's TypeScript features (hover, go-to-definitio
 
 A comprehensive TextMate grammar (~5800 lines) that provides syntax highlighting for GTS files. It covers:
 - Standard TypeScript syntax (comments, strings, types, expressions)
-- GTS-specific keywords (`define`, `query`)
+- GTS-specific keyword (`define`)
 - Attribute definitions and blocks
 - Shortcut function syntax (`:identifier`, `:(expr)`, `:{stmts}`)
 
