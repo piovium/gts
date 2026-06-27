@@ -90,6 +90,7 @@ define summon {
       // This comment should be visible
       x = () => void :heal;
     }
+    const v = :query(null!)?.variables;
     :apply(DamageType.Hydro, :query(:$.my.active));
   }
 }

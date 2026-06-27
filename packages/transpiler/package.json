@@ -23,7 +23,7 @@
     "@sveltejs/acorn-typescript": "^1.0.8",
     "acorn": "^8.15.0",
     "dedent": "^1.7.2",
-    "espolar": "^0.6.1",
+    "espolar": "^0.6.3",
     "esrap": "2.2.1",
     "magic-string": "^0.30.21",
     "path-browserify-esm": "^1.0.6",

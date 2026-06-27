@@ -47,8 +47,8 @@ define summon {
   on endPhase {
     usage 2;
     hint DamageType.Heal, 1;
-    :heal(1, :queryAll(my.character));
-    :apply(DamageType.Hydro, :query(my.active));
+    :heal(1, $.my.character);
+    :apply(DamageType.Hydro, $.my.active);
   }
 }
 ```

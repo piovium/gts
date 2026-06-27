@@ -95,17 +95,21 @@ export interface QueryBuilder {
   active: QueryBuilder;
 }
 
-export type Query = { readonly _query: unique symbol };
+export interface Query {
+  readonly _query: unique symbol;
+  readonly variables: Record<string, number>;
+}
 
 interface SkillContext<TMeta extends BuilderMeta> {
   $: QueryBuilder;
   getVariable<TVarName extends TMeta["varNames"]>(name: TVarName): number;
   damage(type: number, count: number): void;
   summon(type: SummonHandle<any>): void;
-  heal(count: number, query: Query): void;
-  apply(type: number, query: Query): void;
-  query(query: QueryBuilder): Query;
-  queryAll(query: QueryBuilder): Query;
+  heal(count: number, query: null | Query | Query[]): void;
+  apply(type: number, query: null | Query | Query[]): void;
+  query(query: QueryBuilder): Query | null;
+  queryAll(query: QueryBuilder): Query[];
+  // test: { foo: number} | null;
 }
 
 type SkillAction<TMeta extends BuilderMeta> = (

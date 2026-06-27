@@ -41,6 +41,18 @@ export function getPrintOptions(
     getLeadingComments: (node) => (node as Node).leadingComments,
     getTrailingComments: (node) => (node as Node).trailingComments,
     getMappingData: () => DEFAULT_VOLAR_MAPPING_DATA,
+    beforeWriteNode: ({ range, isUntouched, context }) => {
+      if (isUntouched || !range) {
+        return;
+      }
+      context.writeMapped("", range.start, range.start, VERIFICATION_ONLY_MAPPING_DATA);
+    },
+    afterWriteNode: ({ range, isUntouched, context }) => {
+      if (isUntouched || !range) {
+        return;
+      }
+      context.writeMapped("", range.end, range.end, VERIFICATION_ONLY_MAPPING_DATA);
+    },
     printers: {
       // 1) Make the print of dummy identifier print nothing.
       //    Exception: if GTS attribute list's last argument is dummy, e.g.
@@ -94,17 +106,6 @@ export function getPrintOptions(
             LITERAL_FROM_ID_MAPPING_DATA,
           );
           context.write('"');
-          const generatedEnd = context.generatedOffset;
-          // Map error squiggle at quotation mark to the inner content
-          context.createExtraMapping(
-            {
-              start: node.range[0],
-              end: node.range[1],
-            },
-            generatedStart,
-            generatedEnd,
-            VERIFICATION_ONLY_MAPPING_DATA,
-          )
         } else if (state.attributeNameNodes.has(node) && node.range) {
           context.writeMapped(
             node.raw ?? JSON.stringify((node as EspolarAST.Literal).value),
