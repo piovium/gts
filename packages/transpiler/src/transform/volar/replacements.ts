@@ -51,6 +51,8 @@ type ReplacementPayload =
       type: "exitAttr";
       returnType: string;
       defType: string;
+      attrName: string;
+      innerMetaType: string;
       oldMetaType: string;
       newMetaType: string;
     };
@@ -194,9 +196,17 @@ export function applyReplacements(
         type ${payload.typingId} = typeof ${payload.typingId};
       `;
       } else if (payload.type === "exitAttr") {
+        const rewrittenMeta = `${payload.oldMetaType}_rewritten`;
+        const mergeFn = `${payload.oldMetaType}_mergeFn`;
+        const mergeFnRet = `${payload.oldMetaType}_mergeFnRet`;
         replacement = dedent`
         type ${payload.returnType} = typeof ${payload.returnType};
-        type ${payload.newMetaType} = ${payload.returnType} extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : ${payload.oldMetaType}
+        type ${rewrittenMeta} = ${payload.returnType} extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : ${payload.oldMetaType};
+        let ${mergeFn}!: ${payload.defType} extends {
+          [${payload.attrName}]: { mergeMeta: infer M }
+       } ? M : null;
+        let ${mergeFnRet} = ${mergeFn}?.(null! as ${rewrittenMeta}, null! as ${payload.innerMetaType});
+        type ${payload.newMetaType} = [typeof ${mergeFn}] extends [null] ? ${rewrittenMeta} : typeof ${mergeFnRet};
       `;
       } else {
         replacement = "";

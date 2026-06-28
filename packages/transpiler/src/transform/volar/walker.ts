@@ -168,7 +168,14 @@ const enterVMFromAttr = (
   state.attrsOfCurrentVm.push([]);
 };
 
-const exitVM = (state: TypingTranspileState, errorRange?: [number, number]) => {
+interface ExitVMResult {
+  finalMetaId: Identifier;
+}
+
+const exitVM = (
+  state: TypingTranspileState,
+  errorRange?: [number, number],
+): ExitVMResult => {
   const currentDefTypeId = state.vmDefTypeIdStack.pop()!;
   const currentMetaId = state.metaTypeIdStack.pop()!;
   const finalMetaId = state.finalMetaTypeIdStack.pop()!;
@@ -183,17 +190,24 @@ const exitVM = (state: TypingTranspileState, errorRange?: [number, number]) => {
       errorRange,
     }),
   );
+  return { finalMetaId };
 };
+
+interface EnterAttrResult {
+  lhsId: Identifier;
+}
 
 const enterAttr = (
   state: TypingTranspileState,
   attrName: string,
-): { lhsId: Identifier } => {
+): EnterAttrResult => {
   const defTypeId = state.vmDefTypeIdStack.at(-1);
   const metaTypeId = state.metaTypeIdStack.at(-1);
   if (!defTypeId || !metaTypeId) {
     // FIXME error handling?
-    return { lhsId: { type: "Identifier", name: "__gts_invalid_attr_obj" } };
+    return {
+      lhsId: { type: "Identifier", name: "__gts_invalid_attr_obj" },
+    };
   }
   state.attrsOfCurrentVm.at(-1)!.push(attrName);
   const lhsId: Identifier = {
@@ -210,7 +224,7 @@ const enterAttr = (
       hintOnly: attrName === ATTR_HINT_ATTR_NAME,
     }),
   );
-  return { lhsId: lhsId };
+  return { lhsId };
 };
 
 const genBindingTyping = (
@@ -236,7 +250,12 @@ const genBindingTyping = (
   );
 };
 
-const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
+const exitAttr = (
+  state: TypingTranspileState,
+  attrName: string,
+  innerVMFinalMetaId: Identifier,
+  returningId: Identifier,
+) => {
   const currentDefId = state.vmDefTypeIdStack.at(-1);
   if (!currentDefId) {
     return;
@@ -250,6 +269,8 @@ const exitAttr = (state: TypingTranspileState, returningId: Identifier) => {
     createReplacementHolder(state, {
       type: "exitAttr",
       defType: currentDefId.name,
+      attrName,
+      innerMetaType: innerVMFinalMetaId.name,
       oldMetaType: oldMetaTypeId.name,
       newMetaType: newMetaTypeId.name,
       returnType: returningId.name,
@@ -473,11 +494,12 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
       ],
     });
     enterVMFromAttr(state, returnValue);
+    let exitVMResult: ExitVMResult;
     if (body.namedAttributes) {
       visit(body.namedAttributes);
-      exitVM(state, body.namedAttributes.range);
+      exitVMResult = exitVM(state, body.namedAttributes.range);
     } else {
-      exitVM(state, name.range);
+      exitVMResult = exitVM(state, name.range);
     }
     if (bindingName) {
       const export_ = node.bindingAccessModifier !== "private";
@@ -505,7 +527,7 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         leadingComments: state.defineLeadingComments,
       });
     }
-    exitAttr(state, returnValue);
+    exitAttr(state, attrName, exitVMResult.finalMetaId, returnValue);
     return EMPTY;
   },
   GTSNamedAttributeBlock(node, { state, visit }) {

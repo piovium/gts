@@ -48,6 +48,7 @@ define skill {
   id 12011 as private WhisperOfWater;
   cost DiceType.Hydro, 3;
   variable foo, 2;
+  variable foo, 3;
   const a = :getVariable("foo")
   :damage(DamageType.Hydro, 1);
   :summon(MelodyLoop);
@@ -81,6 +82,8 @@ define summon {
     "visible";
   };
   on endPhase {
+    // this variable can propagated typing to "summon" with mergeMeta
+    variable bar, 0;
     when :( !:$.my )
     hint DamageType.Heal, 1;
     :heal(1, :queryAll(:$.my.character));

@@ -1,4 +1,18 @@
-import type { BlockDefinitionRewriteMeta, IViewModel } from "./view_model.ts";
+import type {
+  AttributeBlockDefinition,
+  BlockDefinitionRewriteMeta,
+  IViewModel,
+} from "./view_model.ts";
+
+export type Computed<T, Constraint = any> = T extends Constraint
+  ? { [K in keyof T]: T[K] }
+  : never;
+
+export interface AttributePositionalReturnBase {
+  key?: string;
+  rewriteMeta?: any;
+  namedDefinition: AttributeBlockDefinition;
+}
 
 export namespace AttributeReturn {
   export type This<TMeta> = {
@@ -25,8 +39,12 @@ export namespace AttributeReturn {
     rewriteMeta: NewMeta;
   };
 
-  export type WithRewriteMeta<VM extends IViewModel<any, any, any>, NewMeta> = {
-    namedDefinition: VM["~namedDefinition"];
+  export type WithRewriteMeta<
+    NewMeta,
+    VM extends IViewModel<any, any, any>,
+    TMeta = VM["~namedDefinition"]["~meta"],
+  > = {
+    namedDefinition: BlockDefinitionRewriteMeta<VM["~namedDefinition"], TMeta>;
     rewriteMeta: NewMeta;
   };
 }

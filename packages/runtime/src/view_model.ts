@@ -1,24 +1,18 @@
-import type { AttributeReturn } from "./attribute_return.ts";
-import type { Action, Meta, NamedDefinition } from "./symbols.ts";
+import type { AttributePositionalReturnBase, AttributeReturn, Computed } from "./attribute_return.ts";
+import type { Action, Meta } from "./symbols.ts";
 import { View } from "./view.ts";
 
 export interface AttributeBlockDefinition {
-  "~action"?: AttributeDefinition | undefined;
   "~meta": any;
 }
-
-type Computed<T> = T extends infer U extends { [K in keyof T]: unknown }
-  ? U
-  : never;
 
 export type BlockDefinitionRewriteMeta<
   BlockDef extends AttributeBlockDefinition,
   NewMeta,
-> =
-  Computed<Omit<BlockDef, Meta> & { "~meta": NewMeta }> extends infer R extends
-    AttributeBlockDefinition
-    ? R
-    : never;
+> = Computed<
+  Omit<BlockDef, Meta> & { "~meta": NewMeta },
+  AttributeBlockDefinition
+>;
 
 export interface IViewModel<
   ModelT,
@@ -142,7 +136,7 @@ export class ViewModel<
   }
 }
 
-interface SimpleAttributeOptions {
+export interface SimpleAttributeOptions {
   required?: true;
   uniqueKey?: string;
 }
@@ -300,11 +294,7 @@ export interface AttributeDefinition {
   as?(): any;
   required?(): boolean;
   uniqueKey?(): string;
-}
-
-interface AttributePositionalReturnBase {
-  rewriteMeta?: any;
-  namedDefinition: AttributeBlockDefinition;
+  mergeMeta?(meta: any, subMeta: any): any;
 }
 
 type OverloadedParameters<T extends (...args: any[]) => any> = T extends {

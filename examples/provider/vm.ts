@@ -150,10 +150,10 @@ const SkillVM = defineViewModel(
         variable: TVarName,
         initialValue: number,
       ): AR.WithRewriteMeta<
-        typeof VariableVM,
         {
           varNames: TMeta["varNames"] | TVarName;
-        }
+        },
+        typeof VariableVM
       >;
     }>(() => {}),
 
@@ -197,14 +197,16 @@ type SummonHandle<VarNames extends string> = number & {
 const EntityVM = defineViewModel(
   EntityBuilder,
   (helper) => ({
-    id: helper.simpleAttribute({
-      required: true,
-      uniqueKey: "id",
-    })(
-      function (id: number) {
+    id: helper.attribute<{
+      (id: number): AR.Done;
+      as<TMeta extends BuilderMeta>(
+        this: AR.This<TMeta>,
+      ): SummonHandle<TMeta["varNames"]>;
+    }>(
+      (model, [id]) => {
         // this.id = id;
       },
-      (id: number) => id as SummonHandle<any>,
+      (model, [id]) => id as SummonHandle<any>,
     ),
 
     oops: undefined,
@@ -214,10 +216,10 @@ const EntityVM = defineViewModel(
         this: AR.This<TMeta>,
         count: number,
       ): AR.WithRewriteMeta<
-        typeof VariableVM,
         {
           varNames: TMeta["varNames"] | "usage";
-        }
+        },
+        typeof VariableVM
       >;
     }>(() => {}),
 
@@ -227,6 +229,15 @@ const EntityVM = defineViewModel(
         this: AR.This<Meta>,
         eventName: "endPhase" | "actionPhase",
       ): AR.With<typeof SkillVM, { varNames: Meta["varNames"] }>;
+      mergeMeta: <
+        const TMeta extends BuilderMeta,
+        const TSubMeta extends BuilderMeta,
+      >(
+        meta: TMeta,
+        subMeta: TSubMeta,
+      ) => {
+        varNames: TMeta["varNames"] | TSubMeta["varNames"];
+      };
     }>((model, pos) => {}),
   }),
   {} as { varNames: never } satisfies BuilderMeta,
