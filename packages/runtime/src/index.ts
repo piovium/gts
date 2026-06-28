@@ -2,6 +2,8 @@ export {
   defineViewModel,
   type AttributeDefinition,
   type IViewModel,
+  type SimpleAttributeOptions,
+  type AttributeBlockDefinition,
 } from "./view_model.ts";
 export {
   defineSimpleViewModel,

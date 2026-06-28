@@ -44,10 +44,10 @@ type SimpleViewModelAttribute<
       : {}
   : {});
 
-export type SimpleViewModel<
+export interface SimpleViewModel<
   T,
   Options extends SimpleViewModelOptions = {},
-> = IViewModel<
+> extends IViewModel<
   T,
   {
     [K in keyof T]-?: SimpleViewModelAttribute<T[K], Options> & {
@@ -58,7 +58,9 @@ export type SimpleViewModel<
     "~meta": undefined;
   },
   []
->;
+> {
+  Model: new () => T;
+}
 
 const ajv = new Ajv2020({ strict: false });
 
@@ -91,7 +93,7 @@ function extractObjectSchema(
 function createSimpleViewModelFromJsonSchema(
   jsonSchema: Record<string, unknown>,
   options: SimpleViewModelOptions,
-): IViewModel<any, any, []> {
+): SimpleViewModel<any, any> {
   const Ctor = class SimpleViewModel {};
   const vm = new ViewModel<any, any, []>(Ctor);
   const helper = new AttributeDefHelper(vm);
@@ -109,6 +111,12 @@ function createSimpleViewModelFromJsonSchema(
     );
   }
   helper["~assignActions"](defResult);
+  Object.defineProperty(vm, "Model", {
+    value: Ctor,
+    writable: false,
+    enumerable: true,
+    configurable: true,
+  });
   return vm as any;
 }
 
@@ -120,7 +128,10 @@ function registerAttribute(
 ): unknown {
   let objectSchema: Record<string, unknown> | null = null;
   if (options.recursive && (objectSchema = extractObjectSchema(propSchema))) {
-    const subVM = createSimpleViewModelFromJsonSchema(objectSchema, options);
+    const subVM: IViewModel<any, any, []> = createSimpleViewModelFromJsonSchema(
+      objectSchema,
+      options,
+    );
     return helper.attribute((model, positionals, named) => {
       if (positionals.length > 0) {
         model[key] = positionals[0];
@@ -156,5 +167,8 @@ export function defineSimpleViewModel<
   const jsonSchema = schema["~standard"].jsonSchema.input({
     target: "draft-2020-12",
   });
-  return createSimpleViewModelFromJsonSchema(jsonSchema, resolvedOptions);
+  return createSimpleViewModelFromJsonSchema(
+    jsonSchema,
+    resolvedOptions,
+  ) as SimpleViewModel<StandardJSONSchemaV1.InferInput<T>, Options>;
 }

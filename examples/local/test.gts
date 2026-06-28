@@ -75,6 +75,7 @@ define summon {
   id 112011 as MelodyLoop;
   // oops 3;
   usage 2 {
+    name not_a_usage;
     append {
       limit getLimit(5)?.value;
       value 1;
@@ -87,7 +88,7 @@ define summon {
     when :( !:$.my )
     hint DamageType.Heal, 1;
     :heal(1, :queryAll(:$.my.character));
-    const currentUsage = :getVariable("usage");
+    const currentUsage = :getVariable("not_a_usage");
     void (1 +currentUsage);
     class A {
       // This comment should be visible

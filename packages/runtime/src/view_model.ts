@@ -1,4 +1,8 @@
-import type { AttributePositionalReturnBase, AttributeReturn, Computed } from "./attribute_return.ts";
+import type {
+  AttributePositionalReturnBase,
+  AttributeReturn,
+  Computed,
+} from "./attribute_return.ts";
 import type { Action, Meta } from "./symbols.ts";
 import { View } from "./view.ts";
 
@@ -31,14 +35,31 @@ export interface IViewModel<
    * This is useful for creating binding ViewModels directly that forwards
    * the binding logic to inner ViewModels.
    */
-  bind<NewMeta = BlockDef[Meta]>(): ViewModel<
+  bind<NewMeta = BlockDef[Meta]>(): IViewModel<
     ModelT,
     BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
     CtorArgs
   >;
   bind<NewMeta = BlockDef[Meta]>(
     ...args: CtorArgs
-  ): ViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
+  ): IViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
+  extend<
+    ChildT extends ModelT,
+    const ChildBlockDef extends Partial<
+      Record<string | Action, AttributeDefinition>
+    >,
+    ChildCtorArgs extends any[] = [],
+  >(
+    Ctor: new (...args: ChildCtorArgs) => ChildT,
+    modelDefFn: (helper: AttributeDefHelper<ChildT>) => ChildBlockDef,
+  ): IViewModel<
+    ChildT,
+    Computed<
+      Omit<BlockDef, keyof ChildBlockDef> &
+        ChildBlockDef & { "~meta": BlockDef[Meta] }
+    >,
+    ChildCtorArgs
+  >;
   "~namedDefinition": BlockDef;
 }
 
@@ -112,17 +133,17 @@ export class ViewModel<
     return newVM;
   }
 
-  bind<NewMeta = BlockDef[Meta]>(): ViewModel<
+  bind<NewMeta = BlockDef[Meta]>(): IViewModel<
     ModelT,
     BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
     CtorArgs
   >;
   bind<NewMeta = BlockDef[Meta]>(
     ...args: CtorArgs
-  ): ViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
+  ): IViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
   bind<NewMeta = BlockDef[Meta]>(
     ...args: any[]
-  ): ViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, any> {
+  ): IViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, any> {
     if (args.length === 0) {
       return this as any;
     }
@@ -132,7 +153,37 @@ export class ViewModel<
         super(...args);
       }
     };
-    return newModel;
+    return newModel as IViewModel<any, any, any>;
+  }
+
+  extend<
+    ChildT extends ModelT,
+    const ChildBlockDef extends Partial<
+      Record<string | Action, AttributeDefinition>
+    >,
+    ChildCtorArgs extends any[] = [],
+  >(
+    Ctor: new (...args: ChildCtorArgs) => ChildT,
+    modelDefFn: (helper: AttributeDefHelper<ChildT>) => ChildBlockDef,
+  ): IViewModel<
+    ChildT,
+    Computed<
+      Omit<BlockDef, keyof ChildBlockDef> &
+        ChildBlockDef & { "~meta": BlockDef[Meta] }
+    >,
+    ChildCtorArgs
+  > {
+    const newVM = new ViewModel<ChildT, any, ChildCtorArgs>(Ctor);
+    for (const [name, action] of this.#registeredActions) {
+      newVM["~setActionOrBinder"]("action", name, action as any);
+    }
+    for (const [name, binder] of this.#registeredBinders) {
+      newVM["~setActionOrBinder"]("binder", name, binder as any);
+    }
+    const helper = new AttributeDefHelper(newVM);
+    const defResult = modelDefFn(helper);
+    helper["~assignActions"](defResult);
+    return newVM as any;
   }
 }
 

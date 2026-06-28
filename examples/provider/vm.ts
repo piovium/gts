@@ -185,6 +185,30 @@ const VariableVM = defineSimpleViewModel(
   },
 );
 
+class NamedVariableModel extends VariableVM.Model {
+  name?: string;
+}
+
+type NamedVariableVMMeta = {
+  name: string;
+};
+
+const NamedVariableVM = VariableVM.bind<{ name: "default" }>().extend(
+  NamedVariableModel,
+  (helper) => ({
+    name: helper.attribute<{
+      <TMeta extends NamedVariableVMMeta, const Name extends string>(
+        this: AR.This<TMeta>,
+        name: Name,
+      ): AR.DoneRewriteMeta<{
+        name: Name;
+      }>;
+    }>((model, [name]) => {
+      model.name = name;
+    }),
+  }),
+);
+
 class EntityBuilder {
   constructor(type: "summon" | "status") {}
 }
@@ -215,12 +239,16 @@ const EntityVM = defineViewModel(
       <TMeta extends BuilderMeta>(
         this: AR.This<TMeta>,
         count: number,
-      ): AR.WithRewriteMeta<
-        {
-          varNames: TMeta["varNames"] | "usage";
-        },
-        typeof VariableVM
-      >;
+      ): AR.With<typeof NamedVariableVM, { name: "usage" }>;
+      mergeMeta: <
+        const TMeta extends BuilderMeta,
+        const TSubMeta extends NamedVariableVMMeta,
+      >(
+        meta: TMeta,
+        subMeta: TSubMeta,
+      ) => {
+        varNames: TMeta["varNames"] | TSubMeta["name"];
+      };
     }>(() => {}),
 
     on: helper.attribute<{
