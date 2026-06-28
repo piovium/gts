@@ -178,7 +178,7 @@ The `AttributeReturn` (aliased as `AR`) namespace provides return type utilities
 | `AR.EnableIf<Cond, T>` | Conditional type helper |
 | `AR.With<VM, TMeta>` | Attribute opens a nested ViewModel block |
 | `AR.DoneRewriteMeta<NewMeta>` | Attribute rewrites the meta type |
-| `AR.WithRewriteMeta<VM, NewMeta>` | Opens nested VM and rewrites meta |
+| `AR.WithRewriteMeta<NewMeta, VM, TMeta>` | Opens nested VM and rewrites meta |
 
 **Meta rewriting** is how GTS tracks accumulated state through attribute chains. For example, the `variable` attribute adds a variable name to the meta:
 
@@ -188,9 +188,9 @@ variable: helper.attribute<{
     this: AR.This<TMeta>,
     variable: TVarName,
     initialValue: number,
-  ): AR.WithRewriteMeta<typeof VariableVM, {
+  ): AR.WithRewriteMeta<{
     varNames: TMeta["varNames"] | TVarName;
-  }>;
+  }, typeof VariableVM>;
 }>(() => {});
 ```
 

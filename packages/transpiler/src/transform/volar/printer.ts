@@ -41,6 +41,8 @@ export function getPrintOptions(
     getLeadingComments: (node) => (node as Node).leadingComments,
     getTrailingComments: (node) => (node as Node).trailingComments,
     getMappingData: () => DEFAULT_VOLAR_MAPPING_DATA,
+    // Add a 0-length mapping before and after each touched node with verification only,
+    // so that error squiggles start/ends at those positions can be reflected.
     beforeWriteNode: ({ range, isUntouched, context }) => {
       if (isUntouched || !range) {
         return;
