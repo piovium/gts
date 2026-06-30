@@ -46,7 +46,7 @@ export function transformForVolar(
     directActionStubRange: new WeakMap(),
     literalFromIdentifier: new WeakSet(),
     lastArgNodes: new WeakSet(),
-    lastImportDeclarationIfGen: null,
+    lastImportDeclaration: null,
     diagnosticsOnTopNodes: new WeakSet(),
     extraMappings: [],
     contentStartOffset: getContentStartOffset(sourceInfo.content),
@@ -61,7 +61,7 @@ export function transformForVolar(
     },
   });
   const newAst = walk(ast as AST.Node, state, gtsToTypingsWalker);
-  // mark lastArgNodes
+  // mark lastArgNodes and lastImportDeclaration
   walk(newAst as AST.Node, state, {
     CallExpression(node, { state }) {
       const lastArg = node.arguments.at(-1);
@@ -70,11 +70,22 @@ export function transformForVolar(
       }
     },
     ImportDeclaration(node, { state }) {
-      if (!state.sourceNodes.has(node)) {
-        state.lastImportDeclarationIfGen = node;
+      state.lastImportDeclaration = [node, !state.sourceNodes.has(node)];
+    },
+  });
+  walk(newAst, state, {
+    Program(node, { state }) {
+      const lastImportDeclarationNode = state.lastImportDeclaration?.[0];
+      // break continuous gap between last import declaration and its next node
+      if (lastImportDeclarationNode) {
+        const index = node.body.indexOf(lastImportDeclarationNode);
+        if (index >= 0) {
+          node.body.splice(index + 1, 0, { type: "EmptyStatement" });
+        }
       }
     },
   });
+
   const printOptions = getPrintOptions(sourceInfo.content, state);
   let { code, mappings } = print(newAst, printOptions);
   code = applyReplacements(state, code, mappings);
@@ -88,20 +99,6 @@ export function transformForVolar(
       data: VERIFICATION_ONLY_MAPPING_DATA,
     });
   }
-  walk(newAst, null, {
-    ImportDeclaration(node) {
-      if (!node.range) {
-        return;
-      }
-      const endOffset = node.range[1];
-      const mappingEndsWithThisImport = mappings.find(
-        (m) => m.sourceOffsets[0] + m.lengths[0] === endOffset,
-      );
-      if (mappingEndsWithThisImport?.lengths[0]) {
-        mappingEndsWithThisImport.lengths[0] += 1; // include the newline after the import
-      }
-    },
-  });
   return {
     code,
     mappings,

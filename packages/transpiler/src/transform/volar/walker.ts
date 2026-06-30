@@ -76,10 +76,10 @@ export interface TypingTranspileState extends TranspileState {
   /** Nodes that are last arguments of a CallExpression */
   lastArgNodes: WeakSet<Node>;
   /**
-   * The last import declaration, record if it is a generated one.
-   * This declaration marks the TS auto-import insertion point.
+   * The last import declaration and whether it is a generated one.
+   * This declaration marks the TS auto-import insertion point if it's generated.
    */
-  lastImportDeclarationIfGen: ImportDeclaration | null;
+  lastImportDeclaration: [node: ImportDeclaration, generated: boolean] | null;
   /** Nodes that have a diagnostic mappings to the top of the file */
   diagnosticsOnTopNodes: WeakSet<Node>;
   /** Extra mappings, the generated range will be found by the needle after replacement */

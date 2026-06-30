@@ -20,7 +20,10 @@ import {
   LITERAL_FROM_ID_MAPPING_DATA,
   VERIFICATION_ONLY_MAPPING_DATA,
 } from "./mappings.ts";
-import type { TypingTranspileState, GTSAttributeNameHintStatement } from "./walker.ts";
+import type {
+  TypingTranspileState,
+  GTSAttributeNameHintStatement,
+} from "./walker.ts";
 
 export function getPrintOptions(
   source: string,
@@ -37,23 +40,61 @@ export function getPrintOptions(
       }
       return state.sourceNodes.has(node as Node);
     },
+    
     printCommentsOnUntouchedNodes: true,
     getLeadingComments: (node) => (node as Node).leadingComments,
     getTrailingComments: (node) => (node as Node).trailingComments,
     getMappingData: () => DEFAULT_VOLAR_MAPPING_DATA,
     // Add a 0-length mapping before and after each touched node with verification only,
     // so that error squiggles start/ends at those positions can be reflected.
-    beforeWriteNode: ({ range, isUntouched, context }) => {
-      if (isUntouched || !range) {
+    beforeWriteNode: ({ range, node, isUntouched, context }) => {
+      if (isUntouched || !range || node.type === "ImportDeclaration") {
+        // Don't do that for ImportDeclaration -- it mess up auto-import insertion point
         return;
       }
-      context.writeMapped("", range.start, range.start, VERIFICATION_ONLY_MAPPING_DATA);
+      context.writeMapped(
+        "",
+        range.start,
+        range.start,
+        VERIFICATION_ONLY_MAPPING_DATA,
+      );
     },
-    afterWriteNode: ({ range, isUntouched, context }) => {
-      if (isUntouched || !range) {
+    afterWriteNode: ({ range, node, isUntouched, context }) => {
+      const [lastImportDecl, lastImportGenerated] =
+        state.lastImportDeclaration ?? [];
+      if (node.type === "ImportDeclaration" && lastImportDecl === node) {
+        // If the last import declaration is a generated one, because of we ensured that
+        // the generated import declarations are always unsorted, so TSServer will set the
+        // auto-insertion point next to this last import declaration.
+        // Add a mapping to that position (a written newline character) to the top-of-file,
+        // after skipping hashbang and leading comments.
+        context.write("\n");
+        let sourceOffsetBaseBase = lastImportGenerated
+          ? state.contentStartOffset
+          : (node.range?.[1] ?? 0);
+        const sourceOffset =
+          sourceOffsetBaseBase +
+          Math.max(0, context.source.slice(sourceOffsetBaseBase).search(/\n/));
+        // These +1s below is magic and I don't know why, but it works.
+        context.createExtraMapping(
+          {
+            start: sourceOffset + 1,
+            end: sourceOffset + 1,
+          },
+          context.generatedOffset,
+          context.generatedOffset,
+          DEFAULT_VOLAR_MAPPING_DATA,
+        );
+      } else if (isUntouched || !range) {
         return;
+      } else {
+        context.writeMapped(
+          "",
+          range.end,
+          range.end,
+          VERIFICATION_ONLY_MAPPING_DATA,
+        );
       }
-      context.writeMapped("", range.end, range.end, VERIFICATION_ONLY_MAPPING_DATA);
     },
     printers: {
       // 1) Make the print of dummy identifier print nothing.
@@ -115,7 +156,9 @@ export function getPrintOptions(
             node.range[1],
             ATTRIBUTE_NAME_MAPPING_DATA,
           );
-        } else if ((directActionStubRange = state.directActionStubRange.get(node))) {
+        } else if (
+          (directActionStubRange = state.directActionStubRange.get(node))
+        ) {
           // For direct action stubs, add mappings from this expression statement line to the
           // start of original direct action start position. Add `directActionStub` data
           // for recognizing them in language service plugin.
@@ -124,7 +167,7 @@ export function getPrintOptions(
             directActionStubRange.start,
             directActionStubRange.start + 1,
             DIRECT_ACTION_STUB_MAPPING_DATA,
-          )
+          );
         } else {
           defaultPrinters.Literal(node, context);
         }
@@ -168,37 +211,17 @@ export function getPrintOptions(
           );
         }
       },
-      // If the last import declaration is a generated one, because of we ensured that
-      // the generated import declarations are always unsorted, so TSServer will set the
-      // auto-insertion point next to this last import declaration.
-      // Add a mapping to that position (a written newline character) to the top-of-file,
-      // after skipping hashbang and leading comments.
-      // NOTE: since the insertion derived from here won't add additional newline *before*
-      // the inserted text, so here is a difference behavior from standard TSServer and our
-      // language server. We'd try our best.
-      ImportDeclaration(node, context) {
-        defaultPrinters.ImportDeclaration(node, context);
-        if (state.lastImportDeclarationIfGen === node) {
-          context.write("\n");
-          context.createExtraMapping(
-            {
-              start: state.contentStartOffset,
-              end: state.contentStartOffset + 1,
-            },
-            context.generatedOffset,
-            context.generatedOffset + 1,
-            DEFAULT_VOLAR_MAPPING_DATA,
-          );
-        }
-      },
       // @ts-expect-error This is a custom node type that don't have typing.
       // @see `GTSAttributeNameHintStatement`
-      GTSAttributeNameHintStatement(node: GTSAttributeNameHintStatement, context: PrinterContext<CodeInformation>) {
+      GTSAttributeNameHintStatement(
+        node: GTSAttributeNameHintStatement,
+        context: PrinterContext<CodeInformation>,
+      ) {
         context.writeNode(node.object as EspolarAST.Node);
         context.write(".");
         context.writeSource(node.whiteSpaceStart, node.whiteSpaceEnd);
         context.write(";");
-      }
+      },
     },
     // Enable triggering signature completion
     experimentalGetLeftParenSourceRange: (node) => {
