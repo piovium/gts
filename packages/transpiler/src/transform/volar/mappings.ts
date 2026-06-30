@@ -17,6 +17,7 @@ export const DEFAULT_VOLAR_MAPPING_DATA: CodeInformation = {
   completion: true,
   format: true,
   navigation: true,
+  semantic: true,
   structure: true,
   verification: true,
 };
