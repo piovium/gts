@@ -1,7 +1,7 @@
 {
   "private": true,
-  "name": "gts-vscode",
-  "version": "0.0.14",
+  "name": "gamingts-vscode",
+  "version": "0.0.15",
   "type": "commonjs",
   "repository": {
     "type": "git",
@@ -12,7 +12,7 @@
   "categories": [
     "Programming Languages"
   ],
-  "displayName": "GamingTS Language Features",
+  "displayName": "GamingTS",
   "description": "GamingTS Language Features",
   "author": "Piovium Labs",
   "publisher": "Guyutongxue",
