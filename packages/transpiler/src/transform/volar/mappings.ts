@@ -17,7 +17,6 @@ export const DEFAULT_VOLAR_MAPPING_DATA: CodeInformation = {
   completion: true,
   format: true,
   navigation: true,
-  semantic: true,
   structure: true,
   verification: true,
 };
@@ -30,7 +29,7 @@ export const LITERAL_FROM_ID_MAPPING_DATA: CodeInformation = {
   literalFromId: true,
 }
 export const DIRECT_ACTION_STUB_MAPPING_DATA: CodeInformation = {
-  ...DEFAULT_VOLAR_MAPPING_DATA,
+  semantic: true,
   directActionStub: true,
 }
 export const VERIFICATION_ONLY_MAPPING_DATA: CodeInformation = {
