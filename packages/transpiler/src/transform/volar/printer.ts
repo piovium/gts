@@ -35,12 +35,15 @@ export function getPrintOptions(
       if (node.type === "Identifier" && (node as Identifier).isDummy) {
         return false;
       }
+      if ((node.type as string) === "ErrorStatement") {
+        return false;
+      }
       if (state.attributeNameNodes.has(node as Identifier | Literal)) {
         return false;
       }
       return state.sourceNodes.has(node as Node);
     },
-    
+
     printCommentsOnUntouchedNodes: true,
     getLeadingComments: (node) => (node as Node).leadingComments,
     getTrailingComments: (node) => (node as Node).trailingComments,
@@ -111,15 +114,28 @@ export function getPrintOptions(
         const identifier = node as Identifier;
         if (identifier.isDummy && identifier.range) {
           const text = state.lastArgNodes.has(identifier) ? "," : "";
-          // extend the source mapping of dummy id to the before next token
+          // extend the source mapping of dummy id.
           let firstNonWhiteSpaceIndex = context.source
             .slice(identifier.range[1])
             .search(/\S/);
-          const rangeEnd =
-            firstNonWhiteSpaceIndex === -1
-              ? context.source.length
-              : identifier.range[1] + firstNonWhiteSpaceIndex;
-          context.writeMapped(text, identifier.range[0], rangeEnd);
+          if (firstNonWhiteSpaceIndex !== 0) {
+            // a) if next char-seq is whitespaces, write them as mapped
+            const rangeEnd =
+              firstNonWhiteSpaceIndex === -1
+                ? context.source.length
+                : identifier.range[1] + firstNonWhiteSpaceIndex;
+            context.writeMapped(text, identifier.range[0], rangeEnd);
+          } else {
+            // b) otherwise create extra mapping directly for next character
+            const rangeEnd = Math.min(node.range[0] + 1, context.source.length);
+            context.createExtraMapping(
+              { start: identifier.range[0], end: rangeEnd },
+              context.generatedOffset,
+              context.generatedOffset + 1,
+              DEFAULT_VOLAR_MAPPING_DATA,
+            );
+            context.write(text);
+          }
         } else if (
           identifier.range &&
           state.attributeNameNodes.has(identifier)
@@ -221,6 +237,23 @@ export function getPrintOptions(
         context.write(".");
         context.writeSource(node.whiteSpaceStart, node.whiteSpaceEnd);
         context.write(";");
+      },
+      ErrorStatement(node: any, context: PrinterContext<CodeInformation>) {
+        if (node.range) {
+          context.writePreservedNode(node);
+          const rangeEnd = Math.min(node.range[1] + 1, context.source.length);
+          context.createExtraMapping(
+            { start: node.range[1], end: rangeEnd },
+            context.generatedOffset,
+            context.generatedOffset + 1,
+            VERIFICATION_ONLY_MAPPING_DATA,
+          );
+        } else {
+          // Emit a TS error indicate the error. This should not happen.
+          context.write(
+            `((_: never) => 0)(${JSON.stringify(node.error ?? "Unknown error")});`,
+          );
+        }
       },
     },
     // Enable triggering signature completion

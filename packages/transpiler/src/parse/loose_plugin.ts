@@ -15,7 +15,7 @@ export function loosePlugin() {
           return this.createDummyIdentifier();
         }
       };
-      readonly #proxiedThis = new Proxy(this, {
+      readonly #proxiedThisTrapParseIdent = new Proxy(this, {
         get: (target, prop) => {
           if (prop === "parseIdent") {
             return this._patchedParseIdent;
@@ -48,7 +48,7 @@ export function loosePlugin() {
         forInit?: boolean | "await",
       ): AST.Expression {
         return super.parseSubscript.call(
-          this.#proxiedThis,
+          this.#proxiedThisTrapParseIdent,
           base,
           startPos,
           startLoc,
@@ -57,6 +57,80 @@ export function loosePlugin() {
           optionalChained,
           forInit,
         );
+      }
+
+      // Parsing block statements typically has:
+      // ```js
+      // while (this.type !== tokTypes.braceR) {
+      //   this.parseStatement();
+      // }
+      // ```
+      // But what happens if the next token is EOF? Since we tolerate errors inside `parseStatement`,
+      // it can fall into an infinite loop. To avoid this, we use a proxy to trap `this.type`
+      // access and return a fake `braceR` when the current token is EOF.
+      readonly #proxiedThisTrapEofToRbrace = new Proxy(this, {
+        get: (target, prop) => {
+          if (prop === "type" && target.type === tokTypes.eof) {
+            return tokTypes.braceR;
+          }
+          const value = Reflect.get(target, prop);
+          if (typeof value === "function") {
+            return value.bind(target);
+          }
+          return value;
+        },
+      });
+
+      override parseBlock(
+        createNewLexicalScope?: boolean,
+        node?: AST.BlockStatement,
+        exitStrict?: boolean,
+      ): AST.BlockStatement {
+        return super.parseBlock.call(
+          this.#proxiedThisTrapEofToRbrace,
+          createNewLexicalScope,
+          node,
+          exitStrict,
+        );
+      }
+      override parseClassStaticBlock(node: AST.Node): AST.StaticBlock {
+        return super.parseClassStaticBlock.call(
+          this.#proxiedThisTrapEofToRbrace,
+          node,
+        );
+      }
+      override parseSwitchStatement(node: AST.Node): AST.SwitchStatement {
+        return super.parseSwitchStatement.call(
+          this.#proxiedThisTrapEofToRbrace,
+          node,
+        );
+      }
+
+      override parseStatement(
+        context?: string | null,
+        topLevel?: boolean,
+        exports?: AST.ExportSpecifier,
+      ): AST.ExpressionStatement | AST.Statement | AST.GTSDefineStatement {
+        const { start, startLoc, lastTokEnd, lastTokEndLoc } = this;
+        if (topLevel && this.eat(tokTypes.braceR)) {
+          const errorNode: any = this.startNodeAt(start, startLoc);
+          errorNode.error = "Unexpected token }";
+          return this.finishNode(errorNode, "ErrorStatement");
+        }
+        try {
+          return super.parseStatement(context, topLevel, exports);
+        } catch (e) {
+          const errorNode: any = this.startNodeAt(lastTokEnd, lastTokEndLoc);
+          errorNode.error = (e as Error)?.message;
+          while (
+            this.type !== tokTypes.eof &&
+            this.type !== tokTypes.semi &&
+            this.type !== tokTypes.braceR
+          ) {
+            this.next();
+          }
+          return this.finishNode(errorNode, "ErrorStatement");
+        }
       }
     };
   };

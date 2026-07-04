@@ -58,19 +58,21 @@ describe("loosePlugin", () => {
     expect(testExpr.property.name).toBe(DUMMY_PLACEHOLDER);
   });
 
-  test("should fail on invalid bracket access", () => {
-    const code = "foo[var]";
-    expect(() => {
-      LooseParser.parse(code, { ecmaVersion: "latest" });
-    }).toThrow();
-  });
 
-  test("should fail on invalid optional call argument", () => {
-    const code = "foo?.(var)";
-    expect(() => {
-      LooseParser.parse(code, { ecmaVersion: "latest" });
-    }).toThrow();
-  });
+  test.each([
+    "if (",
+    "if ()",
+    "if (a)",
+    "if (a) {",
+    "if (:)",
+    "if (:) {",
+    "if () }",
+    "if (a) }",
+    "if (:) }",
+  ])("incomplete if", (code) => {
+    const ast = LooseParser.parse(code, { ecmaVersion: "latest", ranges: true });
+    expect(["IfStatement", "ErrorStatement"]).toContain(ast.body[0].type);
+  });
 });
 
 test("comment kept in loose parse", () => {
