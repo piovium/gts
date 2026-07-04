@@ -59,6 +59,11 @@ export function parseLoose(
     const ast = GtsParser.parse(input, {
       ecmaVersion: "latest",
       sourceType: "module",
+      allowImportExportEverywhere: true,
+      allowReturnOutsideFunction: true,
+      allowAwaitOutsideFunction: true,
+      allowSuperOutsideMethod: true,
+      checkPrivateFields: false,
       locations: true,
       ranges: true,
       onComment,
