@@ -240,18 +240,18 @@ export function getPrintOptions(
       ErrorStatement(node: any, context: PrinterContext<CodeInformation>) {
         if (node.range) {
           context.writePreservedNode(node);
-          context.createExtraMapping(
-            {
-              start: node.range[1],
-              end: node.range[1] + 1,
-            },
-            context.generatedOffset,
-            context.generatedOffset + 1,
-            VERIFICATION_ONLY_MAPPING_DATA,
-          );
+          const sourceEnd = Math.min(node.range[1] + 1, context.source.length);
+          if (sourceEnd > node.range[1]) {
+            context.createExtraMapping(
+              { start: node.range[1], end: sourceEnd },
+              context.generatedOffset,
+              context.generatedOffset + 1,
+              VERIFICATION_ONLY_MAPPING_DATA,
+            );
+          }
         } else {
           // Emit a TS error indicate the error. This should not happen.
-          context.write(`((_: unknown) => 0)(${JSON.stringify(node.error ?? "Unknown error")});`);
+          context.write(`((_: never) => 0)(${JSON.stringify(node.error ?? "Unknown error")});`);
         }
       },
     },

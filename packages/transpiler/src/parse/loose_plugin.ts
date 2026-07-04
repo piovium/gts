@@ -65,8 +65,8 @@ export function loosePlugin() {
       //   this.parseStatement();
       // }
       // ```
-      // But what happen if next token is EOF? since we tolerant error inside `parseStatement`,
-      // so it fells into infinite loop. To avoid this, we use a proxy to trap the `this.type`
+      // But what happens if the next token is EOF? Since we tolerate errors inside `parseStatement`,
+      // it can fall into an infinite loop. To avoid this, we use a proxy to trap `this.type`
       // access and return a fake `braceR` when the current token is EOF.
       readonly #proxiedThisTrapEofToRbrace = new Proxy(this, {
         get: (target, prop) => {

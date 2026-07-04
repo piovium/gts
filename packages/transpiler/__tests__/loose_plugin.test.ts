@@ -71,9 +71,8 @@ describe("loosePlugin", () => {
     "if (:) }",
   ])("incomplete if", (code) => {
     const ast = LooseParser.parse(code, { ecmaVersion: "latest", ranges: true });
-    expect(ast.body[0].type).toBeOneOf(["IfStatement", "ErrorStatement"]);
-    console.log(ast.body[0])
-  })
+    expect(["IfStatement", "ErrorStatement"]).toContain(ast.body[0].type);
+  });
 });
 
 test("comment kept in loose parse", () => {
