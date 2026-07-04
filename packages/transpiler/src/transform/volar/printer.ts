@@ -127,8 +127,9 @@ export function getPrintOptions(
             context.writeMapped(text, identifier.range[0], rangeEnd);
           } else {
             // b) otherwise create extra mapping directly for next character
+            const rangeEnd = Math.min(node.range[0] + 1, context.source.length);
             context.createExtraMapping(
-              { start: identifier.range[0], end: identifier.range[0] + 1 },
+              { start: identifier.range[0], end: rangeEnd },
               context.generatedOffset,
               context.generatedOffset + 1,
               DEFAULT_VOLAR_MAPPING_DATA,
@@ -240,18 +241,18 @@ export function getPrintOptions(
       ErrorStatement(node: any, context: PrinterContext<CodeInformation>) {
         if (node.range) {
           context.writePreservedNode(node);
-          const sourceEnd = Math.min(node.range[1] + 1, context.source.length);
-          if (sourceEnd > node.range[1]) {
-            context.createExtraMapping(
-              { start: node.range[1], end: sourceEnd },
-              context.generatedOffset,
-              context.generatedOffset + 1,
-              VERIFICATION_ONLY_MAPPING_DATA,
-            );
-          }
+          const rangeEnd = Math.min(node.range[1] + 1, context.source.length);
+          context.createExtraMapping(
+            { start: node.range[1], end: rangeEnd },
+            context.generatedOffset,
+            context.generatedOffset + 1,
+            VERIFICATION_ONLY_MAPPING_DATA,
+          );
         } else {
           // Emit a TS error indicate the error. This should not happen.
-          context.write(`((_: never) => 0)(${JSON.stringify(node.error ?? "Unknown error")});`);
+          context.write(
+            `((_: never) => 0)(${JSON.stringify(node.error ?? "Unknown error")});`,
+          );
         }
       },
     },
