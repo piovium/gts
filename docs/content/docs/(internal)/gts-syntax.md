@@ -172,7 +172,7 @@ define character {
 - `as Name` — public export (default)
 - `as public Name` — explicit public export
 - `as private Name` — local variable, not exported
-- `as protected Name` — **not supported** (throws error)
+- `as protected Name` — SyntaxError now
 
 ## TypeScript Interop
 
@@ -191,7 +191,14 @@ define character {
 const sub = (a: number, b: number) => a - b;
 ```
 
-The transpiler preserves all TypeScript code and only transforms GTS-specific constructs. TypeScript type annotations are erased in the final JS output (same as standard TS compilation).
+The transpiler preserves all TypeScript code and only transforms GTS-specific constructs. TypeScript type annotations are erased in the final JS output -- so **TypeScript syntax in GTS must have erasable syntax.** For example, following TypeScript features are not support in GTS:
+- `enum`.
+- `namespace` with runtime code, e.g. `namespace A { const B = 1; }` (`namespace A { type B = 1; }` is OK)
+- Member modifier in constructor parameter, e.g. `private` in `class C { constructor(private prop: number) { } }`
+- `import =` (including namespace alias and CJS-style import), `export =`
+- `<T> v` style assertion.
+
+For more info, see [TSConfig reference about `erasableSyntaxOnly`](https://www.typescriptlang.org/tsconfig/#erasableSyntaxOnly).
 
 ## Reserved Words
 

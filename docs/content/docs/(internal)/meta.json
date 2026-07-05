@@ -5,7 +5,6 @@
     "index",
     "architecture",
     "gts-syntax",
-    "transpiler",
     "runtime",
     "language-tooling",
     "build-plugins",

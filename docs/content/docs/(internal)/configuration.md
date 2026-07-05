@@ -77,77 +77,12 @@ import __gts_rootVm from "<providerImportSource>/vm";
 The provider must export:
 - `./vm` — default export of the root `ViewModel`
 
-## Resolution Algorithm
+## `package.json` Resolution
 
-### `resolveGtsConfig(filePath, inlineConfig, options)`
+### API: `resolveGtsConfig(filePath, inlineConfig, options)`
 
-**Async version** — used by build plugins (esbuild, Rollup).
+**Async version** — used by most of build plugins (esbuild, Rollup).
 
-### `resolveGtsConfigSync(filePath, inlineConfig, options)`
+### API: `resolveGtsConfigSync(filePath, inlineConfig, options)`
 
-**Sync version** — used by the language plugin (Volar requires synchronous config resolution).
-
-### Algorithm
-
-Both use a generator-based implementation for shared logic:
-
-```
-1. Normalize the source file path to an absolute directory
-2. Walk up the directory tree:
-   a. Read package.json in the current directory
-   b. Parse JSON and extract the "gamingTs" field
-   c. If found, use it as the package config
-   d. If not found, move to the parent directory
-   e. Stop at the filesystem root or the configured stopDir
-3. Merge: DEFAULT_GTS_CONFIG ← packageConfig ← inlineConfig
-4. Return the fully resolved config
-```
-
-### Options
-
-```ts
-interface ResolveGtsConfigSyncOptions {
-  readFileFn: (path: string, encoding: "utf8") => string;
-  cwd?: string;
-  stopDir?: string;
-}
-
-interface ResolveGtsConfigAsyncOptions {
-  readFileFn: (path: string, encoding: "utf8") => Promise<string>;
-  cwd?: string;
-  stopDir?: string;
-}
-```
-
-- `readFileFn` — file reading function (allows the caller to use Node.js `fs`, TypeScript's `sys`, or Rollup's `this.fs`)
-- `cwd` — current working directory (for resolving relative paths)
-- `stopDir` — stop walking up the directory tree at this directory
-
-## Example: Provider Setup
-
-A typical GTS project has this structure:
-
-```
-my-game/
-├── package.json          # Root workspace
-├── packages/
-│   ├── provider/
-│   │   ├── package.json  # No gamingTs field needed
-│   │   ├── vm.ts         # Root ViewModel (default export)
-│   │   └── runtime.ts    # Re-exports @gi-tcg/gts-runtime
-│   └── cards/
-│       ├── package.json  # { "gamingTs": { "providerImportSource": "@my-game/provider" } }
-│       └── barbara.gts   # Card definitions
-```
-
-The `provider/package.json` must export the correct subpaths:
-
-```json
-{
-  "name": "@my-game/provider",
-  "exports": {
-    "./vm": "./vm.ts",
-    "./runtime": "./runtime.ts"
-  }
-}
-```
+**Sync version** — used by the language plugin and Node.js unloader (both require sync operation on transpilation).

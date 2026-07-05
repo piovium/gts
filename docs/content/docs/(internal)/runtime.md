@@ -2,76 +2,37 @@
 title: Runtime System
 ---
 
-The runtime (`@gi-tcg/gts-runtime`) provides the execution model for transpiled GTS code. It defines the ViewModel pattern that processes `define` statements at runtime.
+The runtime (`@gi-tcg/gts-runtime`) provides the execution model for transpiled GTS code. It defines the Model-View-ViewModel (MVVM) pattern that processes `define` statements at runtime.
 
 ## Overview
 
 When a `.gts` file is transpiled and executed, the generated JavaScript calls runtime functions to:
-1. Create attribute node trees from GTS definitions
-2. Parse those trees through ViewModels (which execute the game logic)
+
+1. Create attribute node trees ("View") from GTS definitions
+2. Parse those trees through ViewModels and run codes on associated Models
 3. Extract binding values (exported variables from `as` clauses)
-
-## Exports
-
-```ts
-// src/index.ts
-export { defineViewModel, type AttributeDefinition, type IViewModel, type AttributeReturn } from "./view_model";
-export { Action, Meta, NamedDefinition } from "./symbols";
-export { createBinding, createDefine } from "./view";
-```
-
-## View System (`src/view.ts`)
-
-### Data Structures
-
-**`SingleAttributeNode`** — represents one attribute call:
-```ts
-interface SingleAttributeNode {
-  name: string | symbol;           // attribute name (or Action symbol)
-  positionals: () => any[];        // lazy positional arguments
-  named: NamedAttributesNode | null; // nested attributes
-  binding?: "public" | "private";  // binding export marker
-}
-```
-
-**`NamedAttributesNode`** — a collection of attributes:
-```ts
-interface NamedAttributesNode {
-  attributes: SingleAttributeNode[];
-}
-```
-
-**`View<BlockDef>`** — wraps a `NamedAttributesNode` with an optional `BindingContext`:
-```ts
-class View<BlockDef extends AttributeBlockDefinition> {
-  constructor(
-    public _node: NamedAttributesNode,
-    public _bindingCtx?: BindingContext | undefined,
-  ) {}
-}
-```
-
-**`BindingContext`** — collects binding values during a `createBinding` call:
-```ts
-class BindingContext {
-  addBinding(value: unknown): void;
-  getBindings(): unknown[];
-}
-```
 
 ### Entry Points
 
 **`createDefine(rootVM, node)`** — executes a define statement (fire-and-forget):
+
 ```ts
-function createDefine(rootVM: ViewModel<any, any>, node: SingleAttributeNode): void {
+function createDefine(
+  rootVM: ViewModel<any, any>,
+  node: SingleAttributeNode,
+): void {
   const view = new View<any>({ attributes: [node] });
   rootVM.parse(view);
 }
 ```
 
 **`createBinding(rootVM, node)`** — executes a define and returns binding values:
+
 ```ts
-function createBinding(rootVM: ViewModel<any, any>, node: SingleAttributeNode): unknown[] {
+function createBinding(
+  rootVM: ViewModel<any, any>,
+  node: SingleAttributeNode,
+): unknown[] {
   const bindingCtx = new BindingContext();
   const view = new View<any>({ attributes: [node] }, bindingCtx);
   rootVM.parse(view);
@@ -102,15 +63,17 @@ class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
 ```
 
 **Execution flow:**
-1. Instantiate the model class (`new Ctor()`)
+
+1. Instantiate the Model class (`new Ctor()`)
 2. Iterate over attribute nodes
 3. For each attribute, look up the registered action (or binder) by name
 4. Call the action with `(model, positionals, new View(named, bindingCtx))`
 5. If the attribute has a `binding` flag and we're in a binding context, collect the return value
-6. Return the built model
+6. Return the built Model
 
 **Action vs. Binder:**
-- **Actions** are used during `createDefine` — they execute the game logic (e.g., set properties on the builder model)
+
+- **Actions** are used during `createDefine` — they execute the game logic (e.g., set properties on the builder Model)
 - **Binders** are used during `createBinding` — they compute the exported value (e.g., return a handle/ID)
 
 ### defineViewModel
@@ -134,8 +97,10 @@ const CharacterVM = defineViewModel(
       required(): true;
       as<TMeta>(this: AR.This<TMeta>): CharacterHandle<TMeta["varNames"]>;
     }>(
-      (model, pos) => { /* action: set ID on model */ },
-      (_, [id]) => id as CharacterHandle<any>,  // binder: return handle
+      (model, pos) => {
+        /* action: set ID on model */
+      },
+      (_, [id]) => id as CharacterHandle<any>, // binder: return handle
     ),
     since: helper.simpleAttribute()(function (version: "v3.3.0" | "v3.4.0") {
       this.setVersion(version);
@@ -156,6 +121,7 @@ const CharacterVM = defineViewModel(
 The helper provides two methods for defining attributes:
 
 **`attribute<T>(action, binder?)`** — full control over action and binder:
+
 - `action(model, positionals, namedView)` — called during define
 - `binder` can be:
   - A function `(model, positionals, namedView) => value` — custom binder
@@ -163,6 +129,7 @@ The helper provides two methods for defining attributes:
   - Omitted — no-op binder
 
 **`simpleAttribute(options?)`** — returns a callable that takes `(action, binder?)`:
+
 - `action` receives `this: ModelT` and spread positional args
 - `binder` receives `this: ModelT` and spread positional args, returns the binding value
 - `options.required?: boolean` and `options.uniqueKey?: string` add corresponding typed methods to the returned attribute definition
@@ -171,16 +138,16 @@ The helper provides two methods for defining attributes:
 
 The `AttributeReturn` (aliased as `AR`) namespace provides return type utilities:
 
-| Type | Description |
-|------|-------------|
-| `AR.Done` | Attribute has no nested block and doesn't rewrite meta |
-| `AR.This<TMeta>` | Access the current meta type (for `this` parameter) |
-| `AR.EnableIf<Cond, T>` | Conditional type helper |
-| `AR.With<VM, TMeta>` | Attribute opens a nested ViewModel block |
-| `AR.DoneRewriteMeta<NewMeta>` | Attribute rewrites the meta type |
-| `AR.WithRewriteMeta<NewMeta, VM, TMeta>` | Opens nested VM and rewrites meta |
+| Type                                     | Description                                            |
+| ---------------------------------------- | ------------------------------------------------------ |
+| `AR.Done`                                | Attribute has no nested block and doesn't rewrite meta |
+| `AR.This<TMeta>`                         | Access the current meta type (for `this` parameter)    |
+| `AR.EnableIf<Cond, T>`                   | Conditional type helper                                |
+| `AR.With<VM, TMeta>`                     | Attribute opens a nested ViewModel block               |
+| `AR.DoneRewriteMeta<NewMeta>`            | Attribute rewrites the meta type                       |
+| `AR.WithRewriteMeta<NewMeta, VM, TMeta>` | Opens nested VM and rewrites meta                      |
 
-**Meta rewriting** is how GTS tracks accumulated state through attribute chains. For example, the `variable` attribute adds a variable name to the meta:
+**Meta rewriting** is how GTS tracks *typing-only* accumulated state through attribute chains. For example, the `variable` attribute adds a variable name to the meta:
 
 ```ts
 variable: helper.attribute<{
@@ -188,9 +155,12 @@ variable: helper.attribute<{
     this: AR.This<TMeta>,
     variable: TVarName,
     initialValue: number,
-  ): AR.WithRewriteMeta<{
-    varNames: TMeta["varNames"] | TVarName;
-  }, typeof VariableVM>;
+  ): AR.WithRewriteMeta<
+    {
+      varNames: TMeta["varNames"] | TVarName;
+    },
+    typeof VariableVM
+  >;
 }>(() => {});
 ```
 
@@ -220,8 +190,8 @@ const __gts_node_0 = {
     attributes: [
       { name: "id", positionals: () => [1201], named: null, binding: "public" },
       { name: "health", positionals: () => [10], named: null },
-    ]
-  }
+    ],
+  },
 };
 const __gts_bindings_0 = createBinding(__gts_rootVm, __gts_node_0);
 export const Barbara = __gts_bindings_0[0];
@@ -229,6 +199,7 @@ createDefine(__gts_rootVm, __gts_node_0);
 ```
 
 At runtime:
+
 1. `createBinding` instantiates a `RootBuilder`, finds the `character` action, which creates a `CharacterVM` and parses the nested attributes
 2. The `id` attribute's binder returns `1201 as CharacterHandle`, which becomes `Barbara`
 3. `createDefine` re-runs the same process (for side effects like registration)

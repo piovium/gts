@@ -36,21 +36,6 @@ GTS provides full IDE support through a Volar-based language server, a TypeScrip
 
 The language plugin is the bridge between the GTS transpiler and the Volar framework. It implements the `LanguagePlugin` interface from `@volar/language-core`.
 
-### `createGtsLanguagePlugin(ts)` (`language_plugin.ts`)
-
-Returns a `LanguagePlugin<URI | string>` with:
-
-**`getLanguageId(uri)`** — returns `"gaming-ts"` for `.gts` files.
-
-**`createVirtualCode(uri, languageId, snapshot)`** — creates a `GtsVirtualCode` instance:
-1. Resolves GTS configuration from the nearest `package.json` (using `resolveGtsConfigSync`)
-2. Calls `transpileForVolar()` to generate TypeScript type declarations
-3. Returns the virtual code with source mappings
-
-**`typescript.extraFileExtensions`** — registers `.gts` as a TypeScript file extension with `ScriptKind.Deferred`.
-
-**`typescript.getServiceScript(root)`** — maps the virtual code to a `.ts` service script with `ScriptKind.TS`.
-
 ### `GtsVirtualCode` (`virtual_code.ts`)
 
 Implements the Volar `VirtualCode` interface:
@@ -75,48 +60,22 @@ class GtsVirtualCode implements VirtualCode {
 
 ## Language Server (`@gi-tcg/gts-language-server`)
 
-The language server implements the Language Server Protocol (LSP). It has two entry points:
-
-### Node.js Server (`node.ts`)
-
-```ts
-const connection = createConnection();
-const server = createServer(connection);
-
-connection.onInitialize((params) => {
-  const tsdk = loadTsdkByPath(params.initializationOptions.typescript.tsdk, params.locale);
-  return server.initialize(params,
-    createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => ({
-      languagePlugins: [createGtsLanguagePlugin(tsdk.typescript)],
-    })),
-    [...createTypeScriptServices(tsdk.typescript), createDiagnosticsPlugin()],
-  );
-});
-```
-
-### Browser Server (`browser.ts`)
-
-Same structure but uses `loadTsdkByUrl` to load TypeScript from a CDN URL (default: `https://cdn.jsdelivr.net/npm/typescript@latest/lib`).
+The language server implements the Language Server Protocol (LSP). It has two entry points **Node.js Server** (`node.ts`) and ****Browser Server** (`browser.ts`).
 
 ### Custom Services
 
-**TypeScript Services (`typescript.ts`)** — wraps `volar-service-typescript` and adds **space** as a signature help trigger character. This is because GTS syntax uses `name arg1, arg2` which transpiles to `name(arg1, arg2)`, so pressing space after an attribute name should trigger signature help.
+- **TypeScript Services** — wraps `volar-service-typescript` to:
+  - adds **space** as a signature help trigger character. This is because GTS syntax uses `name arg1, arg2` which transpiles to `name(arg1, arg2)`, so pressing space after an attribute name should trigger signature help.
+  - adds `gtsAttribute` as a supported semantic token modifier (used for *Semantic Token Service*).
+- **Diagnostics Service** — surfaces `GtsTranspilerError` instances from the virtual code as LSP diagnostics. Converts the transpiler's 1-based line/column positions to 0-based LSP positions.
+- **Completion Service** — triggered when user press `:`, and return result from TS semantic service by replacing trigger character from `:` to `.`. Hide suggestion result that starts with `__gts_`.
+- **Semantic Token Service** — override existing TS semantic service by add italic markup for mappings that are recognized as GTS attribute name.
+- **Code Lens Service** — add a Code Lens line above each direct function to split itself from previous attribute definitions clearer.
 
-**Diagnostics Plugin (`diagnostics.ts`)** — surfaces `GtsTranspilerError` instances from the virtual code as LSP diagnostics. Converts the transpiler's 1-based line/column positions to 0-based LSP positions.
-
-**Document Highlight Service (`document_highlight.ts`)** — extends the TypeScript semantic service's document highlight to also work for GTS-specific keywords. Currently partially implemented (some code is commented out).
 
 ## TypeScript Language Service Plugin (`@gi-tcg/gts-typescript-language-service-plugin`)
 
-A CJS module that integrates GTS into TypeScript's built-in language service:
-
-```ts
-export = createLanguageServicePlugin((ts, info) => {
-  return { languagePlugins: [createGtsLanguagePlugin(ts)] };
-});
-```
-
-This enables GTS features directly in editors that use TypeScript's language service (without needing a separate LSP server). It's loaded as a TypeScript plugin through `tsconfig.json`:
+A CJS module that integrates GTS into TypeScript's built-in language service, which enables GTS features into TSServer so that `import foo from "./foo.gts"` can works in TS as well. It's loaded as a TypeScript plugin through `tsconfig.json`:
 
 ```json
 {
@@ -126,59 +85,22 @@ This enables GTS features directly in editors that use TypeScript's language ser
 }
 ```
 
+**NOTE: it WONT support TS7 (Tsgo) for now.**
+
 ## VS Code Extension (`gts-vscode`)
-
-### Extension Client (`extension.ts`)
-
-**Activation:** triggers on `onLanguage:gaming-ts`.
-
-**Setup:**
-1. Calls `patchTypeScriptExtension()` to inject GTS support into VS Code's built-in TypeScript extension
-2. If patching requires a restart, prompts the user
-3. Starts the language server as a child process (IPC transport)
-4. Registers auto-insertion support for the `gaming-ts` language
-5. Integrates with Volar Labs for debugging
-
-**Language Server Configuration:**
-```ts
-const clientOptions: LanguageClientOptions = {
-  documentSelector: [{ language: "gaming-ts" }],
-  initializationOptions: {
-    typescript: { tsdk: (await getTsdk(context))!.tsdk },
-  },
-};
-```
 
 ### TypeScript Extension Patch (`patch.ts`)
 
-The VS Code extension patches the built-in TypeScript extension to recognize `.gts` files:
+The VS Code extension patches the built-in TypeScript extension to recognize `.gts` files by intercepts `require("fs").readFileSync` for the TypeScript extension's main JS file.
 
-1. Intercepts `require("fs").readFileSync` for the TypeScript extension's main JS file
-2. Modifies the code to:
-   - Add `"gaming-ts"` to `jsTsLanguageModes` 
-   - Add `"gaming-ts"` to `isSupportedLanguageMode` 
-   - Add `"gaming-ts"` to `isTypeScriptDocument`
-   - Sort plugins to prioritize the GTS language service plugin
-3. If the TypeScript extension is already loaded, invalidates the module cache and re-requires it
+**NOTE: it WONT support TS7 (Tsgo) for now.**
 
-This patching ensures that VS Code's TypeScript features (hover, go-to-definition, etc.) work in `.gts` files.
+### Regex-based Syntax Highlighting (`syntaxes/GamingTS.tmLanguage.json`)
 
-### Syntax Highlighting (`syntaxes/GamingTS.tmLanguage.json`)
-
-A comprehensive TextMate grammar (~5800 lines) that provides syntax highlighting for GTS files. It covers:
-- Standard TypeScript syntax (comments, strings, types, expressions)
+A generated TextMate grammar from official TS one, that provides syntax highlighting for GTS files, for covering:
 - GTS-specific keyword (`define`)
 - Attribute definitions and blocks
-- Shortcut function syntax (`:identifier`, `:(expr)`, `:{stmts}`)
-
-### Language Configuration (`language-configuration.json`)
-
-Editor settings for GTS files:
-- Bracket pairs and auto-closing pairs
-- Comment toggling (`//` and `/* */`)
-- Folding regions (brace-based)
-- Indentation rules
-- Word patterns
+- Shortcut function syntax (`:identifier`, `:( expr )`, `:{ stmts }`)
 
 ## How IDE Features Work
 
@@ -195,7 +117,7 @@ For attribute names: the generated code creates typed variables like `__gts_attr
 
 Two sources of diagnostics:
 1. **Transpiler errors** — surfaced by the diagnostics plugin (syntax errors, unsupported features)
-2. **TypeScript errors** — type checking on the generated code, mapped back to source positions (type mismatches, missing required attributes)
+2. **TypeScript errors** — type checking on the generated code, mapped back to source positions (type mismatches, etc. Done by Volar.js and our point-to-point mapping of each syntax production)
 
 ### Signature Help
 
@@ -212,8 +134,6 @@ This is done by resolving the location where TSServer inserts new imports. When 
 1. **Making generated imports unsorted** — an unrelated `ExpressionStatement` (`0;`) is inserted between system-generated import declarations and the last import group. This makes the generated imports appear "unsorted" to TSServer, so it always chooses the position after the final generated import as the insertion point.
 
 2. **Mapping to content start** — if the last import is a generated one, it will gets an extra range mapping that maps a newline after it to the content start offset in the source file. The "content start" is calculated by `getContentStartOffset()` (`volar/content_start.ts`), that skips hashbang lines (`#!/usr/bin/env node`) and leading block-level comments (until two consecutive blank lines or non-comment content is encountered), yielding the character offset where meaningful content begins. This is used as the source mapping target so auto-imports are placed after file headers but before the main code.
-
-3. **Enlarged import declaration mapping** For each user's import, if it was mapped as end of a mapping range, then the transpiler will enlarge its mapping range 1 character from its right boundary, to cover TSServer's insertion point.
 
 ## Volar Transform (`src/transform/volar/`)
 
@@ -294,28 +214,6 @@ These hint statements reuse the `enterAttr`/`exitAttr` mechanism with a special 
 ### Printing & Mappings (`volar/printer.ts`, `volar/mappings.ts`)
 
 The Volar pipeline uses **`espolar`** (instead of `esrap`) for printing. `espolar` generates Volar `CodeMapping[]` directly alongside the code output, eliminating the need for a separate source-map-to-mapping conversion step.
-
-#### `getPrintOptions()` (`volar/printer.ts`)
-
-Configures `espolar`'s `PrintOptions<CodeInformation>` with:
-
-- **`isUntouched`** — returns `true` for nodes from the original source (tracked via `state.sourceNodes: WeakSet<Node>`), so `espolar` preserves their original text and creates proper source-to-generated mappings.
-- **`getMappingData`** — returns `DEFAULT_VOLAR_MAPPING_DATA` (all capabilities: completion, format, navigation, semantic, structure, verification) for most mappings, or `VERIFICATION_ONLY_MAPPING_DATA` for diagnostic-only mappings.
-- **Custom printers** — overrides for specific node types:
-  - **`Identifier`** — dummy identifiers print as `""` (or `","` if the node is the last argument of a `CallExpression`, to preserve TypeScript error detection). Uses `context.writeMapped()` to create inline mappings with correct source ranges.
-  - **`Literal`** — identifiers wrapped as string literals (lowercase positional args like `cryo`) are printed with quote mapping: the source maps to the content between the quotes. Import sources (`"..."` in generated import statements) with `diagnosticsOnTop` get a verification-only mapping to the top of the source file for missing-import diagnostics.
-  - **`ImportDefaultSpecifier` / `ImportSpecifier`** — generated import specifiers also get top-of-file diagnostic mappings via `context.createExtraMapping()`.
-  - **`GTSAttributeNameHintStatement`** — prints as `object.` followed by source-mapped whitespace and a trailing `";"`. The whitespace region is emitted via `context.writeSource()` so the cursor position maps back to the source, enabling attribute name completions in whitespace areas inside `define` blocks.
-- **`experimentalGetLeftParenSourceRange`** — maps `(` tokens in `CallExpression`/`NewExpression` to their original source position for signature help support.
-
-#### Mappings (`volar/mappings.ts`)
-
-Defines the `VolarMappingResult` type and two `CodeInformation` constants:
-
-- `DEFAULT_VOLAR_MAPPING_DATA` — all capabilities (completion, format, navigation, semantic, structure, verification)
-- `VERIFICATION_ONLY_MAPPING_DATA` — verification only, used for diagnostic-position mappings (e.g., import errors pointing to top-of-file, required-attribute validation errors)
-
-After `espolar` produces the initial `{ code, mappings }`, `applyReplacements()` expands the placeholder tagged templates and **adjusts the generated offsets** in the existing `CodeMapping[]` to account for the length differences between placeholders and their expanded type code. Extra diagnostic mappings (from `state.extraMappings`) are appended by searching for unique generated-code needle strings.
 
 #### Runtime vs Volar Printers
 

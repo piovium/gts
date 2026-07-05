@@ -8,15 +8,15 @@ title: Introduction
 
 ## Documentation Index
 
-| Document | Description |
-|----------|-------------|
-| [Architecture](/docs/architecture) | Monorepo structure, package map, dependency graph, and build system |
-| [GTS Syntax](/docs/gts-syntax) | Language syntax reference with formal grammar and examples |
-| [Transpiler](/docs/transpiler) | Transpiler internals: parsing, AST, transformation pipeline |
-| [Runtime](/docs/runtime) | Runtime system: ViewModel, bindings, define execution |
-| [Language Tooling](/docs/language-tooling) | Volar integration, language server, VS Code extension, and TypeScript plugin |
-| [Build Plugins](/docs/build-plugins) | Build plugins (vite, esbuild, rollup, webpack, and more) plus `gtsc` CLI compiler |
-| [Configuration](/docs/configuration) | Configuration resolution, `package.json` fields, and defaults |
+| Document                                   | Description                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------------- |
+| [Architecture](/docs/architecture)         | Monorepo structure, package map, dependency graph, and build system               |
+| [GTS Syntax](/docs/gts-syntax)             | Language syntax reference with formal grammar and examples                        |
+| [Transpiler](/docs/transpiler)             | Transpiler internals: parsing, AST, transformation pipeline                       |
+| [Runtime](/docs/runtime)                   | Runtime system: ViewModel, bindings, define execution                             |
+| [Language Tooling](/docs/language-tooling) | Volar integration, language server, VS Code extension, and TypeScript plugin      |
+| [Build Plugins](/docs/build-plugins)       | Build plugins (vite, esbuild, rollup, webpack, and more) plus `gtsc` CLI compiler |
+| [Configuration](/docs/configuration)       | Configuration resolution, `package.json` fields, and defaults                     |
 
 ## How GTS Works (Summary)
 
@@ -31,7 +31,7 @@ For IDE support, a parallel Volar-based pipeline generates TypeScript type decla
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                       .gts Source File                       │
+│                       .gts Source File                      │
 └─────────────────────┬───────────────────────────────────────┘
                       │
          ┌────────────┴────────────┐
@@ -47,19 +47,19 @@ For IDE support, a parallel Volar-based pipeline generates TypeScript type decla
          │                                         │
     Runtime Path                            IDE / Volar Path
          │                                         │
-  ┌──────┴──────┐                      ┌───────────┴──────────┐
-  │ GTS -> TS   │                      │ GTS -> TypeScript    │
-  │ Transform   │                      │ Typings (Volar)      │
-  └──────┬──────┘                      └───────────┬──────────┘
+  ┌──────┴──────┐                      ┌───────────┴────────┐
+  │ GTS -> TS   │                      │ GTS -> TypeScript  │
+  │ Transform   │                      │ Typings (Volar)    │
+  └──────┬──────┘                      └───────────┬────────┘
          │                                         │
-  ┌──────┴──────┐                      ┌───────────┴──────────┐
-  │ TS Erasure  │                      │ Replacement Pass     │
-  └──────┬──────┘                      └───────────┬──────────┘
+  ┌──────┴──────┐                      ┌───────────┴────────┐
+  │ TS Erasure  │                      │ Replacement Pass   │
+  └──────┬──────┘                      └───────────┬────────┘
          │                                         │
-  ┌──────┴──────┐                      ┌───────────┴──────────┐
-  │ esrap Print │                      │ Volar Mappings       │
-  │ + SourceMap │                      │ (CodeMapping[])      │
-  └──────┬──────┘                      └───────────┬──────────┘
+  ┌──────┴──────┐                      ┌───────────┴────────┐
+  │ esrap Print │                      │ espolar Print      │
+  │ + SourceMap │                      │ + Volar Mappings   │
+  └──────┬──────┘                      └───────────┬────────┘
          │                                         │
      .js output                            Language Server
      (bundlers, CLI)                      (completions, etc.)
