@@ -1,0 +1,84 @@
+---
+title: 特技与夜魂加持
+---
+
+特技 (technique) 是纳塔角色的特殊卡牌类型，而夜魂加持 (Nightsoul's Blessing) 是与之配套的状态机制。
+
+## 特技卡
+
+特技卡是一种特殊卡牌，在手牌中时可以在特定条件下使用。它包含一个内嵌的技能定义。
+
+### 基本结构
+
+```gts
+define card {
+  id <ID> as <导出名>;
+  cost <骰子费用>;
+  technique {
+    target <目标查询>;
+    skill {
+      id <技能ID> as <技能导出名>;
+      usage <次数>;
+      cost <骰子费用>;
+      filter <使用条件>;
+      // 技能效果（快捷函数）
+    }
+  }
+}
+```
+
+### 特技卡的 `on selfDiscard`
+
+特技卡从手牌中被舍弃时，可以触发 `on selfDiscard` 中的效果。`enablePileTriggering` 表示将此效果放入牌库触发队列中。
+
+## 夜魂加持
+
+夜魂加持是一个特殊的角色状态，为纳塔角色提供独有的资源点数和增益机制。
+
+### 定义夜魂加持
+
+```gts
+define status {
+  id <ID> as <导出名>;
+  // ...
+  nightsoulsBlessing <点数> { <选项> };
+}
+```
+
+### 角色关联夜魂
+
+```gts
+define character {
+  id 1315 as Mavuika;
+  tags pyro, claymore, natlan;
+  health 10;
+  energy 0;
+  specialEnergy fightingSpirit, 3;
+  skills ..., FlamestriderFullThrottlePreparedSkill;
+  associateNightsoul NightsoulsBlessing;
+}
+```
+
+`associateNightsoul` 将角色与夜魂加持状态关联。关联后，角色在入场时自动获得夜魂点数。
+
+### 消耗夜魂
+
+在技能或效果中消耗夜魂：
+
+```gts
+:consumeNightsoul("@master");
+```
+
+### 获取夜魂信息
+
+```gts
+:query($.my.character.var("nightsoul"));
+
+// 或者在条件中检查：
+filter :( :self.master.hasNightsoulsBlessing()?.variables.nightsoul );
+```
+
+
+`prepare <技能Handle>` 让角色进入准备状态，下回合行动阶段开始时执行对应的准备技能。
+
+> **特技的完整定义选项**（如 `target` 支持的所有查询模式、`skill` 内的完整技能定义选项）和**夜魂加持的完整配置**（如 `autoDispose`、`onNightsoulConsumed` 等事件）请参考 Provider 的 ViewModel 定义代码：`core/gts/vm_impl/technique.ts` 和 `core/gts/vm_impl/entity_auxilary.ts`。

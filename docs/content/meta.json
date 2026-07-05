@@ -1,6 +1,8 @@
 {
   "pages": [
-    "(internal)",
+    "user-guide",
+    "runtime-guide",
+    "internal",
     "example"
   ]
 }

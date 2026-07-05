@@ -1,0 +1,178 @@
+---
+title: 实体定义
+---
+
+实体 (entity) 包括角色状态 (status)、出战状态 (combatStatus) 和召唤物 (summon)。它们都在战场上存在一定时间，在特定事件触发时执行效果。
+
+## 基本结构
+
+```gts
+define status {
+  id <ID> as <导出名>;
+  // 属性...
+}
+
+define combatStatus {
+  id <ID> as <导出名>;
+  // 属性...
+}
+
+define summon {
+  id <ID> as <导出名>;
+  // 属性...
+}
+```
+
+三者的语法基本相同，差异在于它们在游戏规则中的行为：
+- **status** — 附属在角色身上，跟随角色移动/倒下
+- **combatStatus** — 附属在出战方，不随角色移动
+- **summon** — 独立实体，在每个结束阶段触发效果
+
+## 通用属性
+
+### `hint` — 提示图标
+
+```gts
+hint DamageType.Pyro, 1;
+hint DamageType.Heal, 1;
+hint swirled, 2;
+```
+
+在 UI 中显示的效果图标预览。第一个参数为图标类型（伤害元素/治疗/扩散等），第二个参数为效果数值。
+
+### `duration` — 持续回合
+
+```gts
+duration 2;
+```
+
+实体持续存在的回合数。每回合结束阶段自动减 1，减至 0 时移除此实体。不指定时默认为永久存在（直到主动移除）。
+
+### `oneDuration` — 单回合持续时间
+
+```gts
+oneDuration;
+```
+
+等价于 `duration 1`，但表示"持续到回合结束"（受`@master`角色回合开始/结束的影响）。
+
+### `tags` — 标签
+
+```gts
+tags disableSkill;
+tags barrier;
+```
+
+实体的功能标签，用于其他实体查询和条件判断。常用标签：
+- `disableSkill` — 禁止使用技能（冻结效果）
+- `barrier` — 护盾类效果
+- `immuneControl` — 免疫控制
+- `bondOfLife` — 生命之契
+
+### `shield` — 护盾
+
+```gts
+shield 1, 2;    // shield <初始值>, <最大叠加值>
+```
+
+提供护盾保护。每次受到伤害时优先消耗护盾。
+
+### `conflictWith` — 互斥
+
+```gts
+conflictWith HandleName;
+```
+
+如果场上已存在 `HandleName` 引用的实体，则生成前替换该实体。
+
+
+## 实体效果
+
+实体通过 `on <事件>` 定义触发效果，使用快捷函数编写效果体。详见 [事件系统](/docs/events) 章节。
+
+```gts
+define status {
+  id 106 as Frozen;
+  oneDuration;
+  tags disableSkill;
+  on increaseDamaged {
+    when :( [DamageType.Pyro, DamageType.Physical].includes(:e.type) );
+    :e.increaseDamage(2);
+    :dispose();
+  }
+}
+```
+
+### 实体上的 `usage`
+
+实体的事件处理中可以使用 `usage` 来限制触发次数：
+
+```gts
+define combatStatus {
+  id 112115 as Revelry;
+  on increaseDamage {
+    usage 1 { append };
+    :e.increaseDamage(1);
+  }
+}
+```
+
+详见 [变量与使用次数](/docs/variables-usage) 章节。
+
+## 示例：召唤物
+
+```gts
+define summon {
+  id 112111 as SalonMembers;
+  hint DamageType.Hydro, 1;
+  on endPhase {
+    :damage(DamageType.Hydro, 1);
+  }
+  on endPhase {
+    usage 2 { append 4 };
+    if (:query($.my.character.var("health", ">=", 6))) {
+      :damage(DamageType.Piercing, 1, $.macros.myLeastInjured);
+      :damage(DamageType.Hydro, 1);
+    }
+  }
+}
+```
+
+召唤物可以拥有多个同事件 `on endPhase` 处理——它们会按顺序依次执行。
+
+## 示例：出战状态
+
+```gts
+define combatStatus {
+  id 112114 as UniversalRevelry;
+  duration 2;
+  on damagedOrHealed {
+    when :( :e.target.isActive() );
+    :combatStatus(Revelry);
+  }
+}
+```
+
+## 示例：状态 + 自定义过滤
+
+```gts
+define status {
+  id 112116 as CenterOfAttention;
+  on modifySkillDamageType {
+    when :( :e.viaSkillType("normal") && :e.type === DamageType.Physical );
+    :e.changeDamageType(DamageType.Hydro);
+  }
+  on increaseSkillDamage {
+    when :( :e.viaSkillType("normal") );
+    usage 1;
+    if (:self.master.definition.id === FurinaPneuma) {
+      :heal(1, $.my.standby);
+    } else {
+      :e.increaseDamage(2);
+      :damage(DamageType.Piercing, 1, $.macros.myLeastInjured);
+    }
+  }
+}
+```
+
+> **实体相关的完整属性列表**（`hintForeground`、`onHpChange`、`onDispose` 等高级属性）请参考 Provider 的 ViewModel 定义代码：`core/gts/vm_impl/entity.ts`。

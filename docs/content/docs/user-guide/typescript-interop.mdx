@@ -1,0 +1,104 @@
+---
+title: TypeScript 互操作
+---
+
+`.gts` 文件是 TypeScript 的超集——你可以自由地混合标准 TypeScript 代码和 GTS 的 `define` 语句。
+
+## import 和 export
+
+在 `.gts` 文件中可以使用标准 ES Module 语法：
+
+```gts
+import { DamageType, DiceType, $ } from "@gi-tcg/core/builder";
+import { BattlePlan, Satiated } from "../../commons.gts";
+
+export const helperFunction = (x: number) => x * 2;
+
+define character {
+  id 1201 as Barbara;
+  // ...
+}
+```
+
+**跨 `.gts` 文件导入**：`as Name` 导出的 Handle 可以被其他 `.gts` 或 `.ts` 文件正常 import：
+
+```gts
+// a.gts
+define summon {
+  id 114071 as EyeOfStormyJudgment;
+  // ...
+}
+
+// b.gts
+import { EyeOfStormyJudgment } from "./a.gts";
+:summon(EyeOfStormyJudgment);
+```
+
+## 类型标注
+
+在事件处理器和快捷函数中，你可以使用 TypeScript 类型标注：
+
+```gts
+on useSkill {
+  const card = :e.skillCaller.cast<"character">();
+  // card 现在被类型收窄为 character
+}
+```
+
+`.gts` 文件中的 TypeScript 类型经过正常的类型检查和自动补全。
+
+## erasableSyntaxOnly 限制
+
+GTS 的 transpiler 使用 TypeScript 的 erasable syntax 模式——只有可以"擦除"的 TypeScript 语法被支持。以下 TypeScript 特性**在 `.gts` 中不可用**：
+
+- **`enum`** — 枚举不被支持。使用 `const` 对象或联合类型代替
+- **带运行时代码的 `namespace`** — 仅类型声明（`namespace Foo { type Bar = ... }`）OK，但运行时代码不 OK
+- **构造函数参数属性修饰符**（如 `class C { constructor(private prop: number) {} }`）
+- **`import =` 和 `export =`**（CommonJS 风格）
+- **`<T> v` 风格的类型断言** — 使用 `v as T` 代替
+
+```gts
+// OK
+const x = foo as SomeType;
+type MyType = "a" | "b";
+// NOT OK
+enum MyEnum { A, B }
+namespace MyNs { const x = 1; }
+```
+
+详见 [TypeScript erasableSyntaxOnly 文档](https://www.typescriptlang.org/tsconfig/#erasableSyntaxOnly)。
+
+## GTS 特有的导入
+
+transpiler 会自动插入以下运行时导入（由 `package.json` 中的 `gamingTs` 配置决定具体路径）：
+
+```ts
+// 自动生成（无需手动写）
+import { createDefine, createBinding } from "@gi-tcg/core/gts";
+import __gts_rootVm from "@gi-tcg/core/gts/vm";
+```
+
+你不需要手动导入这些——它们由 transpiler 自动处理。
+
+## 表达式和引用
+
+在 `define` 语句中：
+
+- **小写开头的标识符**在 positional 位置自动转为字符串字面量：
+
+  ```gts
+  tags hydro, catalyst, mondstadt;
+  // 等价于 tags("hydro", "catalyst", "mondstadt");
+  ```
+
+- **大写开头的标识符**作为变量引用保留：
+
+  ```gts
+  skills Origin, TranscendenceBalefulOmen;
+  // 等价于 skills(Origin, TranscendenceBalefulOmen)
+  ```
+
+- 其他表达式（如 `DiceType.Hydro`、`$` 查询宏）正常求值。
+
+
+> **TypeScript 互操作的限制和边界情况**请参考 [GTS Syntax Reference](/docs/gts-syntax) 和 Provider 的 ViewModel 类型定义。

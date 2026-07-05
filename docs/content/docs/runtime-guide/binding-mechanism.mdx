@@ -1,0 +1,188 @@
+---
+title: Binding 机制
+---
+
+Binding 机制是 `as Name` 语法的运行时支撑。它使得 GTS 定义中的实体可以被导出为变量，在同一个 `.gts` 文件或其他文件中引用。
+
+## `as Name` 语法回顾
+
+```gts
+define character {
+  id 1201 as Barbara;  // Barbara 绑定到 1201
+}
+
+define status {
+  id 106 as Frozen;    // Frozen 绑定到 106
+}
+```
+
+编译后：
+
+```js
+const __gts_bindings_0 = createBinding(__gts_rootVm, __gts_node_0);
+export const Barbara = __gts_bindings_0[0];
+createDefine(__gts_rootVm, __gts_node_0);
+
+const __gts_bindings_1 = createBinding(__gts_rootVm, __gts_node_1);
+export const Frozen = __gts_bindings_1[0];
+createDefine(__gts_rootVm, __gts_node_1);
+```
+
+## `createBinding` 的实现
+
+```ts
+function createBinding(
+  rootVM: ViewModel<any, any>,
+  node: SingleAttributeNode,
+): unknown[] {
+  const bindingCtx = new BindingContext();
+  const view = new View({ attributes: [node] }, bindingCtx);
+  rootVM.parse(view);
+  return bindingCtx.getBindings();
+}
+```
+
+关键元素：
+
+1. **`BindingContext`** — 收集绑定值的容器
+2. **`new View(..., bindingCtx)`** — 将上下文注入到 View 中
+3. **`rootVM.parse(view)`** — 解析过程中，每个有 binding 标记的属性将其 binder 返回值写入 `bindingCtx`
+4. **`bindingCtx.getBindings()`** — 返回按顺序收集的所有绑定值
+
+## `BindingContext` 的工作原理
+
+```ts
+class BindingContext {
+  private bindings: unknown[] = [];
+
+  collect(value: unknown): void {
+    this.bindings.push(value);
+  }
+
+  getBindings(): unknown[] {
+    return this.bindings;
+  }
+}
+```
+
+在 `ViewModel.parse()` 中，遍历属性时：如果 `view._bindingCtx` 存在且属性的 `binding` 字段非空，则调用 Binder 并将结果放入上下文：
+
+```ts
+// ViewModel.parse() 核心逻辑（简化）
+for (const attrNode of view._node.attributes) {
+  const registered = this.registry.get(attrNode.name);
+
+  if (view._bindingCtx && attrNode.binding) {
+    // 使用 Binder —— 收集绑定值
+    const result = registered.binder(model, attrNode.positionals(), ...);
+    view._bindingCtx.collect(result);
+  } else {
+    // 使用 Action —— 执行业务逻辑
+    registered.action(model, attrNode.positionals(), ...);
+  }
+}
+```
+
+## 访问修饰符
+
+```gts
+id 1201 as Barbara;           // public (默认)
+id 1201 as public Barbara;    // 显式 public
+id 1201 as private Barbara;   // 不导出
+id 1201 as protected Barbara; // 语法错误
+```
+
+在属性节点中：
+
+```ts
+binding: "public" | "private" | "protected";
+```
+
+transpiler 根据修饰符生成不同的导出代码：
+
+```js
+// binding: "public" (或默认)
+export const Barbara = __gts_bindings_0[0];
+
+// binding: "private"
+const Barbara = __gts_bindings_0[0];
+// 不 export —— 仅文件内部可用
+```
+
+## `createDefine` vs `createBinding` 的区别
+
+| 方面 | `createDefine` | `createBinding` |
+|---|---|---|
+| 使用 Action | 是 | 是（副作用） |
+| 使用 Binder | 否 | 是 |
+| 返回绑定值 | 无 | `unknown[]` |
+| BindingContext | 不创建 | 创建并注入 View |
+| 用途 | 注册实体到 Registry | 导出 Handle 供引用 |
+
+**两者都调用同一个 ViewModel 的 `parse()`**——区别仅在 `BindingContext` 的存在与否。这确保：
+
+- 无论 `as Name` 是否使用，实体的业务逻辑（action）都被正确执行
+- 绑定值只在需要时被提取
+
+## 单个 define 中的多个 Binding
+
+一个 `define` 可以有多个 `as Name` 导出。所有绑定按在属性中的出现顺序收集：
+
+```gts
+define entity {
+  id 100 as PrimaryExport;     // binding[0]
+  otherProp as SecondaryExport; // binding[1]
+}
+```
+
+编译后：
+
+```js
+const __gts_bindings = createBinding(__gts_rootVm, __gts_node);
+export const PrimaryExport = __gts_bindings[0];
+export const SecondaryExport = __gts_bindings[1];
+```
+
+## 嵌套 Binding
+
+嵌套块中的 `as Name` 由子 VM 的 parser 处理。父 VM 的 action 决定是否以及如何将嵌套的绑定值冒泡：
+
+```gts
+define character {
+  id 1201 as Barbara;     // 顶层 binding
+  skills Skill1 {
+    id 12011 as Skill1;   // 嵌套 binding
+  }
+}
+```
+
+嵌套绑定通常不暴露到顶层，因为它们的绑定上下文在嵌套 View 内部管理。
+
+## 排障：绑定值为 undefined
+
+常见原因：
+
+1. **Binder 未定义** — 属性没有注册 binder，但使用了 `as Name` → 运行时无错误，但绑定值为 `undefined`
+2. **属性顺序** — bindings 按出现顺序收集，确保索引访问正确
+3. **`createDefine` 中使用了 Binder** — 不会出错（binder 不被调用），但绑定值不可获取
+
+## 实际使用场景
+
+在 `genius-invokation` 中，绑定机制被广泛使用：
+
+- 角色 ID 导出为 `CharacterHandle`，供卡牌 `talent` 引用
+- 技能 ID 导出为 `SkillHandle`，供角色的 `skills` 列表引用
+- 状态/召唤物/卡牌 ID 导出为各自 Handle 类型，供其他定义引用
+
+```gts
+// 引用链
+define status { id 114072 as ChakraDesiderataStatus; }
+//          ↓
+define skill { on battleBegin { :characterStatus(ChakraDesiderataStatus); } }
+//          ↓
+define character { skills ChakraDesiderata; }
+//          ↓
+define card { talent RaidenShogun { ... } }
+```
+
+> **完整的 binding 机制实现**见 `gi-tcg/gts-runtime` 的 `createBinding` 函数和 `ViewModel.parse()` 方法的具体实现。

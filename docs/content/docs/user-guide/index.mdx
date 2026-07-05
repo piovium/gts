@@ -1,0 +1,71 @@
+---
+title: 概述
+---
+
+GamingTS (GTS) 是 TypeScript 的超集，为 **七圣召唤 (Genius Invokation TCG)** 模拟器提供声明式的卡牌数据定义 DSL。在 `.gts` 文件中，你可以同时使用标准 TypeScript 代码和 GTS 特有的 `define` 语句来定义角色、技能、卡牌、召唤物等游戏实体。
+
+## 两种书写风格
+
+GTS 支持两种等价的书写方式：
+
+### `define` 语句 DSL（推荐）
+
+适合复杂卡牌——角色、多技能、嵌套状态、事件回调等：
+
+```gts
+define character {
+  id 1407 as RaidenShogun;
+  since "v3.7.0";
+  tags electro, pole, inazuma;
+  health 10;
+  energy 2;
+  skills Origin, TranscendenceBalefulOmen, SecretArtMusouShinsetsu, ChakraDesiderata;
+}
+
+define skill {
+  id 14073 as SecretArtMusouShinsetsu;
+  skillType burst;
+  cost DiceType.Electro, 3;
+  cost DiceType.Energy, 2;
+  :damage(DamageType.Electro, 3);
+  :gainEnergy(2, "all my characters and not @self");
+}
+```
+
+### Fluent Builder API（兼容模式）
+
+GTS 项目最早使用纯 TypeScript 的 Builder 链式调用风格定义卡牌。`define` DSL 是后续引入的更简洁的表达方式。
+
+**Builder 风格仅作为与传统 `.ts` 模式的历史兼容保留。** 对于简单卡牌，可以沿用此方式；对于复杂卡牌，推荐使用 `define` 语句。Builder 风格的具体用法请参考 [genius-invokation 仓库的 data 文档](https://github.com/piovium/genius-invokation/tree/main/docs/development/data)。
+
+### Query Fluent API
+
+在某些事件回调中，你需要查询场上实体——例如"我方出战角色"、"对方血量最低的角色"等。GTS 提供了 `$.` 开头的 **Query Fluent API** 来完成此类查询：
+
+```gts
+:heal(1, $.my.character);
+// 治疗我方所有角色 1 点
+
+:damage(DamageType.Piercing, 1, $.macros.myMostInjured);
+// 对我方受伤最多的角色造成 1 点穿透伤害
+
+:query($.my.summon.def(EyeOfStormyJudgment));
+// 查询我方场上是否存在 ID 为 EyeOfStormyJudgment 的召唤物
+```
+
+关于 Query Fluent API 的完整文档，请参阅 [genius-invokation 仓库的 query 文档](https://github.com/piovium/genius-invokation/tree/main/docs/development/query)。
+
+## 本文档范围
+
+本文档面向**卡牌作者**，介绍如何使用 `define` 语句 DSL 编写 `.gts` 文件。内容包括：
+
+- 各类游戏实体的定义方法（角色、技能、卡牌、状态、召唤物等）
+- 事件系统与触发器
+- 常用的快捷函数（`:damage`、`:heal` 等）
+- 变量与使用次数
+- 扩展系统
+- 特技与夜魂
+- 高级模式
+- TypeScript 互操作
+
+> **提示：** 快捷函数和属性列表仅列出最常用和典型的。完整的属性参考见对应 Provider 的 ViewModel 定义代码（`core/gts/vm_impl/` 目录）。

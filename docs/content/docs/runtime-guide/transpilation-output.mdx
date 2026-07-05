@@ -1,0 +1,200 @@
+---
+title: Transpilation 输出
+---
+
+理解 transpiler 的输出格式对运行时开发者至关重要。GTS 源码经过 transpiler 后变成标准 JavaScript，调用 runtime API 执行。
+
+## 输出结构
+
+给定 GTS 源码：
+
+```gts
+define character {
+  id 1201 as Barbara;
+  health 10;
+}
+```
+
+### 编译后输出
+
+```js
+import { createDefine, createBinding } from "@gi-tcg/gts-runtime";
+import __gts_rootVm from "@example/provider/vm";
+
+const __gts_node_0 = {
+  name: "character",
+  positionals: () => [],
+  named: {
+    attributes: [
+      {
+        name: "id",
+        positionals: () => [1201],
+        named: null,
+        binding: "public",
+      },
+      {
+        name: "health",
+        positionals: () => [10],
+        named: null,
+      },
+    ],
+  },
+};
+
+const __gts_bindings_0 = createBinding(__gts_rootVm, __gts_node_0);
+export const Barbara = __gts_bindings_0[0];
+createDefine(__gts_rootVm, __gts_node_0);
+```
+
+### 导入路径
+
+导入路径由 `package.json` 的 `gamingTs` 配置决定：
+
+- `runtimeImportSource` → `@gi-tcg/gts-runtime`（默认）
+- `providerImportSource/vm` → ViewModel 的默认导出路径
+
+## 属性节点格式
+
+```ts
+interface SingleAttributeNode {
+  name: string;
+  positionals: () => unknown[];
+  named: AttributeBlock | null;
+  binding?: "public" | "private" | "protected";
+}
+
+interface AttributeBlock {
+  attributes: SingleAttributeNode[];
+}
+```
+
+### 惰性 Positionals
+
+`positionals` 是返回数组的工厂函数，而非直接数组。这确保参数中的变量引用（如技能 Handle）在求值时已经被初始化：
+
+```ts
+// GTS 源码
+skills Origin, SecretArtMusouShinsetsu;
+
+// 编译后
+positionals: () => [Origin, SecretArtMusouShinsetsu]
+```
+
+### `binding` 字段
+
+仅在书写了 `as Name` 时，`binding` 字段才会出现。其值标记了访问修饰符：
+
+```gts
+id 1201 as Barbara;          // binding: "public"
+id 1201 as private Barbara;  // binding: "private"
+```
+
+## 嵌套属性块
+
+当属性有嵌套的 `{ ... }` 块时，`named` 字段被填充：
+
+```gts
+define character {
+  id 1201 as Barbara;
+  skills Origin {
+    // 嵌套块内容
+  }
+}
+```
+
+```js
+// 编译后
+{
+  name: "character",
+  named: {
+    attributes: [
+      {
+        name: "id",
+        positionals: () => [1201],
+        named: null,
+        binding: "public",
+      },
+      {
+        name: "skills",
+        positionals: () => [Origin],
+        named: {
+          attributes: [
+            /* 嵌套属性节点 */
+          ]
+        },
+      },
+    ],
+  },
+}
+```
+
+## 快捷函数的编译
+
+快捷函数编译为接受 `__gts_fnArg` 参数的箭头函数：
+
+```gts
+// GTS 源码
+when :( [DamageType.Pyro, DamageType.Physical].includes(:e.type) );
+```
+
+```js
+// 编译后
+positionals: () => [
+  (__gts_fnArg) => [DamageType.Pyro, DamageType.Physical].includes(__gts_fnArg.e.type)
+]
+```
+
+直接函数体编译为完整函数：
+
+```gts
+// GTS 源码
+define skill {
+  id 14073 as SecretArtMusouShinsetsu;
+  cost DiceType.Electro, 3;
+  :damage(DamageType.Electro, 3);
+  :gainEnergy(2, "all my characters and not @self");
+}
+```
+
+```js
+// 编译后（简化）
+{
+  name: "skill",
+  named: {
+    attributes: [
+      { name: "id", positionals: () => [14073], binding: "public" },
+      { name: "skillType", positionals: () => ["burst"] },
+      { name: "cost", positionals: () => [DiceType.Electro, 3] },
+      { name: "cost", positionals: () => [DiceType.Energy, 2] },
+      {
+        name: "[Action]",
+        positionals: () => [
+          (__gts_fnArg) => {
+            __gts_fnArg.damage(DamageType.Electro, 3);
+            __gts_fnArg.gainEnergy(2, "all my characters and not @self");
+          }
+        ],
+      },
+    ],
+  },
+}
+```
+
+直接函数体的属性名 `[Action]` 是内部保留值，运行时将其识别为默认行为。
+
+## `createDefine` vs `createBinding`
+
+两个函数都会触发完整的属性解析流程。区别在于：
+
+```js
+// createBinding — 返回绑定值
+const __gts_bindings_0 = createBinding(__gts_rootVm, __gts_node_0);
+export const Barbara = __gts_bindings_0[0];
+
+// createDefine — 执行副作用（注册实体）
+createDefine(__gts_rootVm, __gts_node_0);
+```
+
+两者都调用同一个 ViewModel 的 `parse()` 方法，但 `createBinding` 额外创建 `BindingContext` 来捕获 `as Name` 的导出值。Binding 顺序与属性在源码中的出现顺序一致。
+
+> **关于 transpiler 内部的更多细节**（AST 转换、Volar 映射等）请参考 [GTS Syntax Reference](/docs/gts-syntax) 和 [Language Tooling](/docs/language-tooling)。

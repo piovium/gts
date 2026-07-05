@@ -1,0 +1,16 @@
+{
+  "title": "运行时指南",
+  "root": true,
+  "pages": [
+    "index",
+    "mvvm-architecture",
+    "view-model",
+    "actions-binders",
+    "meta-rewriting",
+    "transpilation-output",
+    "provider-pattern",
+    "custom-attributes",
+    "nested-view-models",
+    "binding-mechanism"
+  ]
+}

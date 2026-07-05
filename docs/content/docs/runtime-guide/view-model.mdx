@@ -1,0 +1,194 @@
+---
+title: ViewModel 实现
+---
+
+`defineViewModel` 是创建 ViewModel 的核心函数。它接收一个 Model 构造函数和一个属性定义函数，返回一个配置好的 ViewModel 实例。
+
+## `defineViewModel` 签名
+
+```ts
+function defineViewModel<ModelT, BlockDef, InitMeta>(
+  Ctor: new () => ModelT,
+  modelDefFn: (helper: AttributeDefHelper<ModelT>) => BlockDef,
+  initMeta?: InitMeta,
+): ViewModel<ModelT, BlockDef & { [Meta]: InitMeta }>;
+```
+
+- **`Ctor`** — Model 类的构造函数（`new () => ModelT`）
+- **`modelDefFn`** — 属性定义函数，接收一个 helper，返回属性定义对象
+- **`initMeta`** — 初始 Meta 类型（用于类型层面的状态追踪）
+
+## 完整示例：CharacterViewModel
+
+参考 `genius-invokation` 的 `core/gts/vm_impl/character.ts`：
+
+```ts
+import { defineViewModel } from "@gi-tcg/gts-runtime";
+
+class CharacterBuilder {
+  id: CharacterHandle = null!;
+  since: string = "";
+  tags: Tag[] = [];
+  health: number = 0;
+  energy: number = 0;
+  skills: CharacterSkillHandle[] = [];
+
+  getEntry(): CharacterEntry {
+    return {
+      type: "character",
+      id: this.id,
+      tags: this.tags,
+      health: this.health,
+      energy: this.energy,
+      skills: this.skills,
+    };
+  }
+}
+
+const CharacterVM = defineViewModel(
+  CharacterBuilder,
+  (helper) => ({
+    id: helper.attribute<{
+      (id: number): AR.Done;
+      required(): true;
+      as(): CharacterHandle;
+    }>(
+      (model, [id]: [number]) => {
+        model.id = id as CharacterHandle;
+      },
+      (_, [id]) => id as CharacterHandle,
+    ),
+    since: helper.simpleAttribute()(function (version: string) {
+      this.since = version;
+    }),
+    tags: helper.simpleAttribute()(function (...tags: Tag[]) {
+      this.tags.push(...tags);
+    }),
+    health: helper.simpleAttribute()(function (value: number) {
+      this.health = value;
+    }),
+    energy: helper.simpleAttribute()(function (value: number) {
+      this.energy = value;
+    }),
+    skills: helper.simpleAttribute()(function (...handles: CharacterSkillHandle[]) {
+      this.skills.push(...handles);
+    }),
+  }),
+  {} as { varNames: never },
+);
+```
+
+## 属性定义的两种方式
+
+### `helper.attribute<T>(action, binder?)`
+
+完全控制 action 和 binder：
+
+```ts
+helper.attribute<{
+  (id: number): AR.Done;       // 类型签名（位置参数类型 + 返回值类型）
+  required(): true;             // 标记为必需属性
+  as(): CharacterHandle;        // binder 的返回类型
+}>(
+  // action: 如何操作 Model
+  (model, [id]) => { model.id = id as CharacterHandle; },
+  // binder: 如何提取绑定值（as Name 时使用）
+  (_, [id]) => id as CharacterHandle,
+)
+```
+
+**Action 签名：**
+
+```ts
+type AttributeAction<ModelT> = (
+  model: ModelT,
+  positionals: unknown[],
+  namedView: View<...> | null,
+) => unknown;
+```
+
+- `model` — Model 实例（`this` 不是 Model，需要显式传参）
+- `positionals` — 位置参数数组（如 `id 1201` → `[1201]`）
+- `namedView` — 如果此属性有嵌套块（如 `on enter { ... }`），则为嵌套的属性视图；否则为 `null`
+
+**Binder 签名：**
+
+```ts
+type AttributeBinder<ModelT> = (
+  model: ModelT,
+  positionals: unknown[],
+  namedView: View<...> | null,
+) => unknown;
+```
+
+Binder 的返回值会在 `as Name` 导出时被收集。
+
+### `helper.simpleAttribute(options?)`
+
+更简洁的定义方式——直接在 `this` 上操作 Model：
+
+```ts
+helper.simpleAttribute(options?)(
+  actionWithThis,    // this = ModelT
+  binderWithThis?,   // this = ModelT
+)
+```
+
+**示例：**
+
+```ts
+helper.simpleAttribute()(function(value: number) {
+  this.health = value;
+});
+```
+
+**选项：**
+
+```ts
+helper.simpleAttribute({ required: true, uniqueKey: "myKey" })
+```
+
+- **`required`** — 标记为必需属性（未填写时触发类型错误）
+- **`uniqueKey`** — 确保此属性在一个实体中只能出现一次
+
+## `AR` 返回类型
+
+`AttributeReturn` (alias `AR`) 命名空间定义了属性的返回类型标注：
+
+```ts
+AR.Done;                   // 无嵌套块，不修改 meta
+AR.This<TMeta>;            // 访问当前 meta 类型
+AR.EnableIf<Cond, T>;      // 条件类型
+AR.With<VM, TMeta>;         // 属性打开一个嵌套 VM 块
+AR.DoneRewriteMeta<NewMeta>;      // 属性重写 meta
+AR.WithRewriteMeta<NewMeta, VM>;  // 打开嵌套 VM + 重写 meta
+```
+
+这些在 `TypeScript Interop` 中用于为 IDE 提供精确的类型信息，不影响运行时逻辑。
+
+## Root ViewModel — 根调度
+
+根 ViewModel (`vm_impl/index.ts`) 通过属性名 dispatch 到子 ViewModel：
+
+```ts
+const RootVM = defineViewModel(RootBuilder, (helper) => ({
+  character: helper.attribute<{
+    (): AR.With<typeof CharacterVM>;
+  }>(
+    (_, __, view) => CharacterVM.parse(view),
+  ),
+  skill: helper.attribute<{
+    (): AR.With<typeof CharacterSkillVM>;
+  }>(
+    (_, __, view) => CharacterSkillVM.parse(view),
+  ),
+  status: helper.attribute<{
+    (): AR.With<typeof StatusVM>;
+  }>(
+    (_, __, view) => EntityVM("status").parse(view),
+  ),
+  // ... 其他实体类型
+}));
+```
+
+> **完整的 ViewModel 实现参考**见 `genius-invokation/packages/core/src/gts/vm_impl/` 下的各文件。尤其是 `index.ts`（RootVM）、`character.ts`（角色）和 `entity.ts`（实体）是最完整的参考实现。

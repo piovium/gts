@@ -1,0 +1,294 @@
+---
+title: 快捷函数参考
+---
+
+快捷函数 (shortcut function) 以 `:method(args)` 形式书写，是 GTS DSL 中编写游戏逻辑的核心语法。`:` 前缀表示在事件上下文对象上调用方法。
+
+> 以下列出最常用的快捷函数。完整的函数列表和参数类型请参考 Provider 的 ViewModel 定义代码（`core/gts/vm_impl/` 目录下各文件）。
+
+## 上下文变量
+
+在快捷函数内，你可以使用以下上下文变量：
+
+- **`:e`** — 当前事件对象
+- **`:self`** — 当前实体自身
+- **`:player`** — 当前实体所属玩家
+- **`:oppPlayer`** — 对方玩家
+- **`$`** — Query Fluent API 入口（详见 [genius-invokation query 文档](https://github.com/piovium/genius-invokation/tree/main/docs/development/query)）
+
+## 伤害与治疗
+
+### `:damage(type, amount, target?)`
+
+造成伤害。`type` 为 `DamageType` 枚举值，`amount` 为数值，`target` 可选（默认为对方出战角色）：
+
+```gts
+:damage(DamageType.Hydro, 3);
+:damage(DamageType.Piercing, 1, $.macros.myLeastInjured);
+```
+
+### `:heal(amount, target?)`
+
+治疗。`target` 可选（默认为所附属角色）：
+
+```gts
+:heal(1, $.my.character);
+:heal(2);
+// 等价于 :heal(2, "@master")
+```
+
+目标可以是查询表达式或特殊字符串：
+- `"@master"` — 所附属角色
+- `"@self"` — 自身
+- `$.my.character` / `$.my.standby` / `$.macros.myMostInjured` 等
+
+### `:e.increaseDamage(amount)` / `:e.decreaseDamage(amount)`
+
+在 `increaseSkillDamage` / `decreaseDamaged` 等事件中，修改即将造成的伤害值：
+
+```gts
+on increaseSkillDamage {
+  :e.increaseDamage(2);
+}
+```
+
+## 实体操作
+
+### `:summon(handle)`
+
+召唤一个召唤物：
+
+```gts
+:summon(EyeOfStormyJudgment);
+```
+
+参数为 `define summon { id X as HandleName }` 导出的 Handle。
+
+### `:characterStatus(handle, target?)`
+
+给角色附属状态：
+
+```gts
+:characterStatus(ChakraDesiderataStatus);
+:characterStatus(BattlePlan, $.my.active);
+```
+
+### `:combatStatus(handle)`
+
+给出战方附属出战状态：
+
+```gts
+:combatStatus(UniversalRevelry);
+```
+
+### `:dispose()`
+
+移除当前实体：
+
+```gts
+:dispose();
+```
+
+### `:attach(handle, target)`
+
+给卡牌（手牌/牌库牌）附属 attachment：
+
+```gts
+:attach(Conductive, targetHand);
+```
+
+## 骰子和费用
+
+### `:e.deductOmniCost(amount)`
+
+在费用扣除事件中减少消耗的骰子数：
+
+```gts
+on deductOmniDiceSkill {
+  usage 2;
+  :e.deductOmniCost(2);
+}
+```
+
+### `:e.deductVoidCost(amount)`
+
+在无色费用扣除事件中减少消耗：
+
+```gts
+on deductVoidDiceSkill {
+  :e.deductVoidCost(1);
+}
+```
+
+### `:generateDice(type, amount)`
+
+生成元素骰：
+
+```gts
+:generateDice(DiceType.Omni, 2);
+:generateDice("randomElement", 1);
+```
+
+### `:gainEnergy(amount, target)`
+
+给角色充能：
+
+```gts
+:gainEnergy(2, "all my characters and not @self");
+```
+
+## 手牌和牌库
+
+### `:drawCards(count)`
+
+抓牌：
+
+```gts
+:drawCards(2);
+```
+
+### `:createHandCard(handle)`
+
+生成手牌：
+
+```gts
+:createHandCard(SeatsSacredAndSecular);
+```
+
+### `:createPileCards(handle, count, placement)`
+
+在牌库中置入卡牌：
+
+```gts
+:createPileCards(TaroumarusSavings, 4, "spaceAround");
+```
+
+`placement` 可选值：`"random"`、`"spaceAround"`、`"topRange5"` 等。
+
+## 技能和行动
+
+### `:useSkill(handle)`
+
+使用技能：
+
+```gts
+:useSkill(SecretArtMusouShinsetsu);
+```
+
+### `:switchActive(target)`
+
+切换出战角色：
+
+```gts
+:switchActive($.recentOppFrom.my.active);
+```
+
+## 查询
+
+### `:query(expression)`
+
+执行一次查询并返回查询结果：
+
+```gts
+const target = :query($.macros.myMaxHealth);
+if (target) {
+  :damage(DamageType.Piercing, :getVariable("layer"), target);
+}
+```
+
+查询表达式的写法参考 [Query Fluent API 文档](https://github.com/piovium/genius-invokation/tree/main/docs/development/query)。
+
+### `:random(items)`
+
+从数组中随机选取一个元素：
+
+```gts
+const targetHand = :random(:oppPlayer.hands);
+```
+
+## 变量
+
+### `:getVariable(name)` / `:setVariable(name, value)`
+
+读写实体上的自定义变量：
+
+```gts
+const currentVal = :getVariable("chakra");
+:setVariable("chakra", 0);
+```
+
+### `:addVariable(name, delta)` / `:addVariableWithMax(name, delta, max)`
+
+给变量加/减一个值：
+
+```gts
+:addVariable("lake", 1);
+:addVariableWithMax("chakra", 1, 3);
+```
+
+### `:consumeUsage(amount?)`
+
+消耗使用次数：
+
+```gts
+:consumeUsage(1);
+```
+
+## 生成实体
+
+### `:createEntity(type, definition, location)`
+
+创建任意实体：
+
+```gts
+:createEntity("support", def, {
+  type: "supports",
+  who: :self.who
+});
+```
+
+## 杂项
+
+### `:transformDefinition(entity, newDefinition)`
+
+改变实体的定义（形态转换）：
+
+```gts
+:transformDefinition(furina, FurinaOusia);
+:transformDefinition(summon, SingerOfManyWaters);
+```
+
+---
+
+
+### `:e.changeDamageType(type)`
+
+修改即将造成的伤害类型：
+
+```gts
+:e.changeDamageType(DamageType.Hydro);
+```
+
+### `:e.setFastAction()`
+
+将当前行动标记为快速行动：
+
+```gts
+on beforeFastSwitch {
+  usagePerRound 1;
+  :e.setFastAction();
+}
+```
+
+---
+
+
+### `:consumeNightsoul(target)`
+
+消耗夜魂点数：
+
+```gts
+:consumeNightsoul("@master");
+```
+
+> **完整的快捷函数列表**和各函数支持的所有参数变体，请参考 Provider 的 ViewModel 实现代码。推荐从 `core/gts/vm_impl/entity.ts`（实体操作）、`core/gts/vm_impl/skill.ts`（技能操作）、`core/gts/vm_impl/card.ts`（卡牌操作）开始查阅。

@@ -1,0 +1,151 @@
+---
+title: Action 与 Binder
+---
+
+Action 和 Binder 是 ViewModel 中每个属性的两个核心处理函数。理解它们的区别和协同工作是实现自定义 Provider 的关键。
+
+## Action vs Binder
+
+| | Action | Binder |
+|---|---|---|
+| **触发场景** | `createDefine` 和 `createBinding` 都调用 | 仅 `createBinding` 中调用 |
+| **目的** | 修改 Model 的状态 | 提取 `as Name` 的导出值 |
+| **返回值的处理** | 一般忽略（除嵌套 VM 情况） | 被 `BindingContext` 收集 |
+| **`this` 绑定** | `simpleAttribute` 中绑定到 Model，`attribute` 中为 `undefined` | 同左 |
+
+## 实际例子：`id` 属性的 Action 和 Binder
+
+Ref: `core/gts/vm_impl/character.ts`
+
+```ts
+id: helper.attribute<{
+  (id: number): AR.Done;
+}>(
+  // Action — 设置 Model 的 id
+  (model, [id]: [number]) => {
+    model.id = id as CharacterHandle;
+  },
+  // Binder — 返回 id 值，供 as 导出
+  (_, [id]) => id as CharacterHandle,
+)
+```
+
+当 transpiler 生成此属性的节点并有 `as` 子句：
+
+```
+id 1201 as Barbara
+```
+
+运行时行为：
+1. **Action** — `model.id = 1201`（在 `createDefine` 和 `createBinding` 中都执行）
+2. **Binder** — 返回 `1201`，被绑定上下文收集为 `Barbara`
+
+## Action 的参数
+
+### Positionals — 惰性求值
+
+位置参数通过 `() => [...]` 惰性包裹。这是因为参数可能引用尚未定义的其他实体：
+
+```ts
+skills WhisperOfWater, ShiningMiracle
+// positionals: () => [WhisperOfWater, ShiningMiracle]
+```
+
+惰性求值确保在使用时这些变量已经被初始化。
+
+### NamedView — 嵌套块
+
+如果属性有嵌套块（`{ ... }`），`namedView` 包含嵌套的属性树：
+
+```gts
+talent RaidenShogun {
+  on enter { ... }
+}
+```
+
+```ts
+// action 中：
+(model, [handle], namedView) => {
+  // namedView 包含 { name: null, attributes: [on节点...] }
+  TalentSkillVM.parse(namedView);
+}
+```
+
+## Binder 的三种形式
+
+### 1. 函数 Binder
+
+```ts
+(_, [id]) => id as CharacterHandle
+```
+
+最直接的形式——返回绑定值。
+
+### 2. ViewModel Binder
+
+如果属性打开了嵌套 ViewModel，可以直接将 child VM 作为 binder：
+
+```ts
+helper.attribute<{ (): AR.With<typeof SkillVM> }>(
+  (_, __, view) => SkillVM.parse(view),
+  SkillVM,  // binder 是一个 ViewModel
+);
+```
+
+当做 binder 使用时，`SkillVM.parse(namedView)` 的返回值会被收集为绑定值。
+
+### 3. 无 Binder
+
+```ts
+helper.simpleAttribute()(function(tag: string) {
+  this.tags.push(tag);
+});
+// 没有 binder —— 此属性不支持 as 导出
+```
+
+## `simpleAttribute` 的工作原理
+
+```ts
+const since = helper.simpleAttribute()(
+  function (version: string) {
+    // this 绑定到 Model 实例
+    this.since = version;
+  }
+);
+```
+
+`simpleAttribute` 内部包装了 action 函数：
+1. 解构 positionals
+2. 将 `this` 绑定到 Model
+3. 调用用户的 action 函数
+
+可选地，`simpleAttribute` 也可以提供 binder：
+
+```ts
+helper.simpleAttribute()(
+  function(value: number) { this.health = value; },
+  function() { return this.health; }, // binder
+);
+```
+
+## Action 中处理嵌套 VM
+
+当一个属性的嵌套块需要由子 ViewModel 处理时：
+
+```ts
+character: helper.attribute<{(): AR.With<typeof CharacterVM>}>(
+  (_, __, view) => {
+    // view 是嵌套的属性节点
+    return CharacterVM.parse(view);
+  }
+)
+```
+
+`AR.With<VM>` 返回类型告诉类型系统此属性会打开子 VM，用于 IDE 的代码补全和类型检查。
+
+## 安全性和错误处理
+
+- 未知属性名 → 运行时错误
+- `required()` 标记的属性未提供 → 类型检查时错误（Volar）
+- 重复的 `uniqueKey` → 类型检查时错误
+- Binder 在非 `createBinding` 上下文中 → 不执行（无副作用）

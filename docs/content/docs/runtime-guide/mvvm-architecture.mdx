@@ -1,0 +1,140 @@
+---
+title: MVVM 架构
+---
+
+GTS 运行时采用 **Model-View-ViewModel (MVVM)** 模式来处理 `define` 语句。这一架构将 transpiler 的输出（View）与游戏的业务逻辑（Model）解耦。
+
+## 三要素
+
+### Model — 数据累积器
+
+Model 是一个普通的 TypeScript 类，它累积属性解析过程中的数据：
+
+```ts
+class CharacterBuilder {
+  id: number = 0;
+  version: string = "";
+  tags: Tag[] = [];
+  health: number = 0;
+  energy: number = 0;
+  skills: CharacterSkillHandle[] = [];
+
+  getEntry(): CharacterEntry {
+    return { ... };
+  }
+}
+```
+
+每个 `define character { ... }` 语句会创建一个新的 `CharacterBuilder` 实例。属性值通过 action 逐个赋值，最后通过 `getEntry()` 产出最终的游戏数据定义。
+
+### View — 属性节点树
+
+View 是 transpiler 编译后的属性数据结构，它在运行时被传入 ViewModel：
+
+```ts
+// GTS 源码
+define character {
+  id 1201 as Barbara;
+  health 10;
+}
+
+// 编译后（简化）
+const __gts_node = {
+  name: "character",
+  positionals: () => [],
+  named: {
+    attributes: [
+      { name: "id", positionals: () => [1201], named: null, binding: "public" },
+      { name: "health", positionals: () => [10], named: null },
+    ],
+  },
+};
+```
+
+每个属性节点包含：
+- `name` — 属性名
+- `positionals` — 位置参数（惰性求值）
+- `named` — 嵌套的属性节点（如果此属性自身是一个块）
+- `binding` — 如果使用了 `as Name`，标记为 `"public"` / `"private"` 等
+
+### ViewModel — 属性注册表
+
+ViewModel 是一个注册表，将属性名映射到：
+
+1. **Action** — 操作 Model 的函数（设置属性值）
+2. **Binder** — 提取绑定值的函数（`as Name` 导出的值）
+
+```ts
+const CharacterVM = defineViewModel(CharacterBuilder, (helper) => ({
+  id: helper.attribute({
+    action: (model, pos) => { model.id = pos[0]; },
+    binder: (model, [id]) => id as CharacterHandle,
+  }),
+  health: helper.simpleAttribute({
+    action: function(value: number) { this.health = value; }
+  }),
+}));
+```
+
+## 执行流程
+
+```
+createDefine(rootVM, node)
+  │
+  ▼
+rootVM.parse(view)
+  │
+  ├─ 创建 RootModel 实例
+  ├─ 遍历 view.attributes
+  │   ├─ 对每个 attribute:
+  │   │   ├─ 查找注册的 action
+  │   │   ├─ 调用 action(model, positionals, namedView)
+  │   │   │   ├─ 如果 action 包含嵌套 VM:
+  │   │   │   │   └─ childVM.parse(namedView) → childModel
+  │   │   │   └─ 更新 model 属性
+  │   │   └─ 如果 binding 存在 → 收集绑定值
+  │   └─ 继续下一个属性
+  └─ 返回 model
+```
+
+## ViewModel 的 `parse()` 方法
+
+```ts
+parse(view: View): ModelT {
+  const model = new this.Ctor();
+
+  for (const attrNode of view._node.attributes) {
+    const registered = this.registry.get(attrNode.name);
+    if (!registered) throw new Error(`Unknown attribute: ${attrNode.name}`);
+
+    const result = registered.action(
+      model,
+      attrNode.positionals(),
+      new View(attrNode.named)
+    );
+
+    if (view._bindingCtx && attrNode.binding) {
+      view._bindingCtx.collect(result);
+    }
+  }
+
+  return model;
+}
+```
+
+## 在 genius-invokation 中的实际结构
+
+`packages/core/src/gts/vm_impl/` 下根据实体类型拆分了多个 ViewModel 文件：
+
+| 文件 | 用途 |
+|---|---|
+| `index.ts` | Root ViewModel — dispatch `define` 的根属性名到子 VM |
+| `character.ts` | `CharacterViewModel` — 处理角色定义 |
+| `skill.ts` | `InitiativeSkillViewModel` / `TriggeredSkillViewModel` — 处理主动/被动技能 |
+| `card.ts` | `CardViewModel` — 处理卡牌定义 |
+| `entity.ts` | `EntityViewModel("status"|"combatStatus"|"summon")` — 处理实体 |
+| `attachment.ts` | `AttachmentViewModel` — 处理卡牌附属 |
+| `extension.ts` | `ExtensionViewModel` — 处理扩展定义 |
+| `technique.ts` | `TechniqueViewModel` — 处理特技定义 |
+| `entity_auxilary.ts` | 小型 VM：NightsoulVM、GlobalUsageVM、PrepareVM、FoodVM 等 |
+| `variables.ts` | VariablesVM、UsageVM — 处理变量和使用次数 |

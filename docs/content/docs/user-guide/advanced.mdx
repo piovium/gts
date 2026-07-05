@@ -1,0 +1,64 @@
+---
+title: 高级模式
+---
+
+本章介绍一些高级但常用的 GTS 编程模式，包括代码片段复用、实体变形、卡牌置入等。
+
+## 代码片段 (`defineSnippet` / `:callSnippet`)
+
+当多个事件处理中有重复逻辑时，使用 `defineSnippet` 定义可复用的代码片段：
+
+```gts
+define summon {
+  id 205 as Thundercloud;
+  hint DamageType.Electro, 2;
+  defineSnippet giveOppRandomCardConductive, :{
+    if (:oppPlayer.hands.length === 0) {
+      return;
+    }
+    const targetHand = :random(:oppPlayer.hands);
+    :attach(Conductive, targetHand);
+  };
+  on endPhase {
+    usage 1 { append };
+    :damage(DamageType.Electro, 2);
+  }
+  on enter {
+    :callSnippet.giveOppRandomCardConductive();
+  }
+  on gainUsage {
+    when :( :e.entity.id === :self.id );
+    :callSnippet.giveOppRandomCardConductive();
+  }
+}
+```
+
+- **`defineSnippet <名称>, :{ <函数体> }`** — 定义命名片段
+- **`:callSnippet.<名称>()`** — 调用片段
+
+片段可以访问当前事件处理器中的所有上下文变量（`:e`、`:self`、`:player` 等）。
+
+## 直接函数内的 TypeScript 逻辑
+
+技能体和卡牌效果中可以直接使用完整的 TypeScript 语法（条件、循环、箭头函数等）：
+
+```gts
+define card {
+  id 333030 as RouletteSpecial;
+  costSame 4;
+  food;
+  const target = e.targets[0];
+  const effects = [
+    () => :heal(2, target),
+    () => :increaseMaxHealth(1, target),
+    () => :characterStatus(BattlePlan, target),
+    () => :characterStatus(SharpenTheBlade, target),
+  ];
+  for (let i = 0; i < 4; i++) {
+    const effect = :random(effects);
+    effect();
+  }
+}
+```
+
+> **更多高级特性**（如 `replaceDescription`、`createEntity`、`moveEntity`、`absorbDice`、`abortPreview`、`defineSnippet` 在卡牌上等）请参考 Provider 的 ViewModel 定义代码和 [genius-invokation 的数据文档](https://github.com/piovium/genius-invokation/tree/main/docs/development/data)。

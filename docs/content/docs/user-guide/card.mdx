@@ -1,0 +1,202 @@
+---
+title: 卡牌定义
+---
+
+卡牌 (card) 是玩家从手牌中打出的游戏实体。GTS 支持天赋牌、武器、圣遗物、事件牌、支援牌、料理牌和特技牌等多种卡牌类型。
+
+## 基本结构
+
+```gts
+define card {
+  id <数字ID> as <导出名>;
+  since "<版本号>";
+  cost <骰子类型>, <数量>;
+  // 卡牌类型与效果
+}
+```
+
+## 通用属性
+
+### `id`、`since`、`cost`
+
+与角色和技能一致：
+
+```gts
+define card {
+  id 333031 as LakkaberryPie;
+  since "v6.7.0";
+  cost DiceType.Aligned, 4;
+  // ...
+}
+```
+
+骰子费用类型：
+- `DiceType.Hydro` / `.Pyro` / `.Electro` 等 — 指定元素
+- `DiceType.Void` — 无色元素
+- `DiceType.Aligned` — 同色元素
+- `DiceType.Energy` — 充能
+
+### `filter` — 打出条件
+
+```gts
+filter :( :query($.my.character.def(FurinaPneuma)) );
+```
+
+限制此牌只有在满足某些条件时才可从手牌中打出。
+
+### `tags` — 卡牌标签
+
+```gts
+tags "food";
+```
+
+标记卡牌的类别标签，通常用于卡牌间的互相引用和检索。
+
+### `undiscoverable` — 不可被发现
+
+```gts
+undiscoverable;
+```
+
+标记此卡牌无法通过常规途径获得（如随机生成、发现等），只能通过特定机制获得。
+
+### `reserve` — 预留 ID
+
+```gts
+export const SkywardSword = card(133089)
+  .reserve();
+```
+
+在 Builder 风格中，`reserve()` 标记仅占用 ID 但不定义效果的卡牌（常用于骗骗花等特殊场景）。
+
+## 卡牌类型
+
+### 天赋牌 (`talent`)
+
+天赋牌是特定角色才能装备的装备牌，通常具有入场效果和技能效果增强：
+
+```gts
+define card {
+  id 214071 as WishesUnnumbered;
+  since "v3.7.0";
+  cost DiceType.Electro, 3;
+  cost DiceType.Energy, 2;
+  talent RaidenShogun {
+    on enter {
+      :useSkill(SecretArtMusouShinsetsu);
+    }
+  }
+}
+```
+
+`talent <角色Handle>` 后面的代码块为天赋效果。天赋牌的 `as` 导出名通常与角色 Handle 一起组成技能引用。
+
+天赋牌还支持多角色绑定：
+
+```gts
+talent [FurinaPneuma, FurinaOusia] {
+  on enter {
+    if (:self.master.definition.id === FurinaPneuma) {
+      :useSkill(SalonSolitairePneuma);
+    } else {
+      :useSkill(SalonSolitaireOusia);
+    }
+  }
+  on useSkill {
+    when :( :e.isSkillType("elemental") );
+    :characterStatus(CenterOfAttention, "@master");
+  }
+}
+```
+
+### 装备牌 (weapon/artifact)
+
+参考 Provider 代码 `core/gts/vm_impl/card.ts` 了解武器和圣遗物的具体属性定义。
+
+### 事件牌
+
+事件牌打出后执行效果，然后进入弃牌堆：
+
+```gts
+define card {
+  id 333031 as LakkaberryPie;
+  since "v6.7.0";
+  cost DiceType.Aligned, 4;
+  food;
+  :characterStatus(LakkaberryPieInEffect, :e.targets[0]);
+}
+```
+
+### 支援牌 (support)
+
+支援牌打出后留存在支援区，持续生效：
+
+```gts
+define card {
+  id 322001 as Paimon;
+  since "v3.3.0";
+  costSame 3;
+  support "ally" {
+    on actionPhase {
+      usage 2;
+      :generateDice(DiceType.Omni, 2);
+    }
+  }
+}
+```
+
+在 `define` DSL 中，支援牌的效果直接写在 `define card` 块中即可。
+
+### 料理牌 (food)
+
+```gts
+define card {
+  id 333031 as LakkaberryPie;
+  since "v6.7.0";
+  cost DiceType.Aligned, 4;
+  food;
+  :characterStatus(LakkaberryPieInEffect, :e.targets[0]);
+}
+```
+
+`food` 关键字自动附带目标选择（"选择我方一名角色"）和饱腹限制。可以使用 `food { injuredOnly; }` 等选项控制。
+
+### 事件响应卡 (`on selfDiscard`)
+
+有些卡牌自身被舍弃时触发效果：
+
+```gts
+define card {
+  id 113154 as FlamestriderSoaringAscent;
+  cost DiceType.Void, 3;
+  on selfDiscard {
+    enablePileTriggering;
+    :damage(DamageType.Pyro, 1);
+  }
+}
+```
+
+## 完整示例
+
+```gts
+define card {
+  id 212111 as HearMeLetUsRaiseTheChaliceOfLove;
+  since "v4.7.0";
+  cost DiceType.Hydro, 3;
+  talent [FurinaPneuma, FurinaOusia] {
+    on enter {
+      if (:self.master.definition.id === FurinaPneuma) {
+        :useSkill(SalonSolitairePneuma);
+      } else {
+        :useSkill(SalonSolitaireOusia);
+      }
+    }
+    on useSkill {
+      when :( :e.isSkillType("elemental") );
+      :characterStatus(CenterOfAttention, "@master");
+    }
+  }
+}
+```
+
+> **卡牌相关的所有可用属性和选项**（武器类型、圣遗物类别、料理选项、支援牌类型等）请参考 Provider 的 ViewModel 定义代码：`core/gts/vm_impl/card.ts`。

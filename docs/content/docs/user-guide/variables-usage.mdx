@@ -1,0 +1,183 @@
+---
+title: 变量与使用次数
+---
+
+实体可以拥有自定义变量 (`variable`) 来追踪状态，以及使用次数 (`usage`) 来限制事件触发次数。这两者是卡牌设计中控制效果次数和状态的核心机制。
+
+## 变量 (`variable`)
+
+### 定义变量
+
+```gts
+variable <变量名>, <初始值> { <选项> };
+```
+
+在实体的顶层定义变量：
+
+```gts
+define status {
+  id 114072 as ChakraDesiderataStatus;
+  variable chakra, 0;
+  // ...
+}
+```
+
+### 支持叠加的变量
+
+对于可叠加、有上限的变量，使用 `addVariableWithMax` 配合 `{ append }` 选项：
+
+```gts
+variable count, 0 { append Infinity };
+// append 选项使变量可以叠加，Infinity 为上限
+```
+
+### 读写变量
+
+在事件处理体内：
+
+```gts
+const currentVal = :getVariable("chakra");       // 读取
+:setVariable("chakra", 0);                        // 设置
+:addVariable("lake", 1);                          // 增减
+:addVariableWithMax("chakra", 1, 3);              // 增减（带上限）
+```
+
+### 示例：愿力计数器
+
+```gts
+define status {
+  id 114072 as ChakraDesiderataStatus;
+  variable chakra, 0;
+  on useSkill {
+    when :( :e.isSkillType("burst") && :e.skill.caller.id !== :self.master.id );
+    listenTo samePlayer;
+    :addVariableWithMax("chakra", 1, 3);
+  }
+  on increaseSkillDamage {
+    when :( :e.via.definition.id === SecretArtMusouShinsetsu );
+    const currentVal = :getVariable("chakra");
+    :e.increaseDamage(currentVal);
+    :setVariable("chakra", 0);
+  }
+}
+```
+
+## 使用次数 (`usage`)
+
+### 在事件中定义 `usage`
+
+`usage` 定义在 `on` 事件块内部，表示此事件处理器的可使用次数：
+
+```gts
+on endPhase {
+  usage 3;                    // 最多触发 3 次
+  :damage(DamageType.Electro, 1);
+}
+```
+
+### `usage` 选项
+
+```gts
+usage 2 { <选项> };
+```
+
+常用选项：
+
+| 选项 | 效果 |
+|---|---|
+| `append <最大值>` | 可叠加，最多到指定值。如 `append 4` 表示最多叠加到 4 次 |
+| `autoDecrease false` | 不自动减少次数（需手动调用 `:consumeUsage()`） |
+| `visible false` | 不在 UI 中显示使用次数 |
+| `name <名称>` | 给这个 usage 计数器命名（与同实体内其他 usage 区分） |
+
+### `usage perRound, N` — 每回合使用次数
+
+```gts
+usage perRound, 1;        // 每回合最多 1 次
+usage perRound, 1 { name usagePerRound1 };
+```
+
+每回合重置的使用次数限制。
+
+### 示例：可叠加的使用次数
+
+```gts
+define summon {
+  id 112111 as SalonMembers;
+  hint DamageType.Hydro, 1;
+  on endPhase {
+    usage 2 { append 4 };
+    if (:query($.my.character.var("health", ">=", 6))) {
+      :damage(DamageType.Piercing, 1, $.macros.myLeastInjured);
+      :damage(DamageType.Hydro, 1);
+    }
+  }
+}
+```
+
+此召唤物初始可用 2 次，最多可叠加到 4 次。
+
+### 手动消耗使用次数
+
+```gts
+on decreaseDamaged {
+  :e.decreaseHeal(deducted);
+  :consumeUsage(deducted);   // 手动消耗
+}
+```
+
+当 `autoDecrease` 设为 `false` 时，需要在事件处理体中手动调用 `:consumeUsage()`。
+
+### 示例：生命之契（手动消耗）
+
+```gts
+define status {
+  id 122 as BondOfLife;
+  tags bondOfLife;
+  on decreaseHealed {
+    when :( :e.healInfo.healKind !== "distribution" );
+    usage 1 {
+      append { limit: Infinity },
+      autoDecrease: false,
+    };
+    const deducted = Math.min(:getVariable("usage"), :e.expectedValue);
+    :e.decreaseHeal(deducted);
+    :consumeUsage(deducted);
+  }
+}
+```
+
+## 多重使用次数管理
+
+同一个实体可以有多个带 `name` 的 `usage`：
+
+```gts
+define card {
+  id 322005 as ChefMao;
+  support "ally";
+  on playCard {
+    when :( :e.hasCardTag("food") );
+    usage perRound, 1;           // 一个计数器
+    :generateDice("randomElement", 1);
+  }
+  on playCard {
+    when :( :e.hasCardTag("food") );
+    usage 1 {
+      autoDispose false,
+      visible false,
+      name drawOnce;             // 另一个计数器，独立管理
+    };
+    :drawCards(1, { withTag: "food" });
+  }
+}
+```
+
+## 全局使用次数
+
+某些效果需要在整个出战方或角色之间共享使用次数，此时用 `globalUsage`：
+
+```gts
+globalUsage 2;
+```
+
+> 完整的 usage 选项和 globalUsage 机制请参考 `core/gts/vm_impl/variables.ts` 和 `core/gts/vm_impl/entity_auxilary.ts` 的 ViewModel 实现代码。

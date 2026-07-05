@@ -1,0 +1,133 @@
+---
+title: 快速上手
+---
+
+本文介绍如何从零开始搭建一个使用 GTS 的项目，并编写你的第一张卡牌定义。
+
+## 项目配置
+
+### 安装依赖
+
+GTS 工具链需要以下 npm 包：
+
+- `@gi-tcg/gts-transpiler` — transpiler 核心
+- `@gi-tcg/gts-runtime` — 运行时库
+- `@gi-tcg/unplugin-gts` — 构建插件（vite、esbuild 等）
+- `@gi-tcg/gtsc` — CLI 类型检查（可选）
+
+此外，你还需要一个 **Provider** 包——它定义了你的游戏领域的 ViewModel（即可用的 `define` 属性和快捷函数）。以七圣召唤为例，Provider 来自 `genius-invokation` 项目的 `@gi-tcg/core` 包。
+
+### 配置 `package.json`
+
+在项目的 `package.json` 中添加 `gamingTs` 字段，指定 Provider 和 Runtime 的导入路径：
+
+```json
+{
+  "gamingTs": {
+    "providerImportSource": "@gi-tcg/core/gts",
+    "runtimeImportSource": "@gi-tcg/core/gts"
+  }
+}
+```
+
+- `providerImportSource` — Provider 包的路径前缀，将从此路径的 `/vm` 子路径导入 root ViewModel
+- `runtimeImportSource` — Runtime 函数（`createDefine`、`createBinding`）的导入源
+
+### 构建集成
+
+使用 vite：
+
+```ts
+import { gts } from "@gi-tcg/unplugin-gts/vite";
+
+export default {
+  plugins: [gts()],
+};
+```
+
+## 第一个角色定义
+
+下面是一个最小但完整的角色定义示例：
+
+```gts
+import { DamageType, DiceType } from "@gi-tcg/core/builder";
+
+define skill {
+  id 12011 as WhisperOfWater;
+  skillType normal;
+  cost DiceType.Hydro, 1;
+  cost DiceType.Void, 2;
+  :damage(DamageType.Physical, 2);
+}
+
+define skill {
+  id 12012 as ShiningMiracle;
+  skillType elemental;
+  cost DiceType.Hydro, 3;
+  :damage(DamageType.Hydro, 3);
+  :heal(1, $.my.character);
+}
+
+define character {
+  id 1201 as Barbara;
+  since "v3.3.0";
+  tags hydro, catalyst, mondstadt;
+  health 10;
+  energy 3;
+  skills WhisperOfWater, ShiningMiracle;
+}
+```
+
+### 关键要点
+
+1. **`import`** 从 Provider 导入类型和工具（`DamageType`、`DiceType`、`$` 查询宏等）
+2. **`define skill { ... }`** 定义技能——先写技能，再在角色中引用
+3. **`define character { ... }`** 定义角色——包含 `id`、`tags`、基础属性、`skills` 列表
+4. **`as Name`** 将定义导出为一个变量，供其他定义引用
+5. **快捷函数** 以 `:method(args)` 形式在技能体内调用
+
+## 第一个卡牌定义
+
+```gts
+define status {
+  id 106 as Frozen;
+  oneDuration;
+  tags disableSkill;
+  on increaseDamaged {
+    when :( [DamageType.Pyro, DamageType.Physical].includes(:e.type) );
+    :e.increaseDamage(2);
+    :dispose();
+  }
+}
+```
+
+这个定义创建了一个名为"冻结"的角色状态：
+- `oneDuration` — 持续到回合结束
+- `tags disableSkill` — 标记为禁用技能
+- `on increaseDamaged` — 当所附属角色受伤时触发
+- `when :( ... )` — 条件过滤器（仅火元素/物理伤害触发）
+- `:e.increaseDamage(2)` — 增加伤害
+- `:dispose()` — 移除此状态
+
+## 文件组织
+
+在 `genius-invokation` 中，`.gts` 文件按此结构组织：
+
+```
+data/src/
+├── begin.ts               # 入口：创建 Registry，开始作用域
+├── end.ts                 # 结束作用域，导出 getter
+├── index.ts               # 聚合所有数据文件
+├── commons.gts            # 通用共享状态（冻结、结晶等）
+├── characters/
+│   ├── pyro/mavuika.gts
+│   ├── hydro/furina.gts
+│   └── ...
+└── cards/
+    ├── equipment/weapon/sword.gts
+    ├── event/food.gts
+    ├── support/ally.gts
+    └── ...
+```
+
+`begin.ts` 和 `end.ts` 包装了数据加载作用域，确保所有 `define` 语句的副作用被正确记录。

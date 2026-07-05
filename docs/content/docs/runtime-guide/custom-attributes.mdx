@@ -1,0 +1,232 @@
+---
+title: 自定义属性
+---
+
+实现一个自定义属性需要：定义 Model 字段、注册 action（和可选的 binder）、声明类型签名。
+
+## 实现步骤
+
+### 1. 定义 Model 类
+
+首先，在 Model 类中添加新属性的存储字段：
+
+```ts
+class MyEntityBuilder {
+  id: number = 0;
+  tags: string[] = [];
+  myCustomValue: string = "";
+
+  getEntry() {
+    return {
+      type: "myEntity",
+      id: this.id,
+      tags: this.tags,
+      myCustomValue: this.myCustomValue,
+    };
+  }
+}
+```
+
+### 2. 注册属性
+
+在 `defineViewModel` 的属性定义对象中添加新属性：
+
+```ts
+const MyEntityVM = defineViewModel(MyEntityBuilder, (helper) => ({
+  // 已有属性
+  id: helper.simpleAttribute()(function(id: number) {
+    this.id = id;
+  }),
+
+  // 自定义属性
+  myProperty: helper.simpleAttribute()(function(value: string) {
+    this.myCustomValue = value;
+  }),
+}));
+```
+
+### 3. 声明类型签名（可选但推荐）
+
+为 IDE 支持添加类型签名：
+
+```ts
+myProperty: helper.simpleAttribute<{
+  (value: string): AR.Done;
+  required(): true;
+}>()(function(value: string) {
+  this.myCustomValue = value;
+}),
+```
+
+类型泛型参数中的函数签名告诉 TypeScript：
+- `value: string` — 位置参数类型
+- `: AR.Done` — 返回类型（无嵌套块，不修改 meta）
+- `required(): true` — 标记为必需属性
+
+## 不同复杂度的属性实现
+
+### 简单值属性
+
+```ts
+health: helper.simpleAttribute()(function(value: number) {
+  this.health = value;
+});
+```
+
+在 GTS 中使用：
+
+```gts
+define character {
+  health 10;
+}
+```
+
+### 多参数属性
+
+```ts
+cost: helper.simpleAttribute()(function(type: DiceType, amount: number) {
+  this.costs.push({ type, amount });
+});
+```
+
+```gts
+define skill {
+  cost DiceType.Hydro, 3;
+}
+```
+
+### 带绑定导出的属性
+
+```ts
+id: helper.simpleAttribute<{
+  (id: number): AR.Done;
+  as(): MyHandle;
+}>()(
+  function(id: number) { this.id = id; },
+  function() { return this.id as MyHandle; },
+);
+```
+
+```gts
+define status {
+  id 100 as MyStatus;  // export const MyStatus = ...
+}
+```
+
+### 带嵌套块的属性
+
+属性打开嵌套 ViewModel：
+
+```ts
+nestedBlock: helper.attribute<{
+  (): AR.With<typeof ChildVM>;
+}>(
+  (_, __, view) => ChildVM.parse(view),
+);
+```
+
+```gts
+define entity {
+  nestedBlock {
+    // 此处属性由 ChildVM 处理
+    childProperty value;
+  }
+}
+```
+
+## 将子 ViewModel 作为 Binder
+
+如果嵌套块需要导出绑定值：
+
+```ts
+nestedBlock: helper.attribute<{
+  (): AR.With<typeof ChildVM>;
+  as(): ReturnType<typeof ChildVM["parse"]>;
+}>(
+  (_, __, view) => ChildVM.parse(view),
+  ChildVM,  // 子 VM 作为 binder
+);
+```
+
+```gts
+define entity {
+  nestedBlock {
+    // ...
+  } as MyExport;  // MyExport = ChildVM.parse(nestedView) 的结果
+}
+```
+
+## genius-invokation 中的实际案例
+
+### 角色属性 `specialEnergy`
+
+参见 `core/gts/vm_impl/character.ts`：
+
+```ts
+specialEnergy: helper.simpleAttribute()(
+  function(type: SpecialEnergyType, amount: number) {
+    this.specialEnergy = { type, amount };
+  },
+);
+```
+
+### 实体属性 `shield`
+
+参见 `core/gts/vm_impl/entity.ts`：
+
+```ts
+shield: helper.simpleAttribute()(
+  function(count: number, max: number) {
+    this.shield = { count, max };
+  },
+);
+```
+
+### 嵌套 VM：`food` 属性
+
+参见 `core/gts/vm_impl/card.ts`：
+
+```ts
+food: helper.attribute<{
+  (options?: FoodOptions): AR.With<typeof FoodVM>;
+}>(
+  (model, [options], view) => {
+    model.setFoodOptions(options);
+    FoodVM.parse(view);
+  },
+  FoodVM,
+);
+```
+
+## 属性中的业务逻辑
+
+Action 函数中可以包含业务逻辑——不仅仅是简单赋值：
+
+```ts
+tags: helper.simpleAttribute()(function(...tags: Tag[]) {
+  // 可以加入验证逻辑
+  const validTags = tags.filter(t => ALLOWED_TAGS.includes(t));
+  this.tags.push(...validTags);
+}),
+```
+
+```ts
+variable: helper.attribute<{
+  <TMeta, const TVarName extends string>(
+    this: AR.This<TMeta>,
+    name: TVarName,
+    initialValue: number,
+  ): AR.WithRewriteMeta<...>;
+}>(
+  (model, [name, value], view) => {
+    // 创建变量存储
+    model.variables.set(name, { initialValue: value });
+    // 解析嵌套选项（如有）
+    if (view) {
+      VariableVM.parse(view);
+    }
+  },
+);
+```
+
+> **完整的自定义属性示例**请参考 `genius-invokation/packages/core/src/gts/vm_impl/` 下的实际实现代码。`entity.ts` 包含了最丰富多样的属性类型。

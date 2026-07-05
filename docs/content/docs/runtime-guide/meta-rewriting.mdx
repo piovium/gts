@@ -1,0 +1,175 @@
+---
+title: Meta 类型重写
+---
+
+Meta 重写 (meta rewriting) 是 GTS 中最精妙的机制之一。它允许属性链在**编译时**（通过 TypeScript 类型）追踪累积的状态，为后续属性提供类型安全的约束。
+
+## 为什么需要 Meta
+
+考虑以下场景：一个实体先定义变量 `chakra`，之后在事件处理中需要引用它。如果 `chakra` 变量名没有在类型层面被追踪，后续 `getVariable("chakra")` 将无法得到类型检查：
+
+```gts
+define status {
+  id 114072 as ChakraDesiderataStatus;
+  variable chakra, 0;     // ← 定义
+  on useSkill {
+    :getVariable("chakra"); // ← 引用 —— 需要确保 "chakra" 是合法的
+  }
+}
+```
+
+Meta 重写使 TypeScript 能在编译时验证变量名的合法性。
+
+## Meta 的生命周期
+
+每个 ViewModel 都有一个关联的 Meta 类型。初始 Meta 在 `defineViewModel` 的第三个参数中定义：
+
+```ts
+const StatusVM = defineViewModel(
+  StatusBuilder,
+  (helper) => ({ /* 属性定义 */ }),
+  { varNames: never } as Meta,  // 初始 Meta
+);
+```
+
+当属性被解析时，Meta 类型可以被子属性"重写"（更新）：
+
+```ts
+// 初始 meta: { varNames: never }
+
+// 解析 variable chakra, 0; 后
+// meta 变为: { varNames: "chakra" }
+
+// 解析 variable count, 0; 后
+// meta 变为: { varNames: "chakra" | "count" }
+```
+
+## 实现 Meta 重写
+
+### 重写 Meta 的属性定义
+
+```ts
+variable: helper.attribute<{
+  <TMeta extends BuilderMeta, const TVarName extends string>(
+    this: AR.This<TMeta>,
+    variable: TVarName,
+    initialValue: number,
+  ): AR.WithRewriteMeta<
+    { varNames: TMeta["varNames"] | TVarName },
+    typeof VariableVM
+  >;
+}>(() => {}),
+```
+
+关键点：
+- **`this: AR.This<TMeta>`** — 接收当前 meta 类型
+- **`AR.WithRewriteMeta<NewMeta, VM>`** — 声明此属性同时打开嵌套 VM **并**重写 meta
+- **`NewMeta`** — 新 meta 类型，通过 `TMeta["varNames"] | TVarName` 追加变量名
+
+### 后续属性使用 Meta
+
+后续的属性通过 `TMeta` 参数获得当前的 meta 类型：
+
+```ts
+getVariable: helper.attribute<{
+  <TMeta extends BuilderMeta>(
+    this: AR.This<TMeta>,
+    name: TMeta["varNames"], // 限制为已定义的变量名
+  ): AR.Done;
+}>(() => {}),
+```
+
+```gts
+:getVariable("chakra");  // ✓ OK —— "chakra" 在 varNames 中
+:getVariable("typo");    // ✗ TypeScript Error —— 未定义
+```
+
+## `AR` 类型完整参考
+
+```ts
+namespace AR {
+  type Done = { return?: unknown; meta?: undefined };
+  type This<TMeta> = { return: unknown; meta: TMeta };
+  type EnableIf<Cond, T> = Cond extends true ? T : never;
+
+  type With<VM extends ViewModel<any, any>, TMeta = void> = {
+    return: unknown;
+    meta: void;
+    vm: VM;
+    metaAcc?: TMeta;
+  };
+
+  type DoneRewriteMeta<NewMeta> = {
+    return: unknown;
+    meta: NewMeta & {};
+  };
+
+  type WithRewriteMeta<NewMeta, VM extends ViewModel<any, any>> = {
+    return: unknown;
+    meta: NewMeta & {};
+    vm: VM;
+  };
+}
+```
+
+| 返回类型 | 含义 |
+|---|---|
+| `AR.Done` | 无嵌套块，不修改 meta |
+| `AR.With<VM>` | 有嵌套块，委托给子 VM |
+| `AR.DoneRewriteMeta<New>` | 无嵌套块，但重写 meta |
+| `AR.WithRewriteMeta<New, VM>` | 有嵌套块 + 重写 meta |
+
+## 完整示例：变量系统
+
+以下展示 `variable` 和 `getVariable` 如何通过 Meta 重写协作：
+
+```ts
+const EntityVM = defineViewModel(
+  EntityBuilder,
+  (helper) => ({
+    variable: helper.attribute<{
+      <TMeta extends EntityMeta, const TVarName extends string>(
+        this: AR.This<TMeta>,
+        variable: TVarName,
+        initialValue: number,
+      ): AR.WithRewriteMeta<
+        { varNames: TMeta["varNames"] | TVarName },
+        typeof VariableVM
+      >;
+    }>(() => {}),
+
+    getVariable: helper.simpleAttribute<{
+      <TMeta extends EntityMeta>(
+        this: AR.This<TMeta>,
+        name: TMeta["varNames"],
+      ): AR.Done;
+    }>()(function(this: EntityBuilder, name: string) {
+      return this.variables.get(name);
+    }),
+  }),
+  { varNames: never } as EntityMeta,
+);
+```
+
+### 类型检查流程
+
+```gts
+define status {
+  id 114072 as ChakraDesiderataStatus;
+  variable chakra, 0;              // meta: { varNames: "chakra" }
+  on useSkill {
+    // 当前 meta: { varNames: "chakra" }
+    const val = :getVariable("chakra");  // ✓
+    // :getVariable("wrong") 将被 TypeScript 报错
+  }
+}
+```
+
+## Meta 重写的适用范围
+
+Meta 类型只在**编译时**存在——它不产生任何运行时代码。transpiler 的 Volar 变换管道使用 Meta 信息生成类型别名，TypeScript 用这些类型验证 GTS 定义的合法性。
+
+常见的 Meta 追踪场景：
+- **变量名** — `variable` 追加 varNames
+- **使用次数标识** — `usage perRound, 1 { name foo }` 追加 usage 名
+- **实体类型特定约束** — 根据实体类型限制可用属性

@@ -1,0 +1,19 @@
+{
+  "title": "用户指南",
+  "root": true,
+  "pages": [
+    "index",
+    "getting-started",
+    "character",
+    "skill",
+    "card",
+    "entity",
+    "events",
+    "shortcut-functions",
+    "variables-usage",
+    "extensions",
+    "techniques",
+    "advanced",
+    "typescript-interop"
+  ]
+}

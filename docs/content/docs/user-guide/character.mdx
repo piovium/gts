@@ -1,0 +1,143 @@
+---
+title: 角色定义
+---
+
+角色 (character) 是 `define` DSL 中最顶层的实体之一。每个角色拥有一组技能、基础属性、标签和可能的特殊机制。
+
+## 基本结构
+
+```gts
+define character {
+  id <数字ID> as <导出名>;
+  since "<版本号>";
+  tags <标签1>, <标签2>, ...;
+  health <生命值>;
+  energy <充能上限>;
+  skills <技能1>, <技能2>, ...;
+}
+```
+
+## 属性详解
+
+### `id` — 数字 ID
+
+```gts
+id 1407 as RaidenShogun;
+```
+
+每个游戏实体必须有一个唯一的数字 ID。`as Name` 将 ID 绑定导出为一个变量（类型为 `CharacterHandle`），供技能、卡牌等引用。
+
+角色 ID 的命名惯例：4 位数，前两位为角色编号，后两位通常为 0（变体角色使用不同的后两位）。
+
+### `since` — 引入版本
+
+```gts
+since "v3.3.0";
+```
+
+标记此角色从哪个游戏版本开始引入。参数为字符串格式的版本号。
+
+### `tags` — 标签
+
+```gts
+tags hydro, catalyst, mondstadt;
+```
+
+小写标识符在 `tags` 位置会自动转为字符串常量。常用标签包括：
+- **元素**：`pyro`、`hydro`、`anemo`、`electro`、`dendro`、`cryo`、`geo`
+- **武器**：`sword`、`claymore`、`pole`、`catalyst`、`bow`
+- **阵营/地区**：`mondstadt`、`liyue`、`inazuma`、`sumeru`、`fontaine`、`natlan`、`snezhnaya`
+- **始基力**：`pneuma`、`ousia`
+- **其他**：`fatui`、`monster`、`eremite`、`sacread` 等
+
+### `health` — 生命值
+
+```gts
+health 10;
+```
+
+角色的最大生命值。
+
+### `energy` — 充能上限
+
+```gts
+energy 2;
+```
+
+角色元素爆发所需的充能点数。设为 `0` 表示该角色没有元素爆发。
+
+### `skills` — 技能列表
+
+```gts
+skills Origin, TranscendenceBalefulOmen, SecretArtMusouShinsetsu, ChakraDesiderata;
+```
+
+引用之前定义好的技能（以大写开头的标识符被当作变量引用）。技能在角色身上的顺序决定它们在 UI 中的显示顺序。通常按照：普通攻击、元素战技、元素爆发、被动技能 的顺序排列。
+
+## 特殊属性
+
+### `specialEnergy` — 特殊充能机制
+
+```gts
+specialEnergy fightingSpirit, 3;
+```
+
+某些角色使用特殊的充能机制而非通用的能量系统。例如玛薇卡使用"战意"（fightingSpirit），上限为 3。
+
+### `associateNightsoul` — 夜魂加持
+
+```gts
+associateNightsoul NightsoulsBlessing;
+```
+
+为角色关联夜魂加持状态（状态需预先在其他位置定义）。关联后，角色的夜魂点数 (`nightsoul`) 变量可用。
+
+## 完整示例
+
+```gts
+import { $, DamageType, DiceType } from "@gi-tcg/core/builder";
+
+define skill {
+  id 14071 as Origin;
+  skillType normal;
+  cost DiceType.Electro, 1;
+  cost DiceType.Void, 2;
+  :damage(DamageType.Physical, 2);
+}
+
+define skill {
+  id 14072 as TranscendenceBalefulOmen;
+  skillType elemental;
+  cost DiceType.Electro, 3;
+  :summon(EyeOfStormyJudgment);
+}
+
+define skill {
+  id 14073 as SecretArtMusouShinsetsu;
+  skillType burst;
+  cost DiceType.Electro, 3;
+  cost DiceType.Energy, 2;
+  :damage(DamageType.Electro, 3);
+  :gainEnergy(2, "all my characters and not @self");
+}
+
+define skill {
+  id 14074 as ChakraDesiderata;
+  skillType passive {
+    on battleBegin {
+      :characterStatus(ChakraDesiderataStatus);
+    }
+  }
+}
+
+define character {
+  id 1407 as RaidenShogun;
+  since "v3.7.0";
+  tags electro, pole, inazuma;
+  health 10;
+  energy 2;
+  skills Origin, TranscendenceBalefulOmen, SecretArtMusouShinsetsu, ChakraDesiderata;
+}
+```
+
+> **角色相关的更多属性**（如 `nations`、`variant` 等）请参考 Provider 的 ViewModel 定义代码：`core/gts/vm_impl/character.ts`。

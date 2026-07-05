@@ -1,0 +1,168 @@
+---
+title: 扩展系统
+---
+
+扩展 (extension) 是一种全局状态跟踪机制，允许跨实体追踪数据。不同于 `variable`（绑定在单个实体上），扩展的状态在整个对局中全局维护，可以被多个实体共享访问。
+
+## 定义扩展
+
+```gts
+define extension {
+  idHint <数字ID> as <私有导出名>;
+  schema ({ <字段>: "<类型>" });       // 可选
+  initialState ({ <字段>: <初始值> }); // 可选
+  mutateWhen <事件名>, ((st, e) => {
+    // 状态变更逻辑
+  });
+}
+```
+
+### `idHint`
+
+扩展的 ID 提示（用于生成内部唯一标识）。通常用 `as private` 导出以限制作用域：
+
+```gts
+idHint 11013 as private FrostflakeArrowUsedExtension;
+```
+
+### `schema`
+
+定义扩展状态的类型结构：
+
+```gts
+schema ({ used: "pair<boolean>" });
+```
+
+支持的类型包括基本类型和以下特殊类型：
+- `"pair<T>"` — 长度为 2 的数组（分别对应我方和对方）
+- `"number"` — 数值
+- 用户自定义的类型引用
+
+### `initialState`
+
+扩展状态的初始值：
+
+```gts
+initialState ({ used: [false, false] });
+```
+
+### `mutateWhen`
+
+定义状态变更的触发事件和处理逻辑。`st` 为扩展状态（类型由 `schema` 定义），`e` 为事件对象：
+
+```gts
+mutateWhen onDamageOrHeal, ((st, e) => {
+  if (e.target.definition.id === Ganyu && e.damageInfo.causeDefeated) {
+    st.used[e.targetWho] = false;
+  }
+});
+```
+
+多个 `mutateWhen` 可以各自监听不同事件。
+
+## 关联扩展
+
+在实体中使用 `associateExtension` 关联一个已定义的扩展：
+
+```gts
+define skill {
+  id 11013 as FrostflakeArrow;
+  skillType normal;
+  cost DiceType.Cryo, 5;
+  associateExtension FrostflakeArrowUsedExtension;
+  if (:self.hasEquipment(UndividedHeart) && :getExtensionState().used[:self.who]) {
+    :damage(DamageType.Piercing, 3, "opp standby");
+  } else {
+    :damage(DamageType.Piercing, 2, "opp standby");
+  }
+  :setExtensionState((st) => st.used[:self.who] = true);
+}
+```
+
+### `:getExtensionState()`
+
+获取关联扩展的当前状态：
+
+```gts
+const ext = :getExtensionState();
+// ext.used 是 pair<boolean>
+// ext.used[:self.who] 访问己方数据
+```
+
+### `:setExtensionState(mutator)`
+
+更新扩展状态。参数可以是新的状态值或一个修改函数：
+
+```gts
+:setExtensionState((st) => {
+  st.used[:self.who] = true;
+});
+```
+
+## 实际案例
+
+### 案例 1：记录支援区弃牌数（婕德）
+
+```gts
+define extension {
+  idHint 322022 as private DisposedSupportCountExtension;
+  schema ({ disposedSupportCount: "pair<number>" });
+  initialState ({ disposedSupportCount: [0, 0] });
+  mutateWhen onDispose, ((st, e) => {
+    if (e.isDiscardOrTuning()) return;
+    if (e.entity.definition.type === "support") {
+      st.disposedSupportCount[e.who]++;
+    }
+  });
+}
+
+define card {
+  id 322022 as Jeht;
+  support "ally";
+  associateExtension DisposedSupportCountExtension;
+  variable experience, 0;
+  on enter {
+    :setVariable("experience", Math.min(:getExtensionState().disposedSupportCount[:self.who], 6));
+  }
+  on dispose {
+    when :( :e.entity.definition.type === "support" );
+    :setVariable("experience", Math.min(:getExtensionState().disposedSupportCount[:self.who], 6));
+  }
+  on useSkill {
+    when :(
+      :e.isSkillType("burst") &&
+      !:e.skillCaller.cast<"character">().hasStatus(SandsAndDream) &&
+      :getVariable("experience") >= 6
+    );
+    :characterStatus(SandsAndDream, "my active");
+    :dispose();
+  }
+}
+```
+
+### 案例 2：记录受到的伤害类型（西尔弗和迈勒斯）
+
+```gts
+define extension {
+  idHint 322023 as private DamageTypeCountExtension;
+  schema ({ damages: "pair<DamageType[]>" });
+  initialState ({ damages: [[], []] });
+  mutateWhen onDamageOrHeal, ((st, e) => {
+    if (e.isDamageTypeDamage() && e.type !== DamageType.Physical && e.type !== DamageType.Piercing) {
+      if (!st.damages[e.targetWho].includes(e.type)) {
+        st.damages[e.targetWho].push(e.type);
+      }
+    }
+  });
+}
+```
+
+### 案例 3：卡牌描述中的动态变量
+
+扩展状态可以用于渲染卡牌的动态描述文本（使用 `replaceDescription`）：
+
+```gts
+replaceDescription("[GCG_TOKEN_COUNTER]", (_, { area }, ext) => ext.disposedSupportCount[area.who]);
+```
+
+> **扩展的完整 API**（多个 `mutateWhen`、`associateExtension` 在不同实体类型上的行为差异等）请参考 Provider 的 ViewModel 定义代码：`core/gts/vm_impl/extension.ts`。

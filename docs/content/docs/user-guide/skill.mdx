@@ -1,0 +1,142 @@
+---
+title: 技能定义
+---
+
+技能 (skill) 是角色在战斗中可以执行的动作。GTS 支持四种技能类型：普通攻击、元素战技、元素爆发和被动技能。
+
+## 基本结构
+
+```gts
+define skill {
+  id <数字ID> as <导出名>;
+  skillType <类型>;
+  cost <骰子类型>, <数量>;
+  // ... 技能效果（快捷函数）
+}
+```
+
+## 属性详解
+
+### `id` 和 `as`
+
+```gts
+id 14073 as SecretArtMusouShinsetsu;
+```
+
+技能 ID 通常由角色 ID 后追加一位数字构成（如角色 ID 为 `1407`，技能 ID 为 `14071`、`14072` 等）。
+
+### `skillType` — 技能类型
+
+```gts
+skillType normal;       // 普通攻击
+skillType elemental;   // 元素战技
+skillType burst;       // 元素爆发
+skillType passive { ... }  // 被动技能（内含事件回调）
+```
+
+**`normal`、`elemental`、`burst`** 是主动技能。定义时可在后跟直接函数体（快捷函数语句），表示使用该技能时执行的动作。
+
+**`passive { ... }`** 是被动技能——自身不执行动作，而是在特定事件发生时触发。括号内使用 `on <事件>` 定义触发条件。
+
+```gts
+define skill {
+  id 14074 as ChakraDesiderata;
+  skillType passive {
+    on battleBegin {
+      :characterStatus(ChakraDesiderataStatus);
+    }
+    on revive {
+      :characterStatus(ChakraDesiderataStatus);
+    }
+  }
+}
+```
+
+### `cost` — 骰子费用
+
+```gts
+cost DiceType.Hydro, 1;
+cost DiceType.Void, 2;
+```
+
+每个 `cost` 行定义一个骰子费用项。`DiceType.Void` 表示无色元素（任意骰子），`DiceType.Energy` 表示充能费用。
+
+多个 `cost` 会被累加。顺序即为费用显示顺序。
+
+### `filter` — 使用条件
+
+```gts
+filter :( :self.master.hasNightsoulsBlessing()?.variables.nightsoul );
+```
+
+过滤条件——只有满足条件时此技能才可使用。条件使用 `:( condition )` 快捷函数书写。
+
+## 直接函数体（技能效果）
+
+对于主动技能（normal/elemental/burst），技能体由快捷函数序列构成，直接写在 `define skill { ... }` 的大括号内：
+
+```gts
+define skill {
+  id 14073 as SecretArtMusouShinsetsu;
+  skillType burst;
+  cost DiceType.Electro, 3;
+  cost DiceType.Energy, 2;
+  :damage(DamageType.Electro, 3);
+  :gainEnergy(2, "all my characters and not @self");
+}
+```
+
+快捷函数会在后面的 [快捷函数参考](/docs/shortcut-functions) 章节中详细介绍。常见的包括：
+- `:damage(type, amount, target?)` — 造成伤害
+- `:heal(amount, target?)` — 治疗
+- `:summon(handle)` — 召唤
+- `:characterStatus(handle)` / `:combatStatus(handle)` — 附属状态
+- `:gainEnergy(amount, target)` — 充能
+- `:drawCards(count)` — 抓牌
+
+### 条件分支
+
+技能体内可以使用标准 TypeScript 的 `if`/`else` 进行条件分支：
+
+```gts
+if (:self.hasEquipment(UndividedHeart) && :getExtensionState().used[:self.who]) {
+  :damage(DamageType.Piercing, 3, "opp standby");
+} else {
+  :damage(DamageType.Piercing, 2, "opp standby");
+}
+```
+
+## 被动技能
+
+被动技能不主动使用，而是在满足条件时自动触发。被动技能内不能写直接函数体——所有动作都通过 `on <事件>` 来触发：
+
+```gts
+define skill {
+  id 12114 as Skill12114;
+  skillType passive {
+    on useSkill {
+      when :(
+        :e.isSkillType("normal") &&
+        !:player.hands.find((card) => card.definition.id === SeatsSacredAndSecular)
+      );
+      usage perRound, 1 { name usagePerRound1 };
+      :createHandCard(SeatsSacredAndSecular);
+    }
+  }
+}
+```
+
+### 被动技能的 `on` 事件
+
+被动技能内的 `on` 可以声明：
+
+```gts
+skillType passive {
+  on battleBegin { ... }      // 战斗开始时
+  on useSkill { ... }         // 友方使用技能后
+  on revive { ... }           // 角色复苏时
+  on enter { ... }            // 装备此天赋牌时
+}
+```
+
+> **技能相关的完整属性列表**（如 `usage`、`once`、`associateExtension` 等在技能上的用法）请参考 Provider 的 ViewModel 定义代码：`core/gts/vm_impl/skill.ts`。

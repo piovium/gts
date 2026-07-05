@@ -1,0 +1,120 @@
+---
+title: Provider 模式
+---
+
+Provider 是连接 GTS 语言和特定游戏领域的桥梁。它定义了一组 ViewModel，决定了 `.gts` 文件中可以使用的 `define` 类型和属性。
+
+## Provider 包的结构
+
+```
+my-provider/
+├── src/
+│   ├── vm.ts                    # 导出 root ViewModel
+│   ├── runtime.ts               # re-export @gi-tcg/gts-runtime
+│   ├── vm_impl/                 # ViewModel 实现
+│   │   ├── index.ts             # RootViewModel
+│   │   ├── character.ts
+│   │   ├── skill.ts
+│   │   ├── ...
+│   │   └── variables.ts
+│   └── index.ts                 # 可选：类型导出
+├── package.json
+└── tsconfig.json
+```
+
+### `vm.ts` — Root ViewModel
+
+```ts
+import { RootViewModel } from "./vm_impl/index";
+
+export default RootViewModel;
+```
+
+导出根 ViewModel 作为 default export。transpiler 生成的代码将从此模块导入：`import __gts_rootVm from "<provider>/vm"`。
+
+### `runtime.ts` — Runtime re-export
+
+```ts
+export { createDefine, createBinding } from "@gi-tcg/gts-runtime";
+```
+
+Provider 需要向外暴露 runtime 函数，以便 transpiler 生成的代码使用。当用户在 `package.json` 中设置 `runtimeImportSource` 指向 Provider 自身时，所有 GTS 文件将从此模块导入 createDefine/createBinding。
+
+## Provider 配置
+
+Provider 通过用户项目的 `package.json` 配置：
+
+```json
+{
+  "gamingTs": {
+    "providerImportSource": "@gi-tcg/core/gts",
+    "runtimeImportSource": "@gi-tcg/core/gts"
+  }
+}
+```
+
+- **`providerImportSource`** — 从此路径导入 `./vm` 获取 root ViewModel
+- **`runtimeImportSource`** — 从此路径导入 runtime 函数
+
+在 `genius-invokation` 中，两者都指向 `@gi-tcg/core/gts`，因为该包的 `runtime.ts` 和 `vm.ts` 在同一路径下。
+
+## genius-invokation 的 Provider 实现
+
+### Root ViewModel 的实现
+
+```ts
+// packages/core/src/gts/vm_impl/index.ts
+
+const RootVM = defineViewModel(RootBuilder, (helper) => ({
+  character: helper.attribute(/* ... */),
+  skill: helper.attribute(/* ... */),
+  status: helper.attribute(/* ... */),
+  combatStatus: helper.attribute(/* ... */),
+  summon: helper.attribute(/* ... */),
+  card: helper.attribute(/* ... */),
+  attachment: helper.attribute(/* ... */),
+  extension: helper.attribute(/* ... */),
+}));
+
+export default RootVM;
+```
+
+### Provider 的导出层
+
+```ts
+// packages/core/src/gts/runtime.ts
+export { createDefine, createBinding } from "@gi-tcg/gts-runtime";
+
+// packages/core/src/gts/vm.ts
+export { default } from "./vm_impl/index";
+```
+
+### 在 data 中使用
+
+```ts
+// packages/data/src/begin.ts
+import { createDefine } from "@gi-tcg/core/gts";
+import __gts_rootVm from "@gi-tcg/core/gts/vm";
+// 初始化 Registry，设置全局定义上下文
+```
+
+## 自定义 Provider 的设计建议
+
+1. **Model 层与游戏数据分离** — Model 类仅累积数据，`getEntry()` 产出最终格式
+2. **ViewModel 按实体类型拆分** — 每个实体类型一个文件，通过 RootVM dispatch
+3. **惰性 positionals** — 确保 action/binder 中的参数在使用时才求值
+4. **Meta 追踪需要类型安全** — 正确使用 `AR.DoneRewriteMeta` 等返回类型
+5. **Runtime re-export** — Provider 应该 re-export runtime 函数，减少用户配置负担
+
+## Provider 的类型导出
+
+Provider 通常还需要导出类型定义，供 `.gts` 文件中使用：
+
+```ts
+// packages/core/src/gts/index.ts
+export type { CharacterHandle, SkillHandle, CardHandle, ... } from "./types";
+export { DamageType, DiceType, ... } from "./enums";
+export { $ } from "./query";
+```
+
+这些不是 runtime 的一部分，但它们构成了 `.gts` 文件的完整 TypeScript 环境。

@@ -1,0 +1,51 @@
+---
+title: 概述
+---
+
+GTS 的运行时系统 (`@gi-tcg/gts-runtime`) 是 `define` 语句的执行引擎。它提供 **MVVM (Model-View-ViewModel)** 架构，将 transpiled 的 GTS 代码在运行时解析为具体的数据定义。
+
+## 运行时系统的角色
+
+在 GTS 的完整流程中，运行时系统处于执行末端：
+
+```
+.gts 源码 → transpiler → .js 代码（调用 runtime API）
+                                    ↓
+                           runtime 系统执行
+                                    ↓
+                           Provider ViewModel
+                                    ↓
+                           游戏数据定义（card data）
+```
+
+## 本文档范围
+
+本文档面向**运行时开发者**——即需要实现 Provider 或扩展 GTS 自定义领域的开发者。内容包括：
+
+- MVVM 架构的核心概念
+- ViewModel 的实现方法
+- Action 与 Binder 机制
+- Meta 类型重写
+- Transpilation 输出格式
+- Provider 包设计模式
+- 自定义属性定义
+- 嵌套 ViewModel 委托
+- Binding 导出机制
+
+## 关键概念
+
+| 概念 | 说明 |
+|---|---|
+| **Model** | 纯数据类，在解析过程中累积属性数据，最终调用 `getEntry()` 产出游戏数据 |
+| **View** | 属性节点树（AST-like），由 transpiler 生成，包含属性名、位置参数和嵌套块 |
+| **ViewModel** | 属性注册表，将属性名映射到 Action（操作 Model）和 Binder（导出值） |
+| **Provider** | 包含自定义 ViewModel 的独立包，定义游戏领域的属性和类型 |
+| **createDefine** | 执行 define 语句的副作用（注册实体） |
+| **createBinding** | 执行 define 语句并返回 `as Name` 的绑定值 |
+
+## 先决知识
+
+阅读本文档前，建议先了解：
+- [GTS 语言语法](/docs/gts-syntax)
+- [transpiler 的基本工作流程](/docs/transpiler)
+- TypeScript 泛型和条件类型

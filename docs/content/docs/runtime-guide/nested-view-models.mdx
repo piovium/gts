@@ -1,0 +1,166 @@
+---
+title: 嵌套 ViewModel
+---
+
+GTS 的声明式语法支持任意深度的属性嵌套。每个嵌套块都由对应的子 ViewModel 处理，形成递归的解析树。
+
+## 嵌套模式
+
+```
+define character {          ← RootVM
+  id 1201;                  ← CharacterVM.id
+  skills Skill1 {           ← CharacterVM.skills → SkillVM
+    on enter {              ← SkillVM.on → TriggeredSkillVM
+      :damage(...);         ← [Action]
+    }
+  }
+}
+```
+
+## RootVM 的 Dispatch
+
+RootVM 通过属性名将 `define` 的根类型分发到子 VM：
+
+```ts
+// core/gts/vm_impl/index.ts
+
+const RootVM = defineViewModel(RootBuilder, (helper) => ({
+  character: helper.attribute<{ (): AR.With<typeof CharacterVM> }>(
+    (_, __, view) => {
+      const model = CharacterVM.parse(view);
+      registry.registerCharacter(model.getEntry());
+      return model;
+    },
+  ),
+  skill: helper.attribute<{ (): AR.With<typeof CharacterSkillVM> }>(
+    (_, __, view) => CharacterSkillVM.parse(view),
+  ),
+  status: helper.attribute<{ (): AR.With<typeof StatusVM> }>(
+    (_, __, view) => EntityVM("status").parse(view),
+  ),
+  // ...
+}));
+```
+
+## 子 VM 的 parse 调用
+
+每个子 VM 暴露 `parse(view)` 方法。父 VM 的 action 在收到 `namedView` 时调用子 VM 的 parse：
+
+```ts
+// 父 VM 属性定义
+skill: helper.attribute<{ (): AR.With<typeof CharacterSkillVM> }>(
+  (model, positionals, namedView) => {
+    // 处理 positionals（如 skills 列表）
+    const handles = positionals as CharacterSkillHandle[];
+    model.skillHandles = handles;
+
+    // 如果有嵌套块，由子 VM 处理
+    if (namedView) {
+      const skillModel = CharacterSkillVM.parse(namedView);
+      model.skills.push(skillModel);
+    }
+  },
+)
+```
+
+## `AR.With<VM>` 的作用
+
+类型签名中的 `AR.With<VM>` 告诉类型系统和 IDE：此属性打开一个子 ViewModel 块。IDE 据此提供代码补全。
+
+```ts
+// 父 VM
+helper.attribute<{
+  (): AR.With<typeof CharacterSkillVM>;
+}>(...)
+
+// IDE 知道 skill { ... } 大括号内
+// 可以使用 CharacterSkillVM 的属性
+```
+
+## 多态子 VM
+
+某些情况下，同一个属性名根据参数不同委托给不同的子 VM。例如实体类型：
+
+```ts
+// 根据参数创建不同的 EntityVM
+function EntityVM(type: "status" | "combatStatus" | "summon") {
+  return defineViewModel(EntityBuilder, (helper) => ({
+    // 所有实体类型共享的属性
+    id: helper.simpleAttribute()(function(id: number) {
+      this.id = id;
+    }),
+    hint: helper.simpleAttribute()(function(icon: ..., value: number) {
+      this.hint = { icon, value };
+    }),
+    // ...类型特定的属性
+    // status 和 combatStatus 有 duration，summon 没有，等
+  }), { type });
+}
+```
+
+在 RootVM 中：
+
+```ts
+status: helper.attribute<{ (): AR.With<StatusVM> }>(
+  (_, __, view) => EntityVM("status").parse(view),
+),
+combatStatus: helper.attribute<{ (): AR.With<CombatStatusVM> }>(
+  (_, __, view) => EntityVM("combatStatus").parse(view),
+),
+summon: helper.attribute<{ (): AR.With<SummonVM> }>(
+  (_, __, view) => EntityVM("summon").parse(view),
+),
+```
+
+## 将子 VM 作为 Binder
+
+当子 VM 的 `parse` 返回的 model 需要作为 `as Name` 导出值时：
+
+```ts
+character: helper.attribute<{
+  (): AR.With<typeof CharacterVM>;
+  as(): CharacterHandle;
+}>(
+  (_, __, view) => {
+    const model = CharacterVM.parse(view);
+    return model;
+  },
+  CharacterVM,  // 子 VM 作为 binder —— parse(view) 的返回值被收集
+);
+```
+
+当使用 `View` 对象直接构建 ViewModel 调用时，`parse` 返回的 Model 会被 binder 作为绑定值。
+
+## 嵌套深度没有限制
+
+GTS 不限制嵌套深度。实际的嵌套层级取决于游戏数据结构的需要。例如：
+
+```
+define card {
+  technique {                ← CardVM.technique → TechniqueVM
+    target $.my.character;
+    skill {                  ← TechniqueVM.skill → SkillVM
+      on enter {             ← SkillVM.on → TriggeredSkillVM
+        :damage(...);        ← [Action]
+      }
+    }
+  }
+}
+```
+
+## 解析顺序
+
+属性在 View 中的顺序决定了解析顺序。前一个属性设置的 model 值可以被后续属性读取：
+
+```ts
+// entity 中
+id 100;           // 先设置 id
+hint DamageType.Hydro, 1;
+on endPhase {
+  :damage(DamageType.Hydro, 1);
+}
+```
+
+因此 Model 类应当设计为可以增量构建——每个属性独立地设置一部分状态，最后由 `getEntry()` 统一产出。
+
+> **完整的嵌套 ViewModel 实现**见 `genius-invokation/packages/core/src/gts/vm_impl/`。特别推荐阅读 `card.ts`（包含 `technique` → `skill` 的多层嵌套）、`technique.ts`（`skill` 子 VM）和 `entity_auxilary.ts`（小型辅助 VM）。

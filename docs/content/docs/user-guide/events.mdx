@@ -1,0 +1,111 @@
+---
+title: 事件系统
+---
+
+事件系统是 GTS 的核心机制。实体可以通过 `on <事件名>` 注册对特定游戏事件的响应，并使用 `when` 过滤器精确控制触发条件。
+
+## `on` — 事件注册
+
+```gts
+on <事件名> {
+  // 事件处理体
+}
+```
+
+`on` 后面跟一个标识符作为事件名。每个实体可以有多个 `on` 块，同一事件名也可以出现多次（按顺序依次触发）。
+
+### 常用事件类型
+
+| 事件名 | 触发时机 | 适用实体 |
+|---|---|---|
+| `enter` | 实体入场时 | 装备、状态、召唤物、支援牌 |
+| `endPhase` | 结束阶段 | 召唤物、出战状态、状态 |
+| `actionPhase` | 行动阶段开始 | 支援牌 |
+| `battleBegin` | 战斗开始时 | 被动技能 |
+| `useSkill` | 使用技能后 | 装备、状态 |
+| `increaseSkillDamage` | 技能造成伤害增加时 | 装备、状态 |
+| `decreaseDamaged` | 受到伤害减少时 | 状态（护盾） |
+| `increaseDamaged` | 受到伤害增加时 | 状态（脆弱） |
+| `damagedOrHealed` | 受到伤害或治疗后 | 状态 |
+| `modifySkillDamageType` | 修改技能伤害类型 | 状态 |
+| `deductOmniDiceSkill` | 技能扣除任意元素骰 | 装备、状态 |
+| `deductElementDice` | 扣除特定元素骰 | 装备 |
+| `deductOmniDiceCard` | 打出卡牌扣骰 | 支援牌 |
+| `playCard` | 打出卡牌后 | 支援牌 |
+| `switchActive` | 切换出战角色后 | 支援牌 |
+| `dispose` | 实体被移除时 | 支援牌、召唤物 |
+| `revive` | 角色复苏时 | 被动技能 |
+| `adventure` | 冒险时 | 状态 |
+| `enterRelative` | 有实体入场时 | 状态、支援牌 |
+| `selfDiscard` | 自身被舍弃时 | 卡牌 |
+
+
+## `once` — 一次性触发
+
+```gts
+once <事件名> {
+  // 仅触发一次
+}
+```
+
+与 `on` 语法相同，但事件处理器只执行一次，之后自动移除。
+
+## `when` — 条件过滤
+
+`when` 定义事件处理的前置过滤条件。只有 `when` 表达式返回 `true` 时，当前 `on` 块的效果才会执行：
+
+```gts
+on increaseDamaged {
+  when :( [DamageType.Pyro, DamageType.Physical].includes(:e.type) );
+  :e.increaseDamage(2);
+  :dispose();
+}
+```
+
+`when` 后的 `:( expr )` 是快捷函数——`expr` 在事件上下文中求值。参数 `:e` 代表事件对象，其类型取决于触发的事件类型。
+
+### 多个 `when` 组合
+
+一个 `on` 块可以有多个 `when`，它们之间的关系是"与"（全部满足才触发）：
+
+```gts
+on useSkill {
+  when :( :e.isSkillType("normal") );
+  when :( !:player.hands.find((card) => card.definition.id === SeatsSacredAndSecular) );
+  usage perRound, 1;
+  :createHandCard(SeatsSacredAndSecular);
+}
+```
+
+## `listenTo` — 事件监听范围
+
+默认情况下，实体只监听**自身所属方**的事件。使用 `listenTo` 可以改变监听范围：
+
+```gts
+listenTo all;        // 监听双方的事件
+listenTo samePlayer; // 仅监听己方
+listenTo sameArea;   // 仅监听同区域实体（默认）
+```
+
+```gts
+define status {
+  id 114072 as ChakraDesiderataStatus;
+  variable chakra, 0;
+  on useSkill {
+    when :( :e.isSkillType("burst") && :e.skill.caller.id !== :self.master.id );
+    listenTo samePlayer;
+    :addVariableWithMax("chakra", 1, 3);
+  }
+  on increaseSkillDamage {
+    when :( :e.via.definition.id === SecretArtMusouShinsetsu );
+    const currentVal = :getVariable("chakra");
+    :e.increaseDamage(currentVal);
+    :setVariable("chakra", 0);
+  }
+}
+```
+
+此例中第一个 `on useSkill` 监听己方其他角色的爆发使用，`listenTo sameArea` 是默认行为。
+
+
+> **完整的事件类型列表**和每个事件的事件对象类型，请参考 Provider 代码和 [genius-invokation 的事件文档](https://github.com/piovium/genius-invokation/tree/main/docs/development/data/events.md)。
