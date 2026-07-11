@@ -30,12 +30,12 @@ declare module "estree" {
     lParenRange?: [number, number];
   }
 
-  interface GTSDefineStatement extends BaseStatement {
+  export interface GTSDefineStatement extends BaseStatement {
     type: "GTSDefineStatement";
     body: GTSNamedAttributeDefinition;
   }
 
-  interface GTSNamedAttributeDefinition extends BaseNode {
+  export interface GTSNamedAttributeDefinition extends BaseNode {
     type: "GTSNamedAttributeDefinition";
     name: Identifier | Literal;
     body: GTSAttributeBody;
@@ -43,34 +43,34 @@ declare module "estree" {
     bindingName?: Identifier;
   }
 
-  interface GTSAttributeBody extends BaseNode {
+  export interface GTSAttributeBody extends BaseNode {
     type: "GTSAttributeBody";
     positionalAttributes: GTSPositionalAttributeList;
     namedAttributes?: GTSNamedAttributeBlock;
   }
 
-  interface GTSPositionalAttributeList extends BaseNode {
+  export interface GTSPositionalAttributeList extends BaseNode {
     type: "GTSPositionalAttributeList";
     attributes: Expression[];
   }
 
-  interface GTSNamedAttributeBlock extends BaseNode {
+  export interface GTSNamedAttributeBlock extends BaseNode {
     type: "GTSNamedAttributeBlock";
     attributes: GTSNamedAttributeDefinition[];
     directAction?: GTSDirectFunction;
   }
 
-  interface GTSDirectFunction extends BaseNode {
+  export interface GTSDirectFunction extends BaseNode {
     type: "GTSDirectFunction";
     body: Statement[];
   }
 
-  interface GTSShortcutArgumentExpression extends BaseExpression {
+  export interface GTSShortcutArgumentExpression extends BaseExpression {
     type: "GTSShortcutArgumentExpression";
     property: Identifier;
   }
 
-  interface GTSShortcutFunctionExpression extends BaseExpression {
+  export interface GTSShortcutFunctionExpression extends BaseExpression {
     type: "GTSShortcutFunctionExpression";
     body: BlockStatement | Expression;
     expression: boolean;

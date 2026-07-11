@@ -1,5 +1,5 @@
 {
-  "name": "@gi-tcg/gts-transpiler",
+  "name": "@gi-tcg/prettier-plugin-gts",
   "version": "0.6.3",
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
@@ -9,29 +9,26 @@
       "types": "./dist/index.d.ts",
       "development": "./src/index.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "src",
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsdown --platform neutral",
     "test": "vitest"
   },
   "dependencies": {
-    "@sveltejs/acorn-typescript": "^1.0.8",
-    "acorn": "^8.15.0",
-    "dedent": "^1.7.2",
-    "espolar": "^0.6.3",
-    "esrap": "2.2.1",
-    "magic-string": "^0.30.21",
-    "path-browserify-esm": "^1.0.6",
-    "zimmerframe": "^1.1.4",
-    "@types/estree": "^1.0.9"
+    "@gi-tcg/gts-transpiler": "workspace:*"
+  },
+  "peerDependencies": {
+    "prettier": "^3.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
-    "@volar/language-core": "^2.4.27"
+    "prettier": "^3.8.3",
+    "@types/estree": "^1.0.9"
   }
 }

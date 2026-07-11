@@ -12,6 +12,7 @@ import {
 import type { TranspileOption } from "./transform/gts.ts";
 import type { VolarMappingResult } from "./transform/volar/index.ts";
 export { GtsTranspilerError } from "./error.ts";
+export type { AST } from "./types.ts";
 
 export function transpile(
   source: string,
