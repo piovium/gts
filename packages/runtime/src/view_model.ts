@@ -69,6 +69,11 @@ type LazyAttributeActionOrBinder<ModelT> = (
   named: View<any>,
 ) => unknown;
 
+let currentContext: "action" | "binder" | null = null;
+export function getCurrentContext(): "action" | "binder" | null {
+  return currentContext;
+}
+
 export class ViewModel<
   ModelT,
   BlockDef extends AttributeBlockDefinition,
@@ -103,6 +108,7 @@ export class ViewModel<
     view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>,
     ...args: CtorArgs
   ): ModelT {
+    currentContext = view._bindingCtx ? "binder" : "action";
     const model = new this.#Ctor(...args);
     for (const attrNode of view._node.attributes) {
       let { name, positionals, named, binding } = attrNode;
@@ -123,6 +129,7 @@ export class ViewModel<
         view._bindingCtx.addBinding(value);
       }
     }
+    currentContext = null;
     return model;
   }
 
