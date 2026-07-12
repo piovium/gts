@@ -267,6 +267,11 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         this.enterScope(acornScope.SCOPE_FUNCTION | acornScope.SCOPE_ARROW);
         const oldShortcutContext = this.isShortcutContext;
         this.isShortcutContext = true;
+        if (this.type === tokTypes.relational && this.value === "<") {
+          this.next(); // consume '<'
+          node.returnType = this.tsInType(this.tsParseType.bind(this));
+          this.expect(tokTypes.relational);
+        }
         if (this.type === tokTypes.parenL) {
           this.next(); // consume '('
           node.expression = true;
@@ -315,7 +320,6 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
         }
         return super.parseExprAtom(refDestructuringErrors, forInit, forNew);
       }
-
     };
   };
 }

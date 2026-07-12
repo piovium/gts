@@ -108,6 +108,12 @@ export const commonGtsVisitor: Visitors<Node, TranspileState> = {
       params: [state.fnArgId],
       body: visit(node.body) as Expression | BlockStatement,
       expression: node.expression,
+      ...(node.returnType && {
+        returnType: {
+          type: "TSTypeAnnotation",
+          typeAnnotation: node.returnType,
+        },
+      }),
       loc: node.loc,
       range: node.range,
     };

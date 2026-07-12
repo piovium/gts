@@ -29,6 +29,14 @@ declare module "estree" {
   interface NewExpression {
     lParenRange?: [number, number];
   }
+  interface ArrowFunctionExpression {
+    returnType?: TSTypeAnnotation;
+  }
+
+  export interface TSTypeAnnotation extends BaseNode {
+    type: "TSTypeAnnotation";
+    typeAnnotation: any;
+  }
 
   export interface GTSDefineStatement extends BaseStatement {
     type: "GTSDefineStatement";
@@ -74,6 +82,7 @@ declare module "estree" {
     type: "GTSShortcutFunctionExpression";
     body: BlockStatement | Expression;
     expression: boolean;
+    returnType?: TSTypeAnnotation;
   }
 
 }
@@ -1499,6 +1508,14 @@ export declare namespace Parse {
       failState: any;
     };
     // parse(input: string, options: Options): AST.Program;
+
+    /**
+   * Runs `cb` in a type context.
+   * This should be called one token *before* the first type token,
+   * so that the call to `next()` is run in type context.
+   */
+    tsInType<T>(cb: () => T): T
+    tsParseType(): any;
 
     getElementName(node?: AST.Node): string | null;
 

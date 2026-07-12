@@ -6,5 +6,8 @@ export class GtsTranspilerError extends Error {
     super(message);
     this.name = "GtsTranspilerError";
     this.position = position;
+    if ("captureStackTrace" in Error) {
+      (Error.captureStackTrace as any)(this, GtsTranspilerError);
+    }
   }
 }
