@@ -37,12 +37,12 @@ type SimpleViewModelAttribute<
           SimpleViewModel<ExtractObject<ValueT>, Options>
         >;
       }
-    : Options["booleanSwitch"] extends true
-      ? [true] extends [ValueT]
-        ? { (): AttributeReturn.Done }
-        : {}
+    : {}
+  : Options["booleanSwitch"] extends true
+    ? true extends ValueT
+      ? { (): AttributeReturn.Done }
       : {}
-  : {});
+    : {});
 
 export interface SimpleViewModel<
   T,

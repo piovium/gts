@@ -227,7 +227,7 @@ function printGtsShortcutFunctionExpression(
   print: Print,
 ): Doc {
   if (path.node.expression) {
-    return group([":(", indent([softline, print("body")]), softline, ")"]);
+    return group([":( ", indent([softline, print("body")]), softline, " )"]);
   }
   return group([":", print("body")]);
 }
