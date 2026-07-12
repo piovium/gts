@@ -60,7 +60,7 @@ test("formats shortcut functions and member access", async () => {
   const source = `define summon {when :( !:$.my );check :{return :query(:$.my.active);};};`;
 
   await expect(format(source)).resolves.toBe(`define summon {
-  when :(!:$.my);
+  when :( !:$.my );
   check :{
     return :query(:$.my.active);
   };
