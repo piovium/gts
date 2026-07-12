@@ -96,6 +96,7 @@ export interface QueryBuilder {
 }
 
 export interface Query {
+  readonly id: number;
   readonly _query: unique symbol;
   readonly variables: Record<string, number>;
 }
