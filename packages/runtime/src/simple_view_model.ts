@@ -25,24 +25,28 @@ export interface SimpleViewModelOptions {
 
 type ExtractObject<T> = T extends object ? T : never;
 
+type IfAll<
+  T extends (boolean | undefined)[],
+  TrueT,
+  FalseT,
+> = T[number] extends true ? TrueT : FalseT;
+
 type SimpleViewModelAttribute<
   ValueT,
   Options extends SimpleViewModelOptions,
 > = {
   (value: ValueT): AttributeReturn.Done;
-} & (Options["recursive"] extends true
-  ? IsSingleton<ExtractObject<ValueT>> extends true
-    ? {
-        (): AttributeReturn.With<
-          SimpleViewModel<ExtractObject<ValueT>, Options>
-        >;
-      }
-    : {}
-  : Options["booleanSwitch"] extends true
-    ? true extends ValueT
-      ? { (): AttributeReturn.Done }
-      : {}
-    : {});
+} & IfAll<
+  [Options["recursive"], IsSingleton<ExtractObject<ValueT>>],
+  {
+    (): AttributeReturn.With<SimpleViewModel<ExtractObject<ValueT>, Options>>;
+  },
+  IfAll<
+    [Options["booleanSwitch"], true extends ValueT ? true : false],
+    { (): AttributeReturn.Done },
+    {}
+  >
+>;
 
 export interface SimpleViewModel<
   T,
