@@ -2,10 +2,14 @@ import * as prettier from "prettier";
 import { expect, test } from "vitest";
 import plugin from "../src/index.ts";
 
-async function format(source: string): Promise<string> {
+async function format(
+  source: string,
+  options?: prettier.Options,
+): Promise<string> {
   return prettier.format(source, {
     parser: "gts",
     plugins: [plugin],
+    ...options,
   });
 }
 
@@ -26,6 +30,26 @@ test("formats basic define statements", async () => {
   await expect(format("define character   hydro,catalyst;")).resolves.toBe(
     "define character hydro, catalyst;\n",
   );
+});
+
+test("removes empty named attribute blocks", async () => {
+  await expect(format("define foo {\n};")).resolves.toBe("define foo;\n");
+  await expect(format("define foo bar { };")).resolves.toBe(
+    "define foo bar;\n",
+  );
+});
+
+test("respects objectWrap for a single named attribute", async () => {
+  await expect(format("define foo { bar 1; };")).resolves.toBe(
+    "define foo { bar 1; };\n",
+  );
+  await expect(format("define foo {\nbar 1;\n};")).resolves.toBe(`define foo {
+  bar 1;
+};
+`);
+  await expect(
+    format("define foo {\nbar 1;\n};", { objectWrap: "collapse" }),
+  ).resolves.toBe("define foo { bar 1; };\n");
 });
 
 test("formats nested named attribute blocks", async () => {

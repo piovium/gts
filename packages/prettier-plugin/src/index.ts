@@ -4,6 +4,7 @@ import type {
   AstPath,
   Doc,
   Parser,
+  ParserOptions,
   Plugin,
   Printer,
   SupportLanguage,
@@ -182,7 +183,11 @@ function printGtsAttributeBody(
     }
   }
 
-  if (node.namedAttributes) {
+  if (
+    node.namedAttributes &&
+    (node.namedAttributes.attributes.length > 0 ||
+      node.namedAttributes.directAction)
+  ) {
     parts.push(" ", print("namedAttributes"));
   }
 
@@ -199,6 +204,7 @@ function printGtsPositionalAttributeList(
 function printGtsNamedAttributeBlock(
   path: AstPath<AST.GTSNamedAttributeBlock>,
   print: Print,
+  options: ParserOptions<AST.BaseNode>,
 ): Doc {
   const node = path.node;
   const docs = printNodeList(path, print, "attributes");
@@ -209,6 +215,18 @@ function printGtsNamedAttributeBlock(
 
   if (docs.length === 0) {
     return "{}";
+  }
+
+  if (node.attributes.length === 1 && !node.directAction) {
+    const shouldBreak =
+      options.objectWrap === "preserve" &&
+      /\r?\n/u.test(
+        options.originalText.slice(node.start, node.attributes[0].start),
+      );
+    return group(
+      ["{", indent([line, docs[0]]), line, "}"],
+      { shouldBreak },
+    );
   }
 
   return group(["{", indent([hardline, join(hardline, docs)]), hardline, "}"]);
@@ -330,6 +348,7 @@ export const printers: Plugin<AST.BaseNode>["printers"] = {
           return printGtsNamedAttributeBlock(
             path as AstPath<AST.GTSNamedAttributeBlock>,
             printChild,
+            options,
           );
         case "GTSDirectFunction":
           return printGtsDirectFunction(
