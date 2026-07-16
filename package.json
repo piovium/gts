@@ -16,6 +16,7 @@
   "devDependencies": {
     "@gi-tcg/gtsc": "workspace:*",
     "@gi-tcg/unplugin-gts": "workspace:*",
+    "@gi-tcg/prettier-plugin-gts": "workspace:*",
     "bunup": "^0.16.26",
     "tsdown": "^0.22.0",
     "typescript": "catalog:"

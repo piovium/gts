@@ -21,5 +21,10 @@ export function createTypeScriptServices(
       "gtsAttribute",
     );
   }
+  // Remove document formatting ability, use Prettier instead (from client config)
+  const syntacticService = services.find(
+    (service) => service.name === "typescript-syntactic",
+  );
+  delete syntacticService?.capabilities.documentFormattingProvider;
   return services;
 }

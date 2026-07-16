@@ -16,6 +16,7 @@ import {
 import * as vscode from "vscode";
 import { patchTypeScriptExtension } from "./patch";
 import { registerDecorations } from "@gi-tcg/gts-language-client-code/decoration";
+import { configurePrettier } from "./formatter";
 
 let client: BaseLanguageClient;
 
@@ -94,6 +95,7 @@ export async function activate(context: vscode.ExtensionContext) {
   await client.start();
 
   activateAutoInsertion("gaming-ts", client);
+  await configurePrettier();
 
   context.subscriptions.push(
     vscode.commands.registerCommand("gaming-ts.restart-server", async () => {

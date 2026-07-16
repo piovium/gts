@@ -21,6 +21,9 @@ importers:
       '@gi-tcg/gtsc':
         specifier: workspace:*
         version: link:packages/tsc
+      '@gi-tcg/prettier-plugin-gts':
+        specifier: workspace:*
+        version: link:packages/prettier-plugin
       '@gi-tcg/unplugin-gts':
         specifier: workspace:*
         version: link:packages/unplugin

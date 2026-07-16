@@ -36,7 +36,7 @@ define character {
   energy 3;
   skills WhisperOfWater;
   // variable "foo", 3;
-}
+};
 
 /**
  * @id 12012
@@ -49,10 +49,10 @@ define skill {
   cost DiceType.Hydro, 3;
   variable foo, 2;
   variable foo, 3;
-  const a = :getVariable("foo")
+  const a = :getVariable("foo");
   :damage(DamageType.Hydro, 1);
   :summon(MelodyLoop);
-}
+};
 
 /**
  * I should be visible when hovering over the function
@@ -60,9 +60,9 @@ define skill {
  */
 const getLimit = (usage: number) => {
   return {
-    value: usage + 1
+    value: usage + 1,
   };
-}
+};
 
 /**
  * @id 112011
@@ -85,32 +85,30 @@ define summon {
   on endPhase {
     // this variable can propagated typing to "summon" with mergeMeta
     variable bar, 0;
-    when :( !:$.my )
+    when :( !:$.my );
     hint DamageType.Heal, 1;
     :heal(1, :queryAll(:$.my.character));
     const currentUsage = :getVariable("not_a_usage");
-    void (1 +currentUsage);
+    void (1 + currentUsage);
     class A {
       // This comment should be visible
       x = () => void :heal;
     }
     const v = :query(null!)?.variables;
     :apply(DamageType.Hydro, :query(:$.my.active));
-  }
-}
-
+  };
+};
 
 const sub = (a: number, b: number) => {
   return a - b;
-}
+};
 
 // gytx
-A
+A;
 const obj = { sub, foo: 0 };
 
 // obj.sub("test");
 // (0, obj).sub("test");
 // obj.foo ? 'a' : 'b';
-// new Date().         
+// new Date().
 // sub
-
