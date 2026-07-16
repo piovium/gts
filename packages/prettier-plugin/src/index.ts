@@ -35,7 +35,7 @@ const GTS_VISITOR_KEYS = {
   GTSPositionalAttributeList: ["attributes"],
   GTSNamedAttributeBlock: ["attributes", "directAction"],
   GTSDirectFunction: ["body"],
-  GTSShortcutFunctionExpression: ["body"],
+  GTSShortcutFunctionExpression: ["returnType", "body"],
   GTSShortcutArgumentExpression: ["property"],
 } as const satisfies Record<string, readonly string[]>;
 
@@ -226,10 +226,21 @@ function printGtsShortcutFunctionExpression(
   path: AstPath<AST.GTSShortcutFunctionExpression>,
   print: Print,
 ): Doc {
+  const returnType = path.node.returnType
+    ? ["<", print("returnType"), ">"]
+    : [];
+
   if (path.node.expression) {
-    return group([":( ", indent([softline, print("body")]), softline, " )"]);
+    return group([
+      ":",
+      returnType,
+      "( ",
+      indent([softline, print("body")]),
+      softline,
+      " )",
+    ]);
   }
-  return group([":", print("body")]);
+  return group([":", returnType, print("body")]);
 }
 
 function printGtsShortcutArgumentExpression(

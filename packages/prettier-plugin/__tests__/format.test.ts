@@ -68,6 +68,18 @@ test("formats shortcut functions and member access", async () => {
 `);
 });
 
+test("formats shortcut function return types", async () => {
+  const source = `define summon {when :<boolean>( !:$.my );check :<number>{return 1;};};`;
+
+  await expect(format(source)).resolves.toBe(`define summon {
+  when :<boolean>( !:$.my );
+  check :<number>{
+    return 1;
+  };
+};
+`);
+});
+
 test("delegates TypeScript syntax to Prettier", async () => {
   const source = `const getLimit=(usage:number)=>{return {value:usage+1}};define foo getLimit(1)?.value;`;
 
