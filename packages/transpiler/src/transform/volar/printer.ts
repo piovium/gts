@@ -236,7 +236,7 @@ export function getPrintOptions(
         context.writeNode(node.object as EspolarAST.Node);
         context.write(".");
         context.writeSource(node.whiteSpaceStart, node.whiteSpaceEnd);
-        context.write(";");
+        context.write("// @ts-ignore\nωAttrNameHint;");
       },
       ErrorStatement(node: any, context: PrinterContext<CodeInformation>) {
         if (node.range) {

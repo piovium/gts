@@ -290,10 +290,6 @@ const insertHintStatement = (
     whiteSpaceStart,
     whiteSpaceEnd,
   } satisfies GTSAttributeNameHintStatement as any);
-  const returnValue: Identifier = {
-    type: "Identifier",
-    name: `__gts_attrRet_hint_${state.idCounter++}`,
-  };
   // do NOT exitAttr (rewrite meta) since hint is a incomplete structure
 };
 

@@ -204,8 +204,8 @@ export function applyReplacements(
         type ${rewrittenMeta} = ${payload.returnType} extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : ${payload.oldMetaType};
         let ${mergeFn}!: ${payload.defType} extends {
           [${payload.attrName}]: { mergeMeta: infer M }
-       } ? M : null;
-        let ${mergeFnRet} = ${mergeFn}?.(null! as ${rewrittenMeta}, null! as ${payload.innerMetaType});
+       } ? M : <const T>(x: T, y: unknown) => T;
+        let ${mergeFnRet} = ${mergeFn}(null! as ${rewrittenMeta}, null! as ${payload.innerMetaType});
         type ${payload.newMetaType} = [typeof ${mergeFn}] extends [null] ? ${rewrittenMeta} : typeof ${mergeFnRet};
       `;
       } else {
