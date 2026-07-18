@@ -18,5 +18,8 @@ minimumReleaseAgeExclude:
 catalog:
   typescript: npm:@typescript/typescript6@^6.0.1
 
+patchedDependencies:
+  '@volar/typescript': patches/@volar__typescript.patch
+
 # patchedDependencies:
 #   ajv@8.20.0: patches/ajv@8.20.0.patch
