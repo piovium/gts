@@ -26,7 +26,7 @@ export interface IViewModel<
   "~modelType": ModelT;
   "~ctorArgs": CtorArgs;
   "~namedDefinition": BlockDef;
-  new (): unknown;
+  new (): {};
   parse(
     view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>,
     ...args: CtorArgs
