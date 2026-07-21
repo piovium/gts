@@ -1,9 +1,10 @@
 import type { StandardJSONSchemaV1 } from "@standard-schema/spec";
 import {
   AttributeDefHelper,
-  ViewModel,
+  createViewModelClass,
+  RuntimeViewModel,
   type IViewModel,
-  type AttributeAction,
+  type ViewModelClass,
 } from "./view_model.ts";
 import type { AttributeReturn } from "./attribute_return.ts";
 import { Ajv2020 } from "ajv/dist/2020.js";
@@ -62,6 +63,22 @@ export interface SimpleViewModel<
     "~meta": undefined;
   },
   []
+> {}
+
+export interface SimpleViewModelClass<
+  T,
+  Options extends SimpleViewModelOptions = {},
+> extends ViewModelClass<
+  T,
+  {
+    [K in keyof T]-?: SimpleViewModelAttribute<T[K], Options> & {
+      uniqueKey(): K;
+      required(): {} extends Pick<T, K> ? false : true;
+    };
+  } & {
+    "~meta": undefined;
+  },
+  []
 > {
   Model: new () => T;
 }
@@ -97,9 +114,9 @@ function extractObjectSchema(
 function createSimpleViewModelFromJsonSchema(
   jsonSchema: Record<string, unknown>,
   options: SimpleViewModelOptions,
-): SimpleViewModel<any, any> {
+): SimpleViewModelClass<any, any> {
   const Ctor = class SimpleViewModel {};
-  const vm = new ViewModel<any, any, []>(Ctor);
+  const vm = new RuntimeViewModel<any, any, []>(Ctor);
   const helper = new AttributeDefHelper(vm);
   const defResult: Record<string, any> = {};
   for (const key of Object.keys(jsonSchema.properties ?? {})) {
@@ -115,13 +132,14 @@ function createSimpleViewModelFromJsonSchema(
     );
   }
   helper["~assignActions"](defResult);
-  Object.defineProperty(vm, "Model", {
+  const ViewModel = createViewModelClass(vm);
+  Object.defineProperty(ViewModel, "Model", {
     value: Ctor,
     writable: false,
     enumerable: true,
     configurable: true,
   });
-  return vm as any;
+  return ViewModel as SimpleViewModelClass<any, any>;
 }
 
 function registerAttribute(
@@ -132,10 +150,8 @@ function registerAttribute(
 ): unknown {
   let objectSchema: Record<string, unknown> | null = null;
   if (options.recursive && (objectSchema = extractObjectSchema(propSchema))) {
-    const subVM: IViewModel<any, any, []> = createSimpleViewModelFromJsonSchema(
-      objectSchema,
-      options,
-    );
+    const subVM: ViewModelClass<any, any, []> =
+      createSimpleViewModelFromJsonSchema(objectSchema, options);
     return helper.attribute((model, positionals, named) => {
       if (positionals.length > 0) {
         model[key] = positionals[0];
@@ -162,7 +178,7 @@ export function defineSimpleViewModel<
 >(
   schema: T,
   options?: Options,
-): SimpleViewModel<StandardJSONSchemaV1.InferInput<T>, Options> {
+): SimpleViewModelClass<StandardJSONSchemaV1.InferInput<T>, Options> {
   const resolvedOptions: SimpleViewModelOptions = {
     booleanSwitch: false,
     recursive: false,
@@ -174,5 +190,5 @@ export function defineSimpleViewModel<
   return createSimpleViewModelFromJsonSchema(
     jsonSchema,
     resolvedOptions,
-  ) as SimpleViewModel<StandardJSONSchemaV1.InferInput<T>, Options>;
+  ) as SimpleViewModelClass<StandardJSONSchemaV1.InferInput<T>, Options>;
 }
