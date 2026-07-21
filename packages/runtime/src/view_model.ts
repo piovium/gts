@@ -26,14 +26,7 @@ export interface IViewModel<
   "~modelType": ModelT;
   "~ctorArgs": CtorArgs;
   "~namedDefinition": BlockDef;
-}
-
-export interface ViewModelClass<
-  ModelT,
-  BlockDef extends AttributeBlockDefinition,
-  CtorArgs extends any[],
-> {
-  new (): IViewModel<ModelT, BlockDef, CtorArgs>;
+  new (): unknown;
   parse(
     view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>,
     ...args: CtorArgs
@@ -46,14 +39,14 @@ export interface ViewModelClass<
    * This is useful for creating binding ViewModels directly that forwards
    * the binding logic to inner ViewModels.
    */
-  bind<NewMeta = BlockDef[Meta]>(): ViewModelClass<
+  bind<NewMeta = BlockDef[Meta]>(): IViewModel<
     ModelT,
     BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
     CtorArgs
   >;
   bind<NewMeta = BlockDef[Meta]>(
     ...args: CtorArgs
-  ): ViewModelClass<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
+  ): IViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
   extend<
     ChildT extends ModelT,
     const ChildBlockDef extends Partial<
@@ -63,7 +56,7 @@ export interface ViewModelClass<
   >(
     Ctor: new (...args: ChildCtorArgs) => ChildT,
     modelDefFn: (helper: AttributeDefHelper<ChildT>) => ChildBlockDef,
-  ): ViewModelClass<
+  ): IViewModel<
     ChildT,
     Computed<
       Omit<BlockDef, keyof ChildBlockDef> &
@@ -212,9 +205,9 @@ export class RuntimeViewModel<
 
 const runtimeViewModelSlot: unique symbol = Symbol("runtimeViewModel");
 
-function isViewModelClass(
+function isViewModel(
   value: unknown,
-): value is ViewModelClass<any, any, any> {
+): value is IViewModel<any, any, any> {
   return typeof value === "function" && runtimeViewModelSlot in value;
 }
 
@@ -224,11 +217,11 @@ export function createViewModelClass<
   CtorArgs extends any[],
 >(
   viewModel: RuntimeViewModel<ModelT, BlockDef, CtorArgs>,
-): ViewModelClass<ModelT, BlockDef, CtorArgs> {
+): IViewModel<ModelT, BlockDef, CtorArgs> {
   class ViewModelDescriptor {
-    declare "~modelType": ModelT;
-    declare "~ctorArgs": CtorArgs;
-    declare "~namedDefinition": BlockDef;
+    declare static "~modelType": ModelT;
+    declare static "~ctorArgs": CtorArgs;
+    declare static "~namedDefinition": BlockDef;
 
     static readonly [runtimeViewModelSlot] = viewModel;
 
@@ -239,21 +232,21 @@ export function createViewModelClass<
       return viewModel.parse(view, ...args);
     }
 
-    static bind<NewMeta = BlockDef[Meta]>(): ViewModelClass<
+    static bind<NewMeta = BlockDef[Meta]>(): IViewModel<
       ModelT,
       BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
       CtorArgs
     >;
     static bind<NewMeta = BlockDef[Meta]>(
       ...args: CtorArgs
-    ): ViewModelClass<
+    ): IViewModel<
       ModelT,
       BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
       []
     >;
     static bind<NewMeta = BlockDef[Meta]>(
       ...args: CtorArgs
-    ): ViewModelClass<
+    ): IViewModel<
       ModelT,
       BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
       any
@@ -276,7 +269,7 @@ export function createViewModelClass<
     >(
       Ctor: new (...args: ChildCtorArgs) => ChildT,
       modelDefFn: (helper: AttributeDefHelper<ChildT>) => ChildBlockDef,
-    ): ViewModelClass<
+    ): IViewModel<
       ChildT,
       Computed<
         Omit<BlockDef, keyof ChildBlockDef> &
@@ -288,7 +281,7 @@ export function createViewModelClass<
     }
   }
 
-  return ViewModelDescriptor;
+  return ViewModelDescriptor as IViewModel<ModelT, BlockDef, CtorArgs>;
 }
 
 export interface SimpleAttributeOptions {
@@ -349,7 +342,7 @@ export class AttributeDefHelper<ModelT> {
     action: AttributeAction<ModelT, T>,
     binder?:
       | AttributeBinder<ModelT, T>
-      | ViewModelClass<any, ReturnType<T>["namedDefinition"], []>,
+      | IViewModel<any, ReturnType<T>["namedDefinition"], []>,
   ): T;
   attribute<T extends AttributeDefinition>(
     action: AttributeAction<ModelT, T>,
@@ -357,7 +350,7 @@ export class AttributeDefHelper<ModelT> {
   ): T;
   attribute(
     action: any,
-    binder?: AttributeBinder<any, any> | ViewModelClass<any, any, any>,
+    binder?: AttributeBinder<any, any> | IViewModel<any, any, any>,
   ) {
     const returnValue = {};
     const lazyAction: LazyAttributeActionOrBinder<ModelT> = (
@@ -370,7 +363,7 @@ export class AttributeDefHelper<ModelT> {
       enumerable: true,
     });
     let lazyBinder: LazyAttributeActionOrBinder<ModelT>;
-    if (isViewModelClass(binder)) {
+    if (isViewModel(binder)) {
       const vm = binder;
       lazyBinder = (model, positionals, named) => {
         return vm.parse(named);
@@ -436,7 +429,7 @@ export function defineViewModel<
   Ctor: new (...args: CtorArgs) => T,
   modelDefFn: (helper: AttributeDefHelper<T>) => BlockDef,
   initMeta?: InitMeta,
-): ViewModelClass<T, BlockDef & { "~meta": InitMeta }, CtorArgs> {
+): IViewModel<T, BlockDef & { "~meta": InitMeta }, CtorArgs> {
   const vm = new RuntimeViewModel<
     T,
     BlockDef & { "~meta": InitMeta },
