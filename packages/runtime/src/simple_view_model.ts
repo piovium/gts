@@ -2,9 +2,10 @@ import type { StandardJSONSchemaV1 } from "@standard-schema/spec";
 import {
   AttributeDefHelper,
   createViewModel,
-  RuntimeViewModel,
+  type ViewModelRuntime,
   type IViewModel,
   type IViewModelInstance,
+  createViewModelRuntime,
 } from "./view_model.ts";
 import type { AttributeReturn } from "./attribute_return.ts";
 import { Ajv2020 } from "ajv/dist/2020.js";
@@ -102,8 +103,8 @@ function createSimpleViewModelFromJsonSchema(
   options: SimpleViewModelOptions,
 ): ISimpleViewModel<any, any> {
   const Ctor = class SimpleViewModel {};
-  const vm = new RuntimeViewModel<any, any, []>(Ctor);
-  const helper = new AttributeDefHelper(vm);
+  const vmr = createViewModelRuntime(Ctor);
+  const helper = new AttributeDefHelper(vmr);
   const defResult: Record<string, any> = {};
   for (const key of Object.keys(jsonSchema.properties ?? {})) {
     const propSchema = (jsonSchema.properties as Record<string, unknown>)[key];
@@ -118,7 +119,7 @@ function createSimpleViewModelFromJsonSchema(
     );
   }
   helper["~assignActions"](defResult);
-  const ViewModel = createViewModel(vm);
+  const ViewModel = createViewModel(vmr);
   Object.defineProperty(ViewModel, "Model", {
     value: Ctor,
     writable: false,

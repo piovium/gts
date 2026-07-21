@@ -19,8 +19,11 @@ function attr(
 test("parse and bind are inherited static methods", () => {
   class Model {
     values: string[] = [];
+    prefix: string;
 
-    constructor(readonly prefix: string) {}
+    constructor(prefix: string) {
+      this.prefix = prefix;
+    }
   }
 
   class VM extends defineViewModel(Model, (helper) => ({
@@ -29,7 +32,7 @@ test("parse and bind are inherited static methods", () => {
     }),
   })) {}
 
-  const view = new View(named([attr("value", ["direct"])]));
+  const view = new View<any>(named([attr("value", ["direct"])]));
   expect(VM.parse(view, "root").values).toEqual(["root:direct"]);
 
   class BoundVM extends VM.bind("bound") {}
