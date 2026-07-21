@@ -31,6 +31,7 @@ export interface IViewModel<
   "~ctorArgs": CtorArgs;
   "~namedDefinition": BlockDef;
   new (): IViewModelInstance<this>;
+  viewModel: this;
   parse(
     view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>,
     ...args: CtorArgs
@@ -213,7 +214,7 @@ function isViewModel(value: unknown): value is IViewModel<any, any, any> {
   return typeof value === "function" && runtimeViewModelSlot in value;
 }
 
-export function createViewModelClass<
+export function createViewModel<
   ModelT,
   BlockDef extends AttributeBlockDefinition,
   CtorArgs extends any[],
@@ -249,7 +250,7 @@ export function createViewModelClass<
         args.length === 0
           ? viewModel.bind<NewMeta>()
           : viewModel.bind<NewMeta>(...args);
-      return createViewModelClass(
+      return createViewModel(
         boundViewModel as RuntimeViewModel<ModelT, any, any>,
       );
     }
@@ -271,10 +272,11 @@ export function createViewModelClass<
       >,
       ChildCtorArgs
     > {
-      return createViewModelClass(viewModel.extend(Ctor, modelDefFn));
+      return createViewModel(viewModel.extend(Ctor, modelDefFn));
     }
 
     declare viewModel: typeof ViewModelDescriptor;
+    declare static viewModel: typeof ViewModelDescriptor;
   }
 
   return ViewModelDescriptor as IViewModel<ModelT, BlockDef, CtorArgs>;
@@ -434,7 +436,7 @@ export function defineViewModel<
   const helper = new AttributeDefHelper(vm);
   const defResult = modelDefFn(helper);
   helper["~assignActions"](defResult);
-  return createViewModelClass(vm);
+  return createViewModel(vm);
 }
 
 export interface AttributeDefinition {

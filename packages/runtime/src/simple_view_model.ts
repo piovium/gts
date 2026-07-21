@@ -1,7 +1,7 @@
 import type { StandardJSONSchemaV1 } from "@standard-schema/spec";
 import {
   AttributeDefHelper,
-  createViewModelClass,
+  createViewModel,
   RuntimeViewModel,
   type IViewModel,
   type IViewModelInstance,
@@ -118,7 +118,7 @@ function createSimpleViewModelFromJsonSchema(
     );
   }
   helper["~assignActions"](defResult);
-  const ViewModel = createViewModelClass(vm);
+  const ViewModel = createViewModel(vm);
   Object.defineProperty(ViewModel, "Model", {
     value: Ctor,
     writable: false,
