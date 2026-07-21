@@ -4,6 +4,7 @@ import {
   createViewModelClass,
   RuntimeViewModel,
   type IViewModel,
+  type IViewModelInstance,
 } from "./view_model.ts";
 import type { AttributeReturn } from "./attribute_return.ts";
 import { Ajv2020 } from "ajv/dist/2020.js";
@@ -39,7 +40,9 @@ type SimpleViewModelAttribute<
 } & IfAll<
   [Options["recursive"], IsSingleton<ExtractObject<ValueT>>],
   {
-    (): AttributeReturn.With<ISimpleViewModel<ExtractObject<ValueT>, Options>>;
+    (): AttributeReturn.With<
+      IViewModelInstance<ISimpleViewModel<ExtractObject<ValueT>, Options>>
+    >;
   },
   IfAll<
     [Options["booleanSwitch"], true extends ValueT ? true : false],
@@ -62,7 +65,9 @@ export interface ISimpleViewModel<
     "~meta": undefined;
   },
   []
-> {}
+> {
+  Model: new () => T;
+}
 
 const ajv = new Ajv2020({ strict: false });
 
@@ -131,8 +136,10 @@ function registerAttribute(
 ): unknown {
   let objectSchema: Record<string, unknown> | null = null;
   if (options.recursive && (objectSchema = extractObjectSchema(propSchema))) {
-    const subVM: IViewModel<any, any, []> =
-      createSimpleViewModelFromJsonSchema(objectSchema, options);
+    const subVM: IViewModel<any, any, []> = createSimpleViewModelFromJsonSchema(
+      objectSchema,
+      options,
+    );
     return helper.attribute((model, positionals, named) => {
       if (positionals.length > 0) {
         model[key] = positionals[0];

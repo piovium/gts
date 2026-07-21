@@ -3,6 +3,7 @@ export {
   getCurrentContext,
   type AttributeDefinition,
   type IViewModel,
+  type IViewModelInstance,
   type SimpleAttributeOptions,
   type AttributeBlockDefinition,
 } from "./view_model.ts";

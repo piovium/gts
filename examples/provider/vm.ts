@@ -288,7 +288,7 @@ class RootVM extends defineViewModel(RootBuilder, (helper) => ({
   }>((model, _, named) => {
     const skill = SkillVM.parse(named, 0);
     registered.push(skill);
-  }, SkillVM),
+  }, SkillVM.bind(0)),
   summon: helper.attribute<{
     (): AR.With<EntityVM, { varNames: never }>;
   }>((model, _, named) => {
