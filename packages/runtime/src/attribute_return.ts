@@ -1,7 +1,6 @@
 import type {
   AttributeBlockDefinition,
   BlockDefinitionRewriteMeta,
-  IViewModel,
   IViewModelInstance,
 } from "./view_model.ts";
 

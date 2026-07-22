@@ -1,9 +1,12 @@
 export {
   defineViewModel,
+  extendViewModel,
   getCurrentContext,
   type AttributeDefinition,
   type IViewModel,
   type IViewModelInstance,
+  type IReboundViewModel as IBoundViewModel,
+  type IExtendedViewModel,
   type SimpleAttributeOptions,
   type AttributeBlockDefinition,
 } from "./view_model.ts";
@@ -13,7 +16,6 @@ export {
   type SimpleViewModelOptions,
 } from "./simple_view_model.ts";
 export type { AttributeReturn, AR } from "./attribute_return.ts";
-export type { Action, Meta, NamedDefinition } from "./symbols.ts";
 
 export {
   createBinding,

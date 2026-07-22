@@ -3,18 +3,21 @@ import type {
   AttributeReturn,
   Computed,
 } from "./attribute_return.ts";
-import type { Action, Meta } from "./symbols.ts";
 import { View } from "./view.ts";
 
 export interface AttributeBlockDefinition {
   "~meta": any;
 }
 
+export interface PartialAttributeBlockDefinition extends Partial<
+  Record<string, AttributeDefinition>
+> {}
+
 export type BlockDefinitionRewriteMeta<
   BlockDef extends AttributeBlockDefinition,
   NewMeta,
 > = Computed<
-  Omit<BlockDef, Meta> & { "~meta": NewMeta },
+  Omit<BlockDef, "~meta"> & { "~meta": NewMeta },
   AttributeBlockDefinition
 >;
 
@@ -23,6 +26,37 @@ export interface IViewModelInstance<
 > {
   "~viewModel": T;
 }
+
+export type DeferredIViewModel<T> =
+  T extends IViewModel<any, any, any> ? T : never;
+
+export interface IReboundViewModel<
+  BaseViewModel extends IViewModel<any, any, any>,
+  NewMeta,
+  NewCtorArgs extends any[],
+> extends DeferredIViewModel<
+  IViewModel<
+    BaseViewModel["~modelType"],
+    BlockDefinitionRewriteMeta<BaseViewModel["~namedDefinition"], NewMeta>,
+    NewCtorArgs
+  >
+> {}
+
+export interface IExtendedViewModel<
+  BaseViewModel extends IViewModel<any, any, any>,
+  ChildModelT extends BaseViewModel["~modelType"],
+  ChildBlockDef extends PartialAttributeBlockDefinition,
+  ChildCtorArgs extends any[],
+> extends DeferredIViewModel<
+  IViewModel<
+    ChildModelT,
+    Computed<
+      Omit<BaseViewModel["~namedDefinition"], keyof ChildBlockDef> &
+        ChildBlockDef & { "~meta": BaseViewModel["~namedDefinition"]["~meta"] }
+    >,
+    ChildCtorArgs
+  >
+> {}
 
 export interface IViewModel<
   ModelT,
@@ -46,31 +80,23 @@ export interface IViewModel<
    * This is useful for creating binding ViewModels directly that forwards
    * the binding logic to inner ViewModels.
    */
-  bind<NewMeta = BlockDef[Meta]>(): IViewModel<
-    ModelT,
-    BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
-    CtorArgs
-  >;
-  bind<NewMeta = BlockDef[Meta]>(
+  bind<This extends IViewModel<any, any, any>, NewMeta = BlockDef["~meta"]>(
+    this: This,
+  ): IReboundViewModel<This, NewMeta, this["~ctorArgs"]>;
+  bind<This extends IViewModel<any, any, any>, NewMeta = BlockDef["~meta"]>(
+    this: This,
     ...args: CtorArgs
-  ): IViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
+  ): IReboundViewModel<This, NewMeta, []>;
   extend<
+    This extends IViewModel<any, any, any>,
     ChildT extends ModelT,
-    const ChildBlockDef extends Partial<
-      Record<string | Action, AttributeDefinition>
-    >,
+    const ChildBlockDef extends PartialAttributeBlockDefinition,
     ChildCtorArgs extends any[] = [],
   >(
+    this: This,
     Ctor: new (...args: ChildCtorArgs) => ChildT,
     modelDefFn: (helper: AttributeDefHelper<ChildT>) => ChildBlockDef,
-  ): IViewModel<
-    ChildT,
-    Computed<
-      Omit<BlockDef, keyof ChildBlockDef> &
-        ChildBlockDef & { "~meta": BlockDef[Meta] }
-    >,
-    ChildCtorArgs
-  >;
+  ): IExtendedViewModel<This, ChildT, ChildBlockDef, ChildCtorArgs>;
 }
 
 type LazyAttributeActionOrBinder<ModelT> = (
@@ -140,12 +166,12 @@ export class ViewModelRuntime {
 
   bind(...args: any[]): ViewModelRuntime {
     const ParentCtor = this.#Ctor;
-    class RebindedCtor extends ParentCtor {
+    class ReboundCtor extends ParentCtor {
       constructor() {
         super(...args);
       }
     }
-    return this.#clone(RebindedCtor);
+    return this.#clone(ReboundCtor);
   }
 
   extend(
@@ -178,47 +204,28 @@ export function createViewModel<
 
     static readonly [runtimeViewModelSlot] = vmr;
 
-    static parse(
-      view: View<BlockDefinitionRewriteMeta<BlockDef, unknown>>,
-      ...args: CtorArgs
-    ): ModelT {
+    constructor() {
+      const name = new.target.name;
+      throw new Error(
+        `ViewModel cannot be constructed. Use static method instead: \`${name}.parse\`, \`${name}.extend\` etc.`,
+      );
+    }
+
+    static parse(view: View<any>, ...args: CtorArgs): ModelT {
       return vmr.parse(view, ...args);
     }
 
-    static bind<NewMeta = BlockDef[Meta]>(): IViewModel<
-      ModelT,
-      BlockDefinitionRewriteMeta<BlockDef, NewMeta>,
-      CtorArgs
-    >;
-    static bind<NewMeta = BlockDef[Meta]>(
-      ...args: CtorArgs
-    ): IViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, []>;
-    static bind<NewMeta = BlockDef[Meta]>(
-      ...args: CtorArgs
-    ): IViewModel<ModelT, BlockDefinitionRewriteMeta<BlockDef, NewMeta>, any> {
+    static bind(...args: any[]): IViewModel<any, any, any> {
       if (args.length === 0) {
         return this as any;
       }
       return createViewModel(vmr.bind(...args));
     }
 
-    static extend<
-      ChildT extends ModelT,
-      const ChildBlockDef extends Partial<
-        Record<string | Action, AttributeDefinition>
-      >,
-      ChildCtorArgs extends any[] = [],
-    >(
-      Ctor: new (...args: ChildCtorArgs) => ChildT,
-      modelDefFn: (helper: AttributeDefHelper<ChildT>) => ChildBlockDef,
-    ): IViewModel<
-      ChildT,
-      Computed<
-        Omit<BlockDef, keyof ChildBlockDef> &
-          ChildBlockDef & { "~meta": BlockDef[Meta] }
-      >,
-      ChildCtorArgs
-    > {
+    static extend(
+      Ctor: new (...args: any[]) => any,
+      modelDefFn: (helper: AttributeDefHelper<any>) => any,
+    ): IViewModel<any, any, any> {
       return createViewModel(vmr.extend(Ctor, modelDefFn));
     }
 
@@ -359,7 +366,7 @@ export class AttributeDefHelper<ModelT> {
 
 export function defineViewModel<
   T,
-  const BlockDef extends Partial<Record<string | Action, AttributeDefinition>>,
+  const BlockDef extends PartialAttributeBlockDefinition,
   CtorArgs extends any[] = [],
   InitMeta = void,
 >(
@@ -372,6 +379,24 @@ export function defineViewModel<
   const defResult = modelDefFn(helper);
   helper["~assignActions"](defResult);
   return createViewModel(vmr);
+}
+
+export function extendViewModel<
+  BaseViewModel extends IViewModel<any, any, any>,
+  ChildModelT extends BaseViewModel["~modelType"],
+  const ChildBlockDef extends PartialAttributeBlockDefinition,
+  ChildCtorArgs extends any[] = [],
+>(
+  baseViewModel: BaseViewModel,
+  Ctor: new (...args: ChildCtorArgs) => ChildModelT,
+  modelDefFn: (helper: AttributeDefHelper<ChildModelT>) => ChildBlockDef,
+): IExtendedViewModel<
+  BaseViewModel,
+  ChildModelT,
+  ChildBlockDef,
+  ChildCtorArgs
+> {
+  return baseViewModel.extend(Ctor, modelDefFn);
 }
 
 export interface AttributeDefinition {
