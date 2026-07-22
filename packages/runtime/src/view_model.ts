@@ -84,40 +84,38 @@ export function getCurrentContext(): "action" | "binder" | null {
   return currentContext;
 }
 
-export interface ViewModelRuntime {
-  Ctor: new (...args: any[]) => any;
-  registeredActions: Map<PropertyKey, LazyAttributeActionOrBinder<any>>;
-  registeredBinders: Map<PropertyKey, LazyAttributeActionOrBinder<any>>;
-  parse(view: View<any>, ...args: any[]): any;
-  bind(...args: any[]): ViewModelRuntime;
-  extend(
-    ChildCtor: new (...args: any[]) => any,
-    modelDefFn: (helper: AttributeDefHelper<any>) => any,
-  ): ViewModelRuntime;
-}
+export class ViewModelRuntime {
+  #registeredActions = new Map<PropertyKey, LazyAttributeActionOrBinder<any>>();
+  #registeredBinders = new Map<PropertyKey, LazyAttributeActionOrBinder<any>>();
+  #Ctor: new (...args: any[]) => any;
 
-export const createViewModelRuntime = (
-  Ctor: new (...args: any[]) => any,
-): ViewModelRuntime => {
-  const registeredActions = new Map<
-    PropertyKey,
-    LazyAttributeActionOrBinder<any>
-  >();
-  const registeredBinders = new Map<
-    PropertyKey,
-    LazyAttributeActionOrBinder<any>
-  >();
-  const parse = (view: View<any>, ...args: any[]) => {
+  constructor(Ctor: new (...args: any[]) => any) {
+    this.#Ctor = Ctor;
+  }
+
+  setActionOrBinder(
+    context: "action" | "binder",
+    name: PropertyKey,
+    action: LazyAttributeActionOrBinder<any>,
+  ): void {
+    if (context === "action") {
+      this.#registeredActions.set(name, action);
+    } else {
+      this.#registeredBinders.set(name, action);
+    }
+  }
+
+  parse(view: View<any>, ...args: any[]): any {
     currentContext = view._bindingCtx ? "binder" : "action";
-    const model = new Ctor(...args);
+    const model = new this.#Ctor(...args);
     for (const attrNode of view._node.attributes) {
       let { name, positionals, named, binding } = attrNode;
       const insideBindingCtx = !!view._bindingCtx;
       let fn = (
-        insideBindingCtx ? vmr.registeredBinders : vmr.registeredActions
+        insideBindingCtx ? this.#registeredBinders : this.#registeredActions
       ).get(name);
       if (!insideBindingCtx && !fn) {
-        const modelName = Ctor.name;
+        const modelName = this.#Ctor.name;
         throw new Error(
           `No action registered for attribute "${String(name)}" on model "${modelName}"`,
         );
@@ -131,40 +129,36 @@ export const createViewModelRuntime = (
     }
     currentContext = null;
     return model;
-  };
-  const bind = (...args: any[]) => {
-    class RebindedCtor extends Ctor {
+  }
+
+  #clone(Ctor = this.#Ctor): ViewModelRuntime {
+    const newVMR = new ViewModelRuntime(Ctor);
+    newVMR.#registeredActions = new Map(this.#registeredActions);
+    newVMR.#registeredBinders = new Map(this.#registeredBinders);
+    return newVMR;
+  }
+
+  bind(...args: any[]): ViewModelRuntime {
+    const ParentCtor = this.#Ctor;
+    class RebindedCtor extends ParentCtor {
       constructor() {
         super(...args);
       }
     }
-    const newVMR = createViewModelRuntime(RebindedCtor);
-    newVMR.registeredActions = new Map(vmr.registeredActions);
-    newVMR.registeredBinders = new Map(vmr.registeredBinders);
-    return newVMR;
-  };
-  const extend = (
+    return this.#clone(RebindedCtor);
+  }
+
+  extend(
     ChildCtor: new (...args: any[]) => any,
     modelDefFn: (helper: AttributeDefHelper<any>) => any,
-  ) => {
-    const newVMR = createViewModelRuntime(ChildCtor);
-    newVMR.registeredActions = new Map(vmr.registeredActions);
-    newVMR.registeredBinders = new Map(vmr.registeredBinders);
+  ): ViewModelRuntime {
+    const newVMR = this.#clone(ChildCtor);
     const helper = new AttributeDefHelper(newVMR);
     const defResult = modelDefFn(helper);
     helper["~assignActions"](defResult);
     return newVMR;
-  };
-  const vmr = {
-    Ctor,
-    registeredActions,
-    registeredBinders,
-    parse,
-    bind,
-    extend,
-  };
-  return vmr;
-};
+  }
+}
 
 const runtimeViewModelSlot: unique symbol = Symbol("runtimeViewModel");
 
@@ -177,7 +171,7 @@ export function createViewModel<
   BlockDef extends AttributeBlockDefinition,
   CtorArgs extends any[],
 >(vmr: ViewModelRuntime): IViewModel<ModelT, BlockDef, CtorArgs> {
-  class ViewModelDescriptor {
+  class ViewModelDescriptor implements IViewModelInstance {
     declare static "~modelType": ModelT;
     declare static "~ctorArgs": CtorArgs;
     declare static "~namedDefinition": BlockDef;
@@ -269,14 +263,14 @@ export class AttributeDefHelper<ModelT> {
         AttributeDefHelper.#lazyActionSlot,
       );
       if (actionDescriptor) {
-        this.#vmr.registeredActions.set(name, actionDescriptor.value);
+        this.#vmr.setActionOrBinder("action", name, actionDescriptor.value);
       }
       const binderDescriptor = Object.getOwnPropertyDescriptor(
         value,
         AttributeDefHelper.#lazyBinderSlot,
       );
       if (binderDescriptor) {
-        this.#vmr.registeredBinders.set(name, binderDescriptor.value);
+        this.#vmr.setActionOrBinder("binder", name, binderDescriptor.value);
       }
     }
   }
@@ -373,7 +367,7 @@ export function defineViewModel<
   modelDefFn: (helper: AttributeDefHelper<T>) => BlockDef,
   initMeta?: InitMeta,
 ): IViewModel<T, BlockDef & { "~meta": InitMeta }, CtorArgs> {
-  const vmr = createViewModelRuntime(Ctor);
+  const vmr = new ViewModelRuntime(Ctor);
   const helper = new AttributeDefHelper<T>(vmr);
   const defResult = modelDefFn(helper);
   helper["~assignActions"](defResult);
