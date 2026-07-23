@@ -2,21 +2,54 @@
 title: ViewModel 实现
 ---
 
-`defineViewModel` 是创建 ViewModel 的核心函数。它接收一个 Model 构造函数和一个属性定义函数，返回一个配置好的 ViewModel 实例。
+`defineViewModel` 是创建 ViewModel 的核心函数。它接收一个 Model 构造函数和一个属性定义函数，返回一个配置好的 ViewModel 类。
+
+## 定义 ViewModel
+
+ViewModel 有两种等价的定义方式：
+
+```ts
+// 1. 赋值给常量
+const MyViewModel = defineViewModel(MyBuilder, (helper) => ({
+  // 属性定义
+}));
+```
+
+```ts
+// 2. 继承 defineViewModel 的返回值
+class MyViewModel extends defineViewModel(MyBuilder, (helper) => ({
+  // 属性定义
+})) {}
+```
+
+两种方式的运行时行为相同。局部使用或简单的 ViewModel 可以使用第一种写法。对于需要从包中导出的 ViewModel，推荐第二种写法：
+
+```ts
+export class MyViewModel extends defineViewModel(MyBuilder, (helper) => ({
+  // 属性定义
+})) {}
+```
+
+类声明会提供可直接引用的具名类型 `MyViewModel`。因此，其他导出类型和生成的 `.d.ts` 都能方便地引用它；常量形式的类型通常需要通过 `typeof MyViewModel` 或 `InstanceType<typeof MyViewModel>` 间接引用。
 
 ## `defineViewModel` 签名
 
 ```ts
-function defineViewModel<ModelT, BlockDef, InitMeta>(
-  Ctor: new () => ModelT,
+function defineViewModel<
+  ModelT,
+  const BlockDef extends PartialAttributeBlockDefinition,
+  CtorArgs extends any[] = [],
+  InitMeta = unknown,
+>(
+  Ctor: new (...args: CtorArgs) => ModelT,
   modelDefFn: (helper: AttributeDefHelper<ModelT>) => BlockDef,
   initMeta?: InitMeta,
-): ViewModel<ModelT, BlockDef & { [Meta]: InitMeta }>;
+): IViewModel<ModelT, BlockDef & { "~meta": InitMeta }, CtorArgs>;
 ```
 
-- **`Ctor`** — Model 类的构造函数（`new () => ModelT`）
+- **`Ctor`** — Model 类的构造函数；它可以声明 ViewModel 的 `parse()` 所需的构造参数
 - **`modelDefFn`** — 属性定义函数，接收一个 helper，返回属性定义对象
-- **`initMeta`** — 初始 Meta 类型（用于类型层面的状态追踪）
+- **`initMeta`** — 初始 Meta 类型（仅用于类型层面的状态追踪，不产生运行时行为）
 
 ## 完整示例：CharacterViewModel
 
@@ -45,7 +78,7 @@ class CharacterBuilder {
   }
 }
 
-const CharacterVM = defineViewModel(
+export class CharacterVM extends defineViewModel(
   CharacterBuilder,
   (helper) => ({
     id: helper.attribute<{
@@ -75,7 +108,7 @@ const CharacterVM = defineViewModel(
     }),
   }),
   {} as { varNames: never },
-);
+) {}
 ```
 
 ## 属性定义的两种方式
@@ -159,12 +192,12 @@ helper.simpleAttribute({ required: true, uniqueKey: "myKey" })
 AR.Done;                   // 无嵌套块，不修改 meta
 AR.This<TMeta>;            // 访问当前 meta 类型
 AR.EnableIf<Cond, T>;      // 条件类型
-AR.With<VM, TMeta>;         // 属性打开一个嵌套 VM 块
+AR.With<VMI, TMeta>;        // 属性打开一个嵌套 VM 块
 AR.DoneRewriteMeta<NewMeta>;      // 属性重写 meta
-AR.WithRewriteMeta<NewMeta, VM>;  // 打开嵌套 VM + 重写 meta
+AR.WithRewriteMeta<NewMeta, VMI>; // 打开嵌套 VM + 重写 meta
 ```
 
-这些在 `TypeScript Interop` 中用于为 IDE 提供精确的类型信息，不影响运行时逻辑。
+这些类型在 `TypeScript Interop` 中用于为 IDE 提供精确的类型信息，不影响运行时逻辑。
 
 ## Root ViewModel — 根调度
 
@@ -173,17 +206,17 @@ AR.WithRewriteMeta<NewMeta, VM>;  // 打开嵌套 VM + 重写 meta
 ```ts
 const RootVM = defineViewModel(RootBuilder, (helper) => ({
   character: helper.attribute<{
-    (): AR.With<typeof CharacterVM>;
+    (): AR.With<CharacterVM>;
   }>(
     (_, __, view) => CharacterVM.parse(view),
   ),
   skill: helper.attribute<{
-    (): AR.With<typeof CharacterSkillVM>;
+    (): AR.With<CharacterSkillVM>;
   }>(
     (_, __, view) => CharacterSkillVM.parse(view),
   ),
   status: helper.attribute<{
-    (): AR.With<typeof StatusVM>;
+    (): AR.With<StatusVM>;
   }>(
     (_, __, view) => EntityVM("status").parse(view),
   ),
