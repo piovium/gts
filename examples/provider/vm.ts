@@ -194,7 +194,7 @@ type NamedVariableVMMeta = {
   name: string;
 };
 
-class NamedVariableVM extends VariableVM.bind<{ name: "default" }>().extend(
+class NamedVariableVM extends VariableVM.narrow({ name: "default" }).extend(
   NamedVariableModel,
   (helper) => ({
     name: helper.attribute<{

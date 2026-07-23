@@ -32,13 +32,22 @@ export type DeferredIViewModel<T> =
 
 export interface IReboundViewModel<
   BaseViewModel extends IViewModel<any, any, any>,
-  NewMeta,
   NewCtorArgs extends any[],
 > extends DeferredIViewModel<
   IViewModel<
     BaseViewModel["~modelType"],
-    BlockDefinitionRewriteMeta<BaseViewModel["~namedDefinition"], NewMeta>,
+    BaseViewModel["~namedDefinition"],
     NewCtorArgs
+  >
+> {}
+export interface INarrowedViewModel<
+  BaseViewModel extends IViewModel<any, any, any>,
+  NewMeta extends BaseViewModel["~namedDefinition"]["~meta"],
+> extends DeferredIViewModel<
+  IViewModel<
+    BaseViewModel["~modelType"],
+    BlockDefinitionRewriteMeta<BaseViewModel["~namedDefinition"], NewMeta>,
+    BaseViewModel["~ctorArgs"]
   >
 > {}
 
@@ -74,19 +83,25 @@ export interface IViewModel<
   ): ModelT;
   /**
    * Creates a new ViewModel with the same actions and binders, but with
-   * - a different constructor that accepts the specified arguments, and/or
-   * - a different initial Meta.
+   * a different constructor that accepts the specified arguments.
    *
    * This is useful for creating binding ViewModels directly that forwards
    * the binding logic to inner ViewModels.
    */
-  bind<This extends IViewModel<any, any, any>, NewMeta = BlockDef["~meta"]>(
-    this: This,
-  ): IReboundViewModel<This, NewMeta, this["~ctorArgs"]>;
-  bind<This extends IViewModel<any, any, any>, NewMeta = BlockDef["~meta"]>(
+  bind<This extends IViewModel<any, any, any>>(
     this: This,
     ...args: CtorArgs
-  ): IReboundViewModel<This, NewMeta, []>;
+  ): IReboundViewModel<This, []>;
+
+  /**
+   * Rewrite the initial meta.
+   * @param newMeta 
+   */
+  narrow<This extends IViewModel<any, any, any>, const NewMeta extends This["~namedDefinition"]["~meta"]>(
+    this: This,
+    newMeta: NewMeta,
+  ): INarrowedViewModel<This, NewMeta>;
+  
   extend<
     This extends IViewModel<any, any, any>,
     ChildT extends ModelT,
@@ -217,9 +232,13 @@ export function createViewModel<
 
     static bind(...args: any[]): IViewModel<any, any, any> {
       if (args.length === 0) {
-        return this as any;
+        return this;
       }
       return createViewModel(vmr.bind(...args));
+    }
+
+    static narrow(_newMeta: any): IViewModel<any, any, any> {
+      return this;
     }
 
     static extend(
@@ -368,7 +387,7 @@ export function defineViewModel<
   T,
   const BlockDef extends PartialAttributeBlockDefinition,
   CtorArgs extends any[] = [],
-  InitMeta = void,
+  InitMeta = unknown,
 >(
   Ctor: new (...args: CtorArgs) => T,
   modelDefFn: (helper: AttributeDefHelper<T>) => BlockDef,

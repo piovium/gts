@@ -62,7 +62,7 @@ export interface ISimpleViewModel<
       required(): {} extends Pick<T, K> ? false : true;
     };
   } & {
-    "~meta": undefined;
+    "~meta": unknown;
   },
   []
 > {

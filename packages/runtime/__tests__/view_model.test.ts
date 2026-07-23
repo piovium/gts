@@ -38,7 +38,7 @@ test("parse and bind are inherited static methods", () => {
   class BoundVM extends VM.bind("bound") {}
   expect(BoundVM.parse(view).values).toEqual(["bound:direct"]);
 
-  class ReMetaVM extends VM.bind<{ scope: "nested" }>() {}
+  class ReMetaVM extends VM.narrow({ scope: "nested" }) {}
   expect(ReMetaVM.parse(view, "meta").values).toEqual(["meta:direct"]);
 });
 
