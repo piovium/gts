@@ -28,7 +28,7 @@ Meta 重写使 TypeScript 能在编译时验证变量名的合法性。
 const StatusVM = defineViewModel(
   StatusBuilder,
   (helper) => ({ /* 属性定义 */ }),
-  { varNames: never } as Meta,  // 初始 Meta
+  null! as { varNames: never },  // 初始 Meta
 );
 ```
 

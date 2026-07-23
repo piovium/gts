@@ -102,13 +102,13 @@ function EntityVM(type: "status" | "combatStatus" | "summon") {
 
 ```ts
 status: helper.attribute<{ (): AR.With<StatusVM> }>(
-  (_, __, view) => EntityVM("status").parse(view),
+  (_, __, view) => EntityVM.parse(view, "status"),
 ),
 combatStatus: helper.attribute<{ (): AR.With<CombatStatusVM> }>(
-  (_, __, view) => EntityVM("combatStatus").parse(view),
+  (_, __, view) => EntityVM.parse(view, "combatStatus"),
 ),
 summon: helper.attribute<{ (): AR.With<SummonVM> }>(
-  (_, __, view) => EntityVM("summon").parse(view),
+  (_, __, view) => EntityVM.parse(view, "summon"),
 ),
 ```
 
