@@ -1,7 +1,7 @@
 import type {
   AttributeBlockDefinition,
   BlockDefinitionRewriteMeta,
-  IViewModel,
+  IViewModelInstance,
 } from "./view_model.ts";
 
 export type Computed<T, Constraint = any> = T extends Constraint
@@ -28,10 +28,13 @@ export namespace AttributeReturn {
   };
 
   export type With<
-    VM extends IViewModel<any, any, any>,
-    TMeta = VM["~namedDefinition"]["~meta"],
+    VMI extends IViewModelInstance,
+    TMeta = VMI["~viewModel"]["~namedDefinition"]["~meta"],
   > = {
-    namedDefinition: BlockDefinitionRewriteMeta<VM["~namedDefinition"], TMeta>;
+    namedDefinition: BlockDefinitionRewriteMeta<
+      VMI["~viewModel"]["~namedDefinition"],
+      TMeta
+    >;
   };
 
   export type DoneRewriteMeta<NewMeta> = {
@@ -41,10 +44,13 @@ export namespace AttributeReturn {
 
   export type WithRewriteMeta<
     NewMeta,
-    VM extends IViewModel<any, any, any>,
-    TMeta = VM["~namedDefinition"]["~meta"],
+    VMI extends IViewModelInstance,
+    TMeta = VMI["~viewModel"]["~namedDefinition"]["~meta"],
   > = {
-    namedDefinition: BlockDefinitionRewriteMeta<VM["~namedDefinition"], TMeta>;
+    namedDefinition: BlockDefinitionRewriteMeta<
+      VMI["~viewModel"]["~namedDefinition"],
+      TMeta
+    >;
     rewriteMeta: NewMeta;
   };
 }

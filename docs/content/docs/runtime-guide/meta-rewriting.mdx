@@ -28,7 +28,7 @@ Meta 重写使 TypeScript 能在编译时验证变量名的合法性。
 const StatusVM = defineViewModel(
   StatusBuilder,
   (helper) => ({ /* 属性定义 */ }),
-  { varNames: never } as Meta,  // 初始 Meta
+  null! as { varNames: never },  // 初始 Meta
 );
 ```
 
@@ -44,6 +44,28 @@ const StatusVM = defineViewModel(
 // meta 变为: { varNames: "chakra" | "count" }
 ```
 
+### 缩窄派生 ViewModel 的初始 Meta
+
+当派生 ViewModel 需要使用更具体的初始 Meta 时，调用 `.narrow(meta)`：
+
+```ts
+type EntityMeta = {
+  type: "status" | "summon";
+};
+
+class EntityVM extends defineViewModel(
+  EntityBuilder,
+  (helper) => ({ /* 属性定义 */ }),
+  {} as EntityMeta,
+) {}
+
+class StatusVM extends EntityVM.narrow({ type: "status" }) {}
+```
+
+`StatusVM` 复用 `EntityVM` 的 action 和 binder，但它的初始 Meta 会被缩窄为 `{ type: "status" }`。这个操作只影响类型；运行时仍使用同一个 ViewModel 实现。
+
+Meta 的这种“重绑定”此前由 `.bind` 承担，现已改名为 `.narrow`。由于 TypeScript 的类型限制，构造参数绑定和 Meta 缩窄不能由同一个 `.bind` API 同时可靠地表达：`.bind(...args)` 现在只绑定 Model 的构造参数，而 `.narrow(meta)` 专门处理初始 Meta。
+
 ## 实现 Meta 重写
 
 ### 重写 Meta 的属性定义
@@ -56,14 +78,14 @@ variable: helper.attribute<{
     initialValue: number,
   ): AR.WithRewriteMeta<
     { varNames: TMeta["varNames"] | TVarName },
-    typeof VariableVM
+    VariableVM
   >;
 }>(() => {}),
 ```
 
 关键点：
 - **`this: AR.This<TMeta>`** — 接收当前 meta 类型
-- **`AR.WithRewriteMeta<NewMeta, VM>`** — 声明此属性同时打开嵌套 VM **并**重写 meta
+- **`AR.WithRewriteMeta<NewMeta, VMI>`** — 声明此属性同时打开嵌套 VM **并**重写 meta；`VMI` 为子 VM 的实例类型
 - **`NewMeta`** — 新 meta 类型，通过 `TMeta["varNames"] | TVarName` 追加变量名
 
 ### 后续属性使用 Meta
@@ -88,26 +110,35 @@ getVariable: helper.attribute<{
 
 ```ts
 namespace AR {
-  type Done = { return?: unknown; meta?: undefined };
-  type This<TMeta> = { return: unknown; meta: TMeta };
+  type This<TMeta> = { "~meta": TMeta };
   type EnableIf<Cond, T> = Cond extends true ? T : never;
+  type Done = { namedDefinition: { "~meta": void } };
 
-  type With<VM extends ViewModel<any, any>, TMeta = void> = {
-    return: unknown;
-    meta: void;
-    vm: VM;
-    metaAcc?: TMeta;
+  type With<
+    VMI extends IViewModelInstance,
+    TMeta = VMI["~viewModel"]["~namedDefinition"]["~meta"],
+  > = {
+    namedDefinition: BlockDefinitionRewriteMeta<
+      VMI["~viewModel"]["~namedDefinition"],
+      TMeta
+    >;
   };
 
   type DoneRewriteMeta<NewMeta> = {
-    return: unknown;
-    meta: NewMeta & {};
+    namedDefinition: { "~meta": void };
+    rewriteMeta: NewMeta;
   };
 
-  type WithRewriteMeta<NewMeta, VM extends ViewModel<any, any>> = {
-    return: unknown;
-    meta: NewMeta & {};
-    vm: VM;
+  type WithRewriteMeta<
+    NewMeta,
+    VMI extends IViewModelInstance,
+    TMeta = VMI["~viewModel"]["~namedDefinition"]["~meta"],
+  > = {
+    namedDefinition: BlockDefinitionRewriteMeta<
+      VMI["~viewModel"]["~namedDefinition"],
+      TMeta
+    >;
+    rewriteMeta: NewMeta;
   };
 }
 ```
@@ -134,7 +165,7 @@ const EntityVM = defineViewModel(
         initialValue: number,
       ): AR.WithRewriteMeta<
         { varNames: TMeta["varNames"] | TVarName },
-        typeof VariableVM
+        VariableVM
       >;
     }>(() => {}),
 

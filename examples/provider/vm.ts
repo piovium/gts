@@ -25,7 +25,7 @@ type CharacterSkillHandle = number & {
   readonly _characterSkill: unique symbol;
 };
 
-const CharacterVM = defineViewModel(
+class CharacterVM extends defineViewModel(
   CharacterBuilder,
   (helper) => ({
     id: helper.attribute<{
@@ -73,7 +73,7 @@ const CharacterVM = defineViewModel(
 
     // skill: helper.attribute<{
     //   <TMeta extends BuilderMeta>(this: AR.This<TMeta>): AR.With<
-    //     typeof CharacterSkillVM,
+    //     CharacterSkillVM,
     //     TMeta
     //   >;
     // }>((model, _, named) => {
@@ -82,7 +82,7 @@ const CharacterVM = defineViewModel(
     // }),
   }),
   {} as { varNames: never } satisfies BuilderMeta,
-);
+) {}
 
 class SkillBuilder {
   constructor(characterId?: number) {}
@@ -117,7 +117,7 @@ type SkillAction<TMeta extends BuilderMeta> = (
   ctx: SkillContext<TMeta>,
 ) => void;
 
-const SkillVM = defineViewModel(
+class SkillVM extends defineViewModel(
   SkillBuilder,
   (helper) => ({
     id: helper.attribute<{
@@ -154,7 +154,7 @@ const SkillVM = defineViewModel(
         {
           varNames: TMeta["varNames"] | TVarName;
         },
-        typeof VariableVM
+        VariableVM
       >;
     }>(() => {}),
 
@@ -166,9 +166,9 @@ const SkillVM = defineViewModel(
     }>((model, pos) => {}),
   }),
   {} as { varNames: never } satisfies BuilderMeta,
-);
+) {}
 
-const VariableVM = defineSimpleViewModel(
+class VariableVM extends defineSimpleViewModel(
   type({
     "append?": [
       {
@@ -184,7 +184,7 @@ const VariableVM = defineSimpleViewModel(
     booleanSwitch: true,
     recursive: true,
   },
-);
+) {}
 
 class NamedVariableModel extends VariableVM.Model {
   name?: string;
@@ -194,7 +194,7 @@ type NamedVariableVMMeta = {
   name: string;
 };
 
-const NamedVariableVM = VariableVM.bind<{ name: "default" }>().extend(
+class NamedVariableVM extends VariableVM.narrow({ name: "default" }).extend(
   NamedVariableModel,
   (helper) => ({
     name: helper.attribute<{
@@ -208,7 +208,7 @@ const NamedVariableVM = VariableVM.bind<{ name: "default" }>().extend(
       model.name = name;
     }),
   }),
-);
+) {}
 
 class EntityBuilder {
   constructor(type: "summon" | "status") {}
@@ -219,7 +219,7 @@ type SummonHandle<VarNames extends string> = number & {
   readonly varNames: VarNames;
 };
 
-const EntityVM = defineViewModel(
+class EntityVM extends defineViewModel(
   EntityBuilder,
   (helper) => ({
     id: helper.attribute<{
@@ -240,7 +240,7 @@ const EntityVM = defineViewModel(
       <TMeta extends BuilderMeta>(
         this: AR.This<TMeta>,
         count: number,
-      ): AR.With<typeof NamedVariableVM, { name: "usage" }>;
+      ): AR.With<NamedVariableVM, { name: "usage" }>;
       mergeMeta: <
         const TMeta extends BuilderMeta,
         const TSubMeta extends NamedVariableVMMeta,
@@ -257,7 +257,7 @@ const EntityVM = defineViewModel(
       <Meta extends BuilderMeta>(
         this: AR.This<Meta>,
         eventName: "endPhase" | "actionPhase",
-      ): AR.With<typeof SkillVM, { varNames: Meta["varNames"] }>;
+      ): AR.With<SkillVM, { varNames: Meta["varNames"] }>;
       mergeMeta: <
         const TMeta extends BuilderMeta,
         const TSubMeta extends BuilderMeta,
@@ -270,29 +270,31 @@ const EntityVM = defineViewModel(
     }>((model, pos) => {}),
   }),
   {} as { varNames: never } satisfies BuilderMeta,
-);
+) {}
 
 class RootBuilder {}
 
 export const registered: any[] = [];
 
-export default defineViewModel(RootBuilder, (helper) => ({
+class RootVM extends defineViewModel(RootBuilder, (helper) => ({
   character: helper.attribute<{
-    (): AR.With<typeof CharacterVM, { varNames: never }>;
+    (): AR.With<CharacterVM, { varNames: never }>;
   }>((model, _, named) => {
     const character = CharacterVM.parse(named);
     registered.push(character);
   }, CharacterVM),
   skill: helper.attribute<{
-    (): AR.With<typeof SkillVM, { varNames: never }>;
+    (): AR.With<SkillVM, { varNames: never }>;
   }>((model, _, named) => {
     const skill = SkillVM.parse(named, 0);
     registered.push(skill);
-  }, SkillVM),
+  }, SkillVM.bind(0)),
   summon: helper.attribute<{
-    (): AR.With<typeof EntityVM, { varNames: never }>;
+    (): AR.With<EntityVM, { varNames: never }>;
   }>((model, _, named) => {
     const summon = EntityVM.parse(named, "summon");
     registered.push(summon);
   }, EntityVM.bind("summon")),
-}));
+})) {}
+
+export default RootVM;
