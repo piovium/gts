@@ -184,9 +184,21 @@ export function getCommentHandlers(source, comments, index = 0) {
 							}
 						}
 
-						const parent = /** @type {AST.Node & AST.NodeWithLocation} */ (path.at(-1));
+						const parent = /** @type {AST.Node & AST.NodeWithLocation | undefined} */ (path.at(-1));
 
-						if (parent === undefined || node.end !== parent.end) {
+						// A comment-only file leaves Program as the sole visited node. There is
+						// no parent to use for sibling-based attachment, so retain the remaining
+						// comments on Program itself.
+						if (parent === undefined) {
+							while (comments.length) {
+								(node.leadingComments ||= []).push(
+									/** @type {AST.CommentWithLocation} */ (comments.shift()),
+								);
+							}
+							return;
+						}
+
+						if (node.end !== parent.end) {
 							const slice = source.slice(node.end, comments[0].start);
 
 							// Check if this node is the last item in an array-like structure

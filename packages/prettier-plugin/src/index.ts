@@ -17,6 +17,13 @@ declare module "estree" {
     start: number;
     end: number;
   }
+  interface NodeMap {
+    TSParenthesizedType: TSParenthesizedType;
+  }
+  interface TSParenthesizedType extends AST.BaseNode {
+    type: "TSParenthesizedType";
+    typeAnnotation: AST.Node;
+  }
 }
 
 const {
@@ -38,6 +45,8 @@ const GTS_VISITOR_KEYS = {
   GTSDirectFunction: ["body"],
   GTSShortcutFunctionExpression: ["returnType", "body"],
   GTSShortcutArgumentExpression: ["property"],
+  // produced by @sveltejs/acorn-typescript, but not recognized by prettier.
+  TSParenthesizedType: ["typeAnnotation"],
 } as const satisfies Record<string, readonly string[]>;
 
 const estreePrinter = estreePrinters.estree as Printer<AST.BaseNode>;
@@ -198,7 +207,20 @@ function printGtsPositionalAttributeList(
   path: AstPath<AST.GTSPositionalAttributeList>,
   print: Print,
 ): Doc {
-  return group(join([",", line], printNodeList(path, print, "attributes")));
+  const attributes = path.map((attributePath) => {
+    const attribute = attributePath.node as AST.Expression;
+    const attributeDoc = print(attributePath);
+    if (
+      attribute.type === "ArrowFunctionExpression" ||
+      attribute.type === "ObjectExpression"
+    ) {
+      return ["(", attributeDoc, ")"];
+    }
+
+    return attributeDoc;
+  }, "attributes");
+
+  return group(join([",", line], attributes));
 }
 
 function printGtsNamedAttributeBlock(
@@ -223,10 +245,7 @@ function printGtsNamedAttributeBlock(
       /\r?\n/u.test(
         options.originalText.slice(node.start, node.attributes[0].start),
       );
-    return group(
-      ["{", indent([line, docs[0]]), line, "}"],
-      { shouldBreak },
-    );
+    return group(["{", indent([line, docs[0]]), line, "}"], { shouldBreak });
   }
 
   return group(["{", indent([hardline, join(hardline, docs)]), hardline, "}"]);
@@ -265,7 +284,24 @@ function printGtsShortcutArgumentExpression(
   path: AstPath<AST.GTSShortcutArgumentExpression>,
   print: Print,
 ): Doc {
-  return [":", print("property")];
+  const doc: Doc = [":", print("property")];
+  const parent = path.getParentNode() as AST.Node;
+
+  // A shortcut expression at the beginning of an arrow body must be wrapped:
+  // `() => :foo` is parsed as the outer shortcut function's closing paren,
+  // whereas `() => (:foo)` is unambiguous.
+  if (parent?.type === "ArrowFunctionExpression" && parent.body === path.node) {
+    return ["(", doc, ")"];
+  }
+
+  return doc;
+}
+
+function printTsParenthesizedType(
+  path: AstPath<AST.TSParenthesizedType>,
+  print: Print,
+): Doc {
+  return ["(", print("typeAnnotation"), ")"];
 }
 
 function getGtsVisitorKeys(
@@ -363,6 +399,11 @@ export const printers: Plugin<AST.BaseNode>["printers"] = {
         case "GTSShortcutArgumentExpression":
           return printGtsShortcutArgumentExpression(
             path as AstPath<AST.GTSShortcutArgumentExpression>,
+            printChild,
+          );
+        case "TSParenthesizedType":
+          return printTsParenthesizedType(
+            path as AstPath<AST.TSParenthesizedType>,
             printChild,
           );
         default:

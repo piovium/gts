@@ -125,6 +125,13 @@ test("allows a trailing positional attribute comma without named attributes in l
   expect(attrs).toHaveLength(3);
 });
 
+test("parses comment-only input loosely", () => {
+  const ast = parseLoose("// line comment\n/* block comment */");
+
+  expect(ast.body).toHaveLength(0);
+  expect((ast as any).leadingComments).toHaveLength(2);
+});
+
 test("attribute value with subscript followed by named block", () => {
   const source = `define foo bar.baz { qux 1; };`;
   const ast = parse(source);

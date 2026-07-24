@@ -114,6 +114,26 @@ define foo getLimit(1)?.value;
 `);
 });
 
+test("prints parenthesized TypeScript types", async () => {
+  await expect(format("type Value = (string | number);")).resolves.toBe(
+    "type Value = (string | number);\n",
+  );
+});
+
+test("preserves parentheses required by positional attributes", async () => {
+  const source = "define foo ((value)=>value),({value:1});";
+
+  await expect(format(source)).resolves.toBe(
+    "define foo ((value) => value), ({ value: 1 });\n",
+  );
+});
+
+test("parenthesizes shortcut expressions used as arrow bodies", async () => {
+  await expect(format("define foo :(() => (:bar));")).resolves.toBe(
+    "define foo :( () => (:bar) );\n",
+  );
+});
+
 test("formats string attribute names and binding modifiers", async () => {
   await expect(
     format(`define entity {"type" passive;id 1 as private Test;};`),
@@ -139,6 +159,10 @@ define character {
   tags hydro, catalyst;
 };
 `);
+});
+
+test("formats comment-only input", async () => {
+  await expect(format("// comment only")).resolves.toBe("// comment only\n");
 });
 
 test("is idempotent", async () => {
