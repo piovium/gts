@@ -1,5 +1,6 @@
 import * as prettier from "prettier";
 import { expect, test } from "vitest";
+import { parse } from "@gi-tcg/gts-transpiler";
 import plugin from "../src/index.ts";
 
 async function format(
@@ -128,10 +129,33 @@ test("preserves parentheses required by positional attributes", async () => {
   );
 });
 
-test("parenthesizes shortcut expressions used as arrow bodies", async () => {
-  await expect(format("define foo :(() => (:bar));")).resolves.toBe(
+test.each([
+  [
+    "the body itself",
+    "define foo :(() => (:bar));",
     "define foo :( () => (:bar) );\n",
-  );
+  ],
+  [
+    "the object of a member expression",
+    "define foo :(() => (:bar.baz));",
+    "define foo :( () => (:bar.baz) );\n",
+  ],
+  [
+    "the callee of a call expression",
+    "define foo :(() => (:bar()));",
+    "define foo :( () => (:bar()) );\n",
+  ],
+  [
+    "the tag of a tagged template expression",
+    "define foo :(() => (:bar`baz`));",
+    "define foo :( () => (:bar`baz`) );\n",
+  ],
+])("parenthesizes a shortcut expression at %s", async (_, source, expected) => {
+  const once = await format(source);
+
+  expect(once).toBe(expected);
+  expect(() => parse(once)).not.toThrow();
+  await expect(format(once)).resolves.toBe(once);
 });
 
 test("formats string attribute names and binding modifiers", async () => {
