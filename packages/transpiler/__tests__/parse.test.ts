@@ -91,6 +91,40 @@ test("multiple mixed attribute values with subscripts", () => {
   expect(attrs[3].type).toBe("Literal");
 });
 
+test.each([parse, parseLoose])("does not apply ASI before a positional attribute comma", (parseFn) => {
+  const source = `define foo first,
+second;`;
+  const ast = parseFn(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs).toHaveLength(2);
+  expect(attrs[0].name).toBe("first");
+  expect(attrs[1].name).toBe("second");
+});
+
+test.each([parse, parseLoose])("allows a trailing positional attribute comma before named attributes", (parseFn) => {
+  const source = `define foo first, second,
+{
+  named value;
+};`;
+  const ast = parseFn(source);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs).toHaveLength(2);
+  expect(def.body.body.namedAttributes.attributes[0].name.name).toBe("named");
+});
+
+test("rejects a trailing positional attribute comma without named attributes", () => {
+  expect(() => parse(`define foo first, second,;`)).toThrow();
+});
+
+test("allows a trailing positional attribute comma without named attributes in looseParse", () => {
+  const ast = parseLoose(`define foo first, second,;`);
+  const def = ast.body[0] as any;
+  const attrs = def.body.body.positionalAttributes.attributes;
+  expect(attrs).toHaveLength(3);
+});
+
 test("attribute value with subscript followed by named block", () => {
   const source = `define foo bar.baz { qux 1; };`;
   const ast = parse(source);

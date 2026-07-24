@@ -20,6 +20,7 @@ AttributeName:
 
 AttributeBody:
     PositionalAttributeList? NamedAttributeBlock? 
+    PositionalAttributeList "," NamedAttributeBlock
 
 AttributeBindingClause:
     "as" BindingAccessModifier? Identifier
@@ -44,7 +45,7 @@ AttributeExpression:
     ":" ShortcutFunction
     # Intentionally disable object literal, for distinction to named attribute block
     # foo bar { baz = 1 };
-    # foo bar, { baz: 1 };   // If allowed, hard to distinguish
+    # foo bar, { baz: 1 };   // Named attribute block
     # foo bar, ({ baz: 1 }); // OK
     [lookahead != "{"] CallExpression OptionalChain?
     [lookahead != "{"] MemberExpression OptionalChain?
@@ -181,6 +182,10 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           }
           if (!first) {
             this.expect(tokTypes.comma);
+            // A trailing comma is only valid before a named attribute block.
+            if (this.type === tokTypes.braceL) {
+              break;
+            }
           } else {
             first = false;
           }
@@ -247,7 +252,6 @@ export function gtsPlugin(options: GtsPluginOption = {}) {
           (this.type === tokTypes.comma ||
             this.type === tokTypes.braceR ||
             this.type === tokTypes.semi ||
-            this.canInsertSemicolon() ||
             this.isContextual("as"))
         ) {
           // Allow omitting the attribute expression for language tooling
