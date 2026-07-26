@@ -93,6 +93,17 @@ test("formats shortcut functions and member access", async () => {
 `);
 });
 
+test("removes direct empty statements from GTS functions", async () => {
+  await expect(
+    format("define foo { on endPhase { const value=1;; } };"),
+  ).resolves.toBe(`define foo {
+  on endPhase {
+    const value = 1;
+  };
+};
+`);
+});
+
 test("formats shortcut function return types", async () => {
   const source = `define summon {when :<boolean>( !:$.my );check :<number>{return 1;};};`;
 

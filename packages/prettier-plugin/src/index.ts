@@ -145,14 +145,6 @@ function printAttributeName(
   }, "name");
 }
 
-function printNodeList<T, const K extends keyof T>(
-  path: AstPath<T>,
-  print: Print,
-  property: K,
-): Doc[] {
-  return path.map((childPath) => print(childPath), property as any);
-}
-
 function printGtsDefineStatement(
   path: AstPath<AST.GTSDefineStatement>,
   print: Print,
@@ -232,7 +224,7 @@ function printGtsNamedAttributeBlock(
   options: ParserOptions<AST.BaseNode>,
 ): Doc {
   const node = path.node;
-  const docs = printNodeList(path, print, "attributes");
+  const docs = path.map((childPath) => print(childPath), "attributes");
 
   if (node.directAction) {
     docs.push(print("directAction"));
@@ -258,7 +250,13 @@ function printGtsDirectFunction(
   path: AstPath<AST.GTSDirectFunction>,
   print: Print,
 ): Doc {
-  const docs = printNodeList(path, print, "body");
+  const docs = path
+    .map(
+      (childPath) =>
+        childPath.node.type === "EmptyStatement" ? null : print(childPath),
+      "body",
+    )
+    .filter((doc) => doc !== null);
   return join(hardline, docs);
 }
 
