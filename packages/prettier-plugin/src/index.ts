@@ -1,4 +1,7 @@
-import { parseLoose } from "@gi-tcg/gts-transpiler";
+import {
+  isGtsShortcutArgumentStartingConciseBody,
+  parseLoose,
+} from "@gi-tcg/gts-transpiler";
 import { doc } from "prettier";
 import type {
   AstPath,
@@ -27,7 +30,7 @@ declare module "estree" {
 }
 
 const {
-  builders: { group, hardline, indent, join, line, softline },
+  builders: { group, hardline, indent, join, line },
 } = doc;
 
 const AST_FORMAT = "gts-estree";
@@ -271,10 +274,10 @@ function printGtsShortcutFunctionExpression(
     return group([
       ":",
       returnType,
-      "( ",
-      indent([softline, print("body")]),
-      softline,
-      " )",
+      "(",
+      indent([line, print("body")]),
+      line,
+      ")",
     ]);
   }
   return group([":", returnType, print("body")]);
@@ -284,17 +287,7 @@ function printGtsShortcutArgumentExpression(
   path: AstPath<AST.GTSShortcutArgumentExpression>,
   print: Print,
 ): Doc {
-  const doc: Doc = [":", print("property")];
-  const parent = path.getParentNode() as AST.Node;
-
-  // A shortcut expression at the beginning of an arrow body must be wrapped:
-  // `() => :foo` is parsed as the outer shortcut function's closing paren,
-  // whereas `() => (:foo)` is unambiguous.
-  if (parent?.type === "ArrowFunctionExpression" && parent.body === path.node) {
-    return ["(", doc, ")"];
-  }
-
-  return doc;
+  return [":", print("property")];
 }
 
 function printTsParenthesizedType(
@@ -406,6 +399,27 @@ export const printers: Plugin<AST.BaseNode>["printers"] = {
             path as AstPath<AST.TSParenthesizedType>,
             printChild,
           );
+        case "ArrowFunctionExpression":
+          const doc: any = estreePrinter.print(path, options, print, args);
+          if (
+            Array.isArray(doc.contents) &&
+            isGtsShortcutArgumentStartingConciseBody(path.node.body as any)
+          ) {
+            const arrow = doc.contents.indexOf(" =>");
+            if (arrow !== -1) {
+              const body = doc.contents[arrow + 1];
+              const indentedBody = body?.contents?.[0];
+              if (
+                indentedBody?.type === "indent" &&
+                Array.isArray(indentedBody.contents) &&
+                indentedBody.contents[0]?.type === "line"
+              ) {
+                indentedBody.contents.splice(1, 0, "(");
+                indentedBody.contents.push(")");
+              }
+            }
+          }
+          return doc;
         default:
           return estreePrinter.print(path, options, print, args);
       }

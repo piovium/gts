@@ -56,3 +56,4 @@ export {
   type ResolveGtsConfigSyncOptions,
   type PathModule,
 } from "./config.ts";
+export { isGtsShortcutArgumentStartingConciseBody } from "./utils/index.ts";

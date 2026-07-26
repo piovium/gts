@@ -105,6 +105,15 @@ test("formats shortcut function return types", async () => {
 `);
 });
 
+test("adds spaces inside shortcut function parentheses only on one line", async () => {
+  await expect(
+    format("define foo :(someVeryLongIdentifier);", { printWidth: 20 }),
+  ).resolves.toBe(`define foo :(
+  someVeryLongIdentifier
+);
+`);
+});
+
 test("delegates TypeScript syntax to Prettier", async () => {
   const source = `const getLimit=(usage:number)=>{return {value:usage+1}};define foo getLimit(1)?.value;`;
 
@@ -150,7 +159,35 @@ test.each([
     "define foo :(() => (:bar`baz`));",
     "define foo :( () => (:bar`baz`) );\n",
   ],
-])("parenthesizes a shortcut expression at %s", async (_, source, expected) => {
+  [
+    "already parenthesized body",
+    "define foo :(() => (:foo, 0));",
+    "define foo :( () => (:foo, 0) );\n",
+  ],
+  [
+    "chain that trigger break",
+    "define foo :(() => (:foo.bar().bar().bar().bar().bar().bar().bar().bar().bar().bar().bar().bar().bar().bar()));",
+    `define foo :(
+  () =>
+    (:foo
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar()
+      .bar())
+);
+`
+  ],
+])("parenthesizes a shortcut argument at %s", async (_, source, expected) => {
   const once = await format(source);
 
   expect(once).toBe(expected);
