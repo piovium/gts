@@ -1,13 +1,12 @@
-type TypeScript = typeof import("typescript/lib/tsserverlibrary");
-type Project = import("typescript/lib/tsserverlibrary").server.Project;
+import type * as ts from "typescript";
 
 interface FindImportedGtsFilesOptions {
   openFilesOnly?: boolean;
 }
 
-function findImportedGtsFiles(
-  ts: TypeScript,
-  project: Project,
+export function findImportedGtsFiles(
+  ts: typeof import("typescript"),
+  project: ts.server.Project,
   options: FindImportedGtsFilesOptions = {},
 ): string[] {
   const compilerOptions = project.getCompilerOptions();
@@ -15,8 +14,8 @@ function findImportedGtsFiles(
     ? getOpenFileNames(ts, project)
     : new Set<string>(project.getFileNames());
   if (
-    !options.openFilesOnly
-    && project.projectKind === ts.server.ProjectKind.Configured
+    !options.openFilesOnly &&
+    project.projectKind === ts.server.ProjectKind.Configured
   ) {
     const configFile = project.getProjectName();
     const config = ts.readJsonConfigFile(
@@ -83,17 +82,18 @@ function findImportedGtsFiles(
   return [...result];
 }
 
-function getOpenFileNames(ts: TypeScript, project: Project): Set<string> {
+function getOpenFileNames(
+  ts: typeof import("typescript"),
+  project: ts.server.Project,
+): Set<string> {
   const result = new Set<string>();
   for (const path of project.projectService.openFiles.keys()) {
     const scriptInfo = project.projectService.getScriptInfoForPath(path);
     if (
-      scriptInfo?.fileName
-      && (
-        project.isRoot(scriptInfo)
-        || scriptInfo.containingProjects.includes(project)
-        || isConfiguredProjectFile(ts, project, scriptInfo)
-      )
+      scriptInfo?.fileName &&
+      (project.isRoot(scriptInfo) ||
+        scriptInfo.containingProjects.includes(project) ||
+        isConfiguredProjectFile(ts, project, scriptInfo))
     ) {
       result.add(scriptInfo.fileName);
     }
@@ -102,27 +102,30 @@ function getOpenFileNames(ts: TypeScript, project: Project): Set<string> {
 }
 
 function isConfiguredProjectFile(
-  ts: TypeScript,
-  project: Project,
-  scriptInfo: import("typescript/lib/tsserverlibrary").server.ScriptInfo,
+  ts: typeof import("typescript"),
+  project: ts.server.Project,
+  scriptInfo: ts.server.ScriptInfo,
 ): boolean {
   if (project.projectKind !== ts.server.ProjectKind.Configured) {
     return false;
   }
-  const projectService = project.projectService as typeof project.projectService & {
-    getConfigFileNameForFile?(
-      info: typeof scriptInfo,
-      findFromCacheOnly: boolean,
-    ): string | undefined;
-  };
-  return projectService.getConfigFileNameForFile?.(scriptInfo, false)
-    === project.getProjectName();
+  const projectService =
+    project.projectService as typeof project.projectService & {
+      getConfigFileNameForFile?(
+        info: typeof scriptInfo,
+        findFromCacheOnly: boolean,
+      ): string | undefined;
+    };
+  return (
+    projectService.getConfigFileNameForFile?.(scriptInfo, false) ===
+    project.getProjectName()
+  );
 }
 
 function resolveGtsImport(
-  ts: TypeScript,
-  project: Project,
-  compilerOptions: import("typescript").CompilerOptions,
+  ts: typeof import("typescript"),
+  project: ts.server.Project,
+  compilerOptions: ts.CompilerOptions,
   containingFile: string,
   specifier: string,
 ): string | undefined {
@@ -139,12 +142,11 @@ function resolveGtsImport(
   } catch {}
 
   try {
-    const resolved =
-      require("node:module").createRequire(containingFile).resolve(specifier);
+    const resolved = require("node:module")
+      .createRequire(containingFile)
+      .resolve(specifier);
     if (resolved.toLowerCase().endsWith(".gts")) {
       return resolved;
     }
   } catch {}
 }
-
-module.exports = { findImportedGtsFiles };

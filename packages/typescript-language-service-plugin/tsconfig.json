@@ -5,17 +5,16 @@
       "esnext"
     ],
     "types": ["node"],
-    "module": "NodeNext",
+    "module": "CommonJS",
 
-    "verbatimModuleSyntax": true,
-    "erasableSyntaxOnly": true,
+    // "verbatimModuleSyntax": true,
+    // "erasableSyntaxOnly": true,
     "rewriteRelativeImportExtensions": true,
 
     "sourceMap": true,
     
     "composite": true,
-    "declaration": true,
-    "emitDeclarationOnly": true,
+    "noEmit": true,
     "strict": true,
     "skipLibCheck": true,
   },

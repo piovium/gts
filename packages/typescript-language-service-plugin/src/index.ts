@@ -1,17 +1,17 @@
-const { createLanguageServicePlugin } =
-  require("@volar/typescript/lib/quickstart/createLanguageServicePlugin.js") as typeof import("@volar/typescript/lib/quickstart/createLanguageServicePlugin.js");
-const { createGtsLanguagePlugin } =
-  require("@gi-tcg/gts-language-plugin") as typeof import("@gi-tcg/gts-language-plugin");
+import createLanguageServicePluginMod = require("@volar/typescript/lib/quickstart/createLanguageServicePlugin.js");
+import createGtsLanguagePluginMod = require("@gi-tcg/gts-language-plugin");
+import type * as ts from "typescript";
+import externalFilesMod = require("./external_files.ts");
 
-type TypeScript = typeof import("typescript/lib/tsserverlibrary");
-type Project = import("typescript/lib/tsserverlibrary").server.Project;
-const { findImportedGtsFiles } = require("./external_files") as {
-  findImportedGtsFiles(
-    ts: TypeScript,
-    project: Project,
-    options?: { openFilesOnly?: boolean },
-  ): string[];
-};
+declare module "typescript" {
+  var createTsgoProgram: unknown;
+}
+
+const { createLanguageServicePlugin } = createLanguageServicePluginMod;
+const { createGtsLanguagePlugin } = createGtsLanguagePluginMod;
+
+type Project = ts.server.Project;
+const { findImportedGtsFiles } = externalFilesMod;
 
 // Use CommonJS export to be compatible with TypeScript Language Service Plugin system
 const createPlugin = createLanguageServicePlugin((ts, info) => {
@@ -24,14 +24,11 @@ const createPlugin = createLanguageServicePlugin((ts, info) => {
   };
 });
 
-module.exports = ((modules: Parameters<typeof createPlugin>[0]) => {
+const plugin: ts.server.PluginModuleFactory = (modules) => {
   const plugin = createPlugin(modules);
   const getExternalFiles = plugin.getExternalFiles;
   const importedExternalFiles = new WeakMap<Project, string[]>();
-  const isNativeBridge =
-    typeof (modules.typescript as TypeScript & {
-      createTsgoProgram?: unknown;
-    }).createTsgoProgram === "function";
+  const isNativeBridge = modules.typescript.createTsgoProgram === "function";
 
   return {
     ...plugin,
@@ -48,7 +45,10 @@ module.exports = ((modules: Parameters<typeof createPlugin>[0]) => {
             }),
           );
         } catch (error) {
-          console.error("[GamingTS] Failed to collect imported GTS files", error);
+          console.error(
+            "[GamingTS] Failed to collect imported GTS files",
+            error,
+          );
           importedExternalFiles.set(project, []);
         }
       }
@@ -60,4 +60,6 @@ module.exports = ((modules: Parameters<typeof createPlugin>[0]) => {
       ];
     },
   };
-}) satisfies typeof createPlugin;
+};
+
+export = plugin;
