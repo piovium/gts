@@ -1,28 +1,17 @@
 import type * as ts from "typescript";
 
-interface FindImportedGtsFilesOptions {
-  openFilesOnly?: boolean;
-}
-
 export function findImportedGtsFiles(
   ts: typeof import("typescript"),
   project: ts.server.Project,
-  options: FindImportedGtsFilesOptions = {},
 ): string[] {
-  const compilerOptions = project.getCompilerOptions();
-  const roots = options.openFilesOnly
-    ? getOpenFileNames(ts, project)
-    : new Set<string>(project.getFileNames());
-  if (
-    !options.openFilesOnly &&
-    project.projectKind === ts.server.ProjectKind.Configured
-  ) {
+  const roots = new Set<string>(project.getFileNames());
+  if (project.projectKind === ts.server.ProjectKind.Configured) {
     const configFile = project.getProjectName();
     const config = ts.readJsonConfigFile(
       configFile,
       project.readFile.bind(project),
     );
-    const parseHost: import("typescript").ParseConfigHost = {
+    const parseHost: ts.ParseConfigHost = {
       useCaseSensitiveFileNames: project.useCaseSensitiveFileNames(),
       fileExists: project.fileExists.bind(project),
       readFile: project.readFile.bind(project),
@@ -44,13 +33,11 @@ export function findImportedGtsFiles(
     queue.filter((fileName) => fileName.toLowerCase().endsWith(".gts")),
   );
 
-  for (let index = 0; index < queue.length; index++) {
-    const containingFile = queue[index];
+  for (const containingFile of queue) {
     if (checked.has(containingFile)) {
       continue;
     }
     checked.add(containingFile);
-
     let text: string | undefined;
     try {
       text = project.readFile(containingFile);
@@ -66,9 +53,6 @@ export function findImportedGtsFiles(
         continue;
       }
       const resolvedFileName = resolveGtsImport(
-        ts,
-        project,
-        compilerOptions,
         containingFile,
         imported.fileName,
       );
@@ -82,69 +66,12 @@ export function findImportedGtsFiles(
   return [...result];
 }
 
-function getOpenFileNames(
-  ts: typeof import("typescript"),
-  project: ts.server.Project,
-): Set<string> {
-  const result = new Set<string>();
-  for (const path of project.projectService.openFiles.keys()) {
-    const scriptInfo = project.projectService.getScriptInfoForPath(path);
-    if (
-      scriptInfo?.fileName &&
-      (project.isRoot(scriptInfo) ||
-        scriptInfo.containingProjects.includes(project) ||
-        isConfiguredProjectFile(ts, project, scriptInfo))
-    ) {
-      result.add(scriptInfo.fileName);
-    }
-  }
-  return result;
-}
-
-function isConfiguredProjectFile(
-  ts: typeof import("typescript"),
-  project: ts.server.Project,
-  scriptInfo: ts.server.ScriptInfo,
-): boolean {
-  if (project.projectKind !== ts.server.ProjectKind.Configured) {
-    return false;
-  }
-  const projectService =
-    project.projectService as typeof project.projectService & {
-      getConfigFileNameForFile?(
-        info: typeof scriptInfo,
-        findFromCacheOnly: boolean,
-      ): string | undefined;
-    };
-  return (
-    projectService.getConfigFileNameForFile?.(scriptInfo, false) ===
-    project.getProjectName()
-  );
-}
-
 function resolveGtsImport(
-  ts: typeof import("typescript"),
-  project: ts.server.Project,
-  compilerOptions: ts.CompilerOptions,
   containingFile: string,
   specifier: string,
 ): string | undefined {
   try {
-    const resolved = ts.resolveModuleName(
-      specifier,
-      containingFile,
-      compilerOptions,
-      project,
-    ).resolvedModule?.resolvedFileName;
-    if (resolved?.toLowerCase().endsWith(".gts")) {
-      return resolved;
-    }
-  } catch {}
-
-  try {
-    const resolved = require("node:module")
-      .createRequire(containingFile)
-      .resolve(specifier);
+    const resolved = require.resolve(specifier, { paths: [containingFile] });
     if (resolved.toLowerCase().endsWith(".gts")) {
       return resolved;
     }

@@ -3,10 +3,6 @@ import createGtsLanguagePluginMod = require("@gi-tcg/gts-language-plugin");
 import type * as ts from "typescript";
 import externalFilesMod = require("./external_files.ts");
 
-declare module "typescript" {
-  var createTsgoProgram: unknown;
-}
-
 const { createLanguageServicePlugin } = createLanguageServicePluginMod;
 const { createGtsLanguagePlugin } = createGtsLanguagePluginMod;
 
@@ -28,21 +24,16 @@ const plugin: ts.server.PluginModuleFactory = (modules) => {
   const plugin = createPlugin(modules);
   const getExternalFiles = plugin.getExternalFiles;
   const importedExternalFiles = new WeakMap<Project, string[]>();
-  const isNativeBridge = typeof modules.typescript.createTsgoProgram === "function";
 
   return {
     ...plugin,
     getExternalFiles(project: Project, updateLevel = 0) {
-      const externalFiles = isNativeBridge
-        ? []
-        : (getExternalFiles?.(project, updateLevel) ?? []);
+      const externalFiles = getExternalFiles?.(project, updateLevel) ?? [];
       if (updateLevel >= 1 || !importedExternalFiles.has(project)) {
         try {
           importedExternalFiles.set(
             project,
-            findImportedGtsFiles(modules.typescript, project, {
-              openFilesOnly: isNativeBridge,
-            }),
+            findImportedGtsFiles(modules.typescript, project),
           );
         } catch (error) {
           console.error(
