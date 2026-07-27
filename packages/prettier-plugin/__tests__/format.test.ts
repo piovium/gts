@@ -160,6 +160,12 @@ test("preserves parentheses required by positional attributes", async () => {
   );
 });
 
+test("preserves parentheses around a positional TypeScript as expression", async () => {
+  await expect(format("define foo (value as string);")).resolves.toBe(
+    "define foo (value as string);\n",
+  );
+});
+
 test.each([
   [
     "the body itself",
