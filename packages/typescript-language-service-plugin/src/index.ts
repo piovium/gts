@@ -28,7 +28,7 @@ const plugin: ts.server.PluginModuleFactory = (modules) => {
   const plugin = createPlugin(modules);
   const getExternalFiles = plugin.getExternalFiles;
   const importedExternalFiles = new WeakMap<Project, string[]>();
-  const isNativeBridge = modules.typescript.createTsgoProgram === "function";
+  const isNativeBridge = typeof modules.typescript.createTsgoProgram === "function";
 
   return {
     ...plugin,

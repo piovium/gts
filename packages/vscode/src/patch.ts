@@ -100,7 +100,6 @@ export function patchTypeScriptExtension() {
       );
       if (index !== -1) {
         args[1][index] = transformTsserver(args[1][index]);
-        console.log("[GamingTS] Patched tsserver path in child_process.spawn", args);
       }
     }
     return spawn(...args);
@@ -110,7 +109,6 @@ export function patchTypeScriptExtension() {
   child_process.fork = (...args: any[]) => {
     if (typeof args[0] === "string" && isTsserverFile(args[0])) {
       args[0] = transformTsserver(args[0]);
-      console.log("[GamingTS] Patched tsserver path in child_process.fork", args);
     }
     return fork(...args);
   };
