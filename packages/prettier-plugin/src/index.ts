@@ -22,10 +22,17 @@ declare module "estree" {
   }
   interface NodeMap {
     TSParenthesizedType: TSParenthesizedType;
+    TSAsExpression: TSAsExpression;
+  }
+  interface ExpressionMap {
+    TSAsExpression: TSAsExpression;
   }
   interface TSParenthesizedType extends AST.BaseNode {
     type: "TSParenthesizedType";
     typeAnnotation: AST.Node;
+  }
+  interface TSAsExpression extends AST.BaseNode {
+    type: "TSAsExpression";
   }
 }
 
@@ -207,7 +214,8 @@ function printGtsPositionalAttributeList(
     const attributeDoc = print(attributePath);
     if (
       attribute.type === "ArrowFunctionExpression" ||
-      attribute.type === "ObjectExpression"
+      attribute.type === "ObjectExpression" ||
+      attribute.type === "TSAsExpression"
     ) {
       return ["(", attributeDoc, ")"];
     }
