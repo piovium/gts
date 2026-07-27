@@ -215,7 +215,13 @@ function printGtsPositionalAttributeList(
     return attributeDoc;
   }, "attributes");
 
-  return group(join([",", line], attributes));
+  const [firstAttribute, ...remainingAttributes] = attributes;
+  return group([
+    firstAttribute ?? "",
+    indent(
+      remainingAttributes.map((attribute) => [",", line, attribute] as Doc),
+    ),
+  ]);
 }
 
 function printGtsNamedAttributeBlock(
