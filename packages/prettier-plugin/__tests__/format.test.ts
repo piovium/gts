@@ -33,6 +33,17 @@ test("formats basic define statements", async () => {
   );
 });
 
+test("indents wrapped positional attributes", async () => {
+  await expect(
+    format("define foo { bar item1, item2, item3; };", { printWidth: 20 }),
+  ).resolves.toBe(`define foo {
+  bar item1,
+    item2,
+    item3;
+};
+`);
+});
+
 test("removes empty named attribute blocks", async () => {
   await expect(format("define foo {\n};")).resolves.toBe("define foo;\n");
   await expect(format("define foo bar { };")).resolves.toBe(
