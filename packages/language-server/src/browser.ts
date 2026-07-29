@@ -15,6 +15,7 @@ import { fs as memfs } from "@zenfs/core";
 import type ts from "typescript";
 import zenFsProvider from "./zen_fs_provider.ts";
 import { createLanguageServicePlugins } from "./services/index.ts";
+import { PROJECT_FILE_WATCH_PATTERNS } from "./file_watcher.ts";
 
 export interface GtsLanguageServerBrowserInitializationOptions {
   tsdkUrl?: string;
@@ -25,12 +26,11 @@ export interface GtsLanguageServerBrowserInitializationOptions {
 
 const connection = createConnection();
 const server = createServer(connection);
+let projectFileWatcher: { dispose(): void } | undefined;
 
 server.fileSystem.install("file", zenFsProvider(memfs));
 
 connection.listen();
-
-type AnyTuple = [unknown, ...unknown[]];
 
 connection.onInitialize(
   async (
@@ -68,9 +68,15 @@ connection.onInitialize(
   },
 );
 
-connection.onInitialized(server.initialized);
+connection.onInitialized(async () => {
+  server.initialized();
+  projectFileWatcher = await server.fileWatcher.watchFiles(PROJECT_FILE_WATCH_PATTERNS);
+});
 
-connection.onShutdown(server.shutdown);
+connection.onShutdown(() => {
+  projectFileWatcher?.dispose();
+  server.shutdown();
+});
 
 self.addEventListener("error", (event) => {
   console.error("Uncaught exception:", event.error);
