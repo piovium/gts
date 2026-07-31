@@ -16,6 +16,7 @@ export {
   type ISimpleViewModel,
   type SimpleViewModelOptions,
 } from "./simple_view_model.ts";
+export { defineActionViewModel, ActionModel } from "./action_view_model.ts";
 export type { AttributeReturn, AR } from "./attribute_return.ts";
 
 export {

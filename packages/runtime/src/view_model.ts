@@ -426,7 +426,7 @@ export interface AttributeDefinition {
   mergeMeta?(meta: any, subMeta: any): any;
 }
 
-type OverloadedParameters<T extends (...args: any[]) => any> = T extends {
+export type OverloadedParameters<T extends (...args: any[]) => any> = T extends {
   (...args: infer A1): any;
   (...args: infer A2): any;
   (...args: infer A3): any;

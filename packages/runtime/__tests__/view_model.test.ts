@@ -1,5 +1,6 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import type { AR } from "../src/attribute_return.ts";
+import { ActionModel, defineActionViewModel } from "../src/index.ts";
 import { createBinding, View } from "../src/view.ts";
 import type { NamedAttributesNode, SingleAttributeNode } from "../src/view.ts";
 import { defineViewModel } from "../src/view_model.ts";
@@ -99,4 +100,40 @@ test("a view-model class can be used as an attribute binder", () => {
   expect(bindings).toHaveLength(1);
   expect(bindings[0]).toBeInstanceOf(ChildModel);
   expect(bindings[0]).toMatchObject({ value: "bound" });
+});
+
+test("defineActionViewModel defines a Meta-aware direct action", () => {
+  type Meta = {
+    names: string;
+  };
+  type GenericAction<CurrentMeta extends Meta> = (
+    name: CurrentMeta["names"],
+  ) => void;
+
+  class VM extends defineActionViewModel<
+    <CurrentMeta extends Meta>(
+      this: AR.This<CurrentMeta>,
+      action: GenericAction<CurrentMeta>,
+    ) => AR.Done,
+    { names: "foo" }
+  >() {}
+
+  type NamedDefinition = (typeof VM)["~namedDefinition"];
+  expectTypeOf<keyof NamedDefinition>().toEqualTypeOf<"~action" | "~meta">();
+  expectTypeOf<NamedDefinition["~meta"]>().toEqualTypeOf<{
+    names: "foo";
+  }>();
+  if (false) {
+    const definition = null as unknown as NamedDefinition;
+    definition["~action"]((name) => {
+      expectTypeOf(name).toEqualTypeOf<"foo">();
+      return name;
+    });
+  }
+
+  const result = VM.parse(
+    new View(named([attr("~action", [(name: "foo") => `action:${name}`])])),
+  );
+  expect(result).toBeInstanceOf(ActionModel);
+  expect(result.action("foo")).toBe("action:foo");
 });
