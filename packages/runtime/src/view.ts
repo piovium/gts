@@ -20,24 +20,15 @@ export class View<BlockDef extends AttributeBlockDefinition> {
   #phantom!: BlockDef;
   #children = new WeakMap<SingleAttributeNode, View<any>>();
   _node: NamedAttributesNode;
-  /** @deprecated Binding state is execution-scoped; retained for direct callers. */
-  _bindingCtx?: BindingContext;
 
-  constructor(
-    _node: NamedAttributesNode,
-    _bindingCtx?: BindingContext | undefined,
-  ) {
+  constructor(_node: NamedAttributesNode) {
     this._node = _node;
-    this._bindingCtx = _bindingCtx;
   }
 
   _getChild(attribute: SingleAttributeNode): View<any> {
     let child = this.#children.get(attribute);
     if (!child) {
-      child = new View(
-        attribute.named ?? { attributes: [] },
-        this._bindingCtx,
-      );
+      child = new View(attribute.named ?? { attributes: [] });
       this.#children.set(attribute, child);
     }
     return child;

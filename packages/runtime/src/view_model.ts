@@ -108,13 +108,16 @@ export interface IViewModel<
 
   /**
    * Rewrite the initial meta.
-   * @param newMeta 
+   * @param newMeta
    */
-  narrow<This extends IViewModel<any, any, any>, const NewMeta extends This["~namedDefinition"]["~meta"]>(
+  narrow<
+    This extends IViewModel<any, any, any>,
+    const NewMeta extends This["~namedDefinition"]["~meta"],
+  >(
     this: This,
     newMeta: NewMeta,
   ): INarrowedViewModel<This, NewMeta>;
-  
+
   extend<
     This extends IViewModel<any, any, any>,
     ChildT extends ModelT,
@@ -155,43 +158,29 @@ export class ViewModelRuntime {
   }
 
   parse(view: View<any>, ...args: any[]): any {
-    const parse = () =>
-      runWithCurrentView(view, () => {
-        const execution = getCurrentViewModelExecution();
-        const phase = execution?.phase ?? "action";
-        const model = new this.#Ctor(...args);
-        for (const attrNode of view._node.attributes) {
-          const { name, positionals, binding } = attrNode;
-          let fn = (
-            phase === "binder"
-              ? this.#registeredBinders
-              : this.#registeredActions
-          ).get(name);
-          if (phase === "action" && !fn) {
-            const modelName = this.#Ctor.name;
-            throw new Error(
-              `No action registered for attribute "${String(name)}" on model "${modelName}"`,
-            );
-          }
-          fn ??= () => {};
-          const value = fn(model, positionals, view._getChild(attrNode));
-          if (binding && execution?.bindingContext) {
-            execution.bindingContext.addBinding(value);
-          }
+    return runWithCurrentView(view, () => {
+      const execution = getCurrentViewModelExecution();
+      const phase = execution?.phase ?? "action";
+      const model = new this.#Ctor(...args);
+      for (const attrNode of view._node.attributes) {
+        const { name, positionals, binding } = attrNode;
+        let fn = (
+          phase === "binder" ? this.#registeredBinders : this.#registeredActions
+        ).get(name);
+        if (phase === "action" && !fn) {
+          const modelName = this.#Ctor.name;
+          throw new Error(
+            `No action registered for attribute "${String(name)}" on model "${modelName}"`,
+          );
         }
-        return model;
-      });
-
-    if (getCurrentViewModelExecution()) {
-      return parse();
-    }
-    return runInViewModelExecution(
-      {
-        phase: view._bindingCtx ? "binder" : "action",
-        bindingContext: view._bindingCtx,
-      },
-      parse,
-    );
+        fn ??= () => {};
+        const value = fn(model, positionals, view._getChild(attrNode));
+        if (binding && execution?.bindingContext) {
+          execution.bindingContext.addBinding(value);
+        }
+      }
+      return model;
+    });
   }
 
   #clone(Ctor = this.#Ctor): ViewModelRuntime {
@@ -448,24 +437,25 @@ export interface AttributeDefinition {
   mergeMeta?(meta: any, subMeta: any): any;
 }
 
-export type OverloadedParameters<T extends (...args: any[]) => any> = T extends {
-  (...args: infer A1): any;
-  (...args: infer A2): any;
-  (...args: infer A3): any;
-  (...args: infer A4): any;
-}
-  ? A1 | A2 | A3 | A4
-  : T extends {
-        (...args: infer A1): any;
-        (...args: infer A2): any;
-        (...args: infer A3): any;
-      }
-    ? A1 | A2 | A3
-    : T extends { (...args: infer A1): any; (...args: infer A2): any }
-      ? A1 | A2
-      : T extends (...args: infer A) => any
-        ? A
-        : never;
+export type OverloadedParameters<T extends (...args: any[]) => any> =
+  T extends {
+    (...args: infer A1): any;
+    (...args: infer A2): any;
+    (...args: infer A3): any;
+    (...args: infer A4): any;
+  }
+    ? A1 | A2 | A3 | A4
+    : T extends {
+          (...args: infer A1): any;
+          (...args: infer A2): any;
+          (...args: infer A3): any;
+        }
+      ? A1 | A2 | A3
+      : T extends { (...args: infer A1): any; (...args: infer A2): any }
+        ? A1 | A2
+        : T extends (...args: infer A) => any
+          ? A
+          : never;
 
 export type AttributeAction<Model, T extends AttributeDefinition> = (
   model: Model,
