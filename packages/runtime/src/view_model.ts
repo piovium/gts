@@ -162,7 +162,7 @@ export class ViewModelRuntime {
       const execution = getCurrentViewModelExecution();
       const phase = execution?.phase ?? "action";
       const model = new this.#Ctor(...args);
-      for (const attrNode of view._node.attributes) {
+      for (const attrNode of view["~node"].attributes) {
         const { name, positionals, binding } = attrNode;
         let fn = (
           phase === "binder" ? this.#registeredBinders : this.#registeredActions

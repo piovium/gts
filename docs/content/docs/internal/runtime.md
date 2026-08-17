@@ -57,7 +57,7 @@ class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
   parse(view: View<...>): ModelT {
     return runWithCurrentView(view, () => {
       const model = new this.Ctor();
-      for (const attrNode of view._node.attributes) {
+      for (const attrNode of view["~node"].attributes) {
         // Look up the action or binder selected by the execution phase
         // Call it with a stable child View
         // If binding is set, collect the result in the execution context

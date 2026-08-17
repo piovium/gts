@@ -18,10 +18,10 @@ export interface NamedAttributesNode {
 
 export class View<BlockDef extends AttributeBlockDefinition> {
   #phantom!: BlockDef;
-  _node: NamedAttributesNode;
+  "~node": NamedAttributesNode;
 
-  constructor(_node: NamedAttributesNode) {
-    this._node = _node;
+  constructor(node: NamedAttributesNode) {
+    this["~node"] = node;
   }
 }
 

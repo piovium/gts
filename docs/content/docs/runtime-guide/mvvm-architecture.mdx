@@ -104,7 +104,7 @@ parse(view: View): ModelT {
   return runWithCurrentView(view, () => {
     const model = new this.Ctor();
 
-    for (const attrNode of view._node.attributes) {
+    for (const attrNode of view["~node"].attributes) {
       const registered = this.registry.get(attrNode.name);
       const handler = execution.phase === "binder"
         ? registered.binder

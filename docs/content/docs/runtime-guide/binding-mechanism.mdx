@@ -71,7 +71,7 @@ class BindingContext {
 
 ```ts
 // ViewModel.parse() 核心逻辑（简化）
-for (const attrNode of view._node.attributes) {
+for (const attrNode of view["~node"].attributes) {
   const registered = this.registry.get(attrNode.name);
 
   if (execution.phase === "binder") {
