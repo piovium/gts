@@ -174,7 +174,7 @@ export class ViewModelRuntime {
           );
         }
         fn ??= () => {};
-        const value = fn(model, positionals, view._getChild(attrNode));
+        const value = fn(model, positionals, view["~getChild"](attrNode));
         if (binding && execution?.bindingContext) {
           execution.bindingContext.addBinding(value);
         }

@@ -25,7 +25,7 @@ export class View<BlockDef extends AttributeBlockDefinition> {
     this._node = _node;
   }
 
-  _getChild(attribute: SingleAttributeNode): View<any> {
+  "~getChild"(attribute: SingleAttributeNode): View<any> {
     let child = this.#children.get(attribute);
     if (!child) {
       child = new View(attribute.named ?? { attributes: [] });

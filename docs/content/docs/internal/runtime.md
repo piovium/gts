@@ -73,7 +73,7 @@ class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
 1. Instantiate the Model class (`new Ctor()`)
 2. Iterate over attribute nodes
 3. For each attribute, look up the registered action (or binder) by name
-4. Call the selected action or binder with `(model, positionals, view._getChild(attrNode))`
+4. Call the selected action or binder with `(model, positionals, view["~getChild"](attrNode))`
 5. If the attribute has a `binding` flag and we're in a binding context, collect the return value
 6. Return the built Model
 

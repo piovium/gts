@@ -114,7 +114,7 @@ parse(view: View): ModelT {
       const result = handler(
         model,
         attrNode.positionals(),
-        view._getChild(attrNode)
+        view["~getChild"](attrNode)
       );
 
       if (execution.bindingContext && attrNode.binding) {
