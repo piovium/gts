@@ -36,8 +36,9 @@ function createBinding(
   node: SingleAttributeNode,
 ): unknown[] {
   const bindingCtx = new BindingContext();
-  const view = new View({ attributes: [node] }, bindingCtx);
-  rootVM.parse(view);
+  runInViewModelExecution({ phase: "binder", bindingContext: bindingCtx }, () => {
+    rootVM.parse(getRootView(node));
+  });
   return bindingCtx.getBindings();
 }
 ```
@@ -45,9 +46,10 @@ function createBinding(
 关键元素：
 
 1. **`BindingContext`** — 收集绑定值的容器
-2. **`new View(..., bindingCtx)`** — 将上下文注入到 View 中
-3. **`rootVM.parse(view)`** — 解析过程中，每个有 binding 标记的属性将其 binder 返回值写入 `bindingCtx`
-4. **`bindingCtx.getBindings()`** — 返回按顺序收集的所有绑定值
+2. **执行上下文** — 保存当前 phase 和 `BindingContext`，不修改 View
+3. **`getRootView(node)`** — 为同一个 node 返回稳定的 View 实例
+4. **`rootVM.parse(view)`** — 解析过程中，每个有 binding 标记的属性将其 binder 返回值写入 `bindingCtx`
+5. **`bindingCtx.getBindings()`** — 返回按顺序收集的所有绑定值
 
 ## `BindingContext` 的工作原理
 
@@ -65,17 +67,17 @@ class BindingContext {
 }
 ```
 
-在 `ViewModel.parse()` 中，遍历属性时：如果 `view._bindingCtx` 存在且属性的 `binding` 字段非空，则调用 Binder 并将结果放入上下文：
+在 `ViewModel.parse()` 中，遍历属性时：如果执行上下文处于 binder phase 且属性的 `binding` 字段非空，则调用 Binder 并将结果放入上下文：
 
 ```ts
 // ViewModel.parse() 核心逻辑（简化）
 for (const attrNode of view._node.attributes) {
   const registered = this.registry.get(attrNode.name);
 
-  if (view._bindingCtx && attrNode.binding) {
+  if (execution.phase === "binder") {
     // 使用 Binder —— 收集绑定值
     const result = registered.binder(model, attrNode.positionals(), ...);
-    view._bindingCtx.collect(result);
+    if (attrNode.binding) execution.bindingCtx.collect(result);
   } else {
     // 使用 Action —— 执行业务逻辑
     registered.action(model, attrNode.positionals(), ...);
@@ -113,16 +115,17 @@ const Barbara = __gts_bindings_0[0];
 
 | 方面 | `createDefine` | `createBinding` |
 |---|---|---|
-| 使用 Action | 是 | 是（副作用） |
+| 使用 Action | 是 | 否 |
 | 使用 Binder | 否 | 是 |
 | 返回绑定值 | 无 | `unknown[]` |
-| BindingContext | 不创建 | 创建并注入 View |
+| BindingContext | 不创建 | 创建并放入执行上下文 |
 | 用途 | 注册实体到 Registry | 导出 Handle 供引用 |
 
-**两者都调用同一个 ViewModel 的 `parse()`**——区别仅在 `BindingContext` 的存在与否。这确保：
+**两者都使用同一个 View 实例调用 ViewModel 的 `parse()`**——区别仅在执行 phase 和 `BindingContext`。这确保：
 
-- 无论 `as Name` 是否使用，实体的业务逻辑（action）都被正确执行
+- `createDefine` 的 action phase 负责执行业务逻辑
 - 绑定值只在需要时被提取
+- Model 构造器可以通过 `getCurrentView()` 在两趟解析中识别同一个逻辑定义
 
 ## 单个 define 中的多个 Binding
 

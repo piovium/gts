@@ -184,7 +184,7 @@ define skill {
 
 ## `createDefine` vs `createBinding`
 
-两个函数都会触发完整的属性解析流程。区别在于：
+两个函数都会完整遍历 View，但分别执行 binder 和 action：
 
 ```js
 // createBinding — 返回绑定值
@@ -195,6 +195,6 @@ export const Barbara = __gts_bindings_0[0];
 createDefine(__gts_rootVm, __gts_node_0);
 ```
 
-两者都调用同一个 ViewModel 的 `parse()` 方法，但 `createBinding` 额外创建 `BindingContext` 来捕获 `as Name` 的导出值。Binding 顺序与属性在源码中的出现顺序一致。
+两者使用同一个 View 实例调用 ViewModel 的 `parse()` 方法，但 `createBinding` 的执行上下文额外包含 `BindingContext`，用于捕获 `as Name` 的导出值。Binding 顺序与属性在源码中的出现顺序一致。
 
 > **关于 transpiler 内部的更多细节**（AST 转换、Volar 映射等）请参考 [GTS Syntax Reference](/docs/gts-syntax) 和 [Language Tooling](/docs/language-tooling)。

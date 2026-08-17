@@ -2,6 +2,8 @@ export {
   defineViewModel,
   extendViewModel,
   getCurrentContext,
+  getCurrentModelContext,
+  getCurrentView,
   type AttributeDefinition,
   type IViewModel,
   type IViewModelInstance,
@@ -10,6 +12,8 @@ export {
   type IExtendedViewModel,
   type SimpleAttributeOptions,
   type AttributeBlockDefinition,
+  type ModelConstructionContext,
+  type RuntimePhase,
 } from "./view_model.ts";
 export {
   defineSimpleViewModel,

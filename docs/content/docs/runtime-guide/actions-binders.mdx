@@ -8,7 +8,7 @@ Action 和 Binder 是 ViewModel 中每个属性的两个核心处理函数。理
 
 | | Action | Binder |
 |---|---|---|
-| **触发场景** | `createDefine` 和 `createBinding` 都调用 | 仅 `createBinding` 中调用 |
+| **触发场景** | 仅 `createDefine` 中调用 | 仅 `createBinding` 中调用 |
 | **目的** | 修改 Model 的状态 | 提取 `as Name` 的导出值 |
 | **返回值的处理** | 一般忽略（除嵌套 VM 情况） | 被 `BindingContext` 收集 |
 | **`this` 绑定** | `simpleAttribute` 中绑定到 Model，`attribute` 中为 `undefined` | 同左 |
@@ -37,7 +37,7 @@ id 1201 as Barbara
 ```
 
 运行时行为：
-1. **Action** — `model.id = 1201`（在 `createDefine` 和 `createBinding` 中都执行）
+1. **Action** — `model.id = 1201`（在 `createDefine` 的 action phase 中执行）
 2. **Binder** — 返回 `1201`，被绑定上下文收集为 `Barbara`
 
 ## Action 的参数

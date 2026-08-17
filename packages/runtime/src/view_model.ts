@@ -3,7 +3,20 @@ import type {
   AttributeReturn,
   Computed,
 } from "./attribute_return.ts";
+import {
+  getCurrentViewModelExecution,
+  runInViewModelExecution,
+  runWithCurrentView,
+} from "./execution_context.ts";
 import { View } from "./view.ts";
+
+export {
+  getCurrentContext,
+  getCurrentModelContext,
+  getCurrentView,
+  type ModelConstructionContext,
+  type RuntimePhase,
+} from "./execution_context.ts";
 
 export interface AttributeBlockDefinition {
   "~meta": any;
@@ -120,11 +133,6 @@ type LazyAttributeActionOrBinder<ModelT> = (
   named: View<any>,
 ) => unknown;
 
-let currentContext: "action" | "binder" | null = null;
-export function getCurrentContext(): "action" | "binder" | null {
-  return currentContext;
-}
-
 export class ViewModelRuntime {
   #registeredActions = new Map<PropertyKey, LazyAttributeActionOrBinder<any>>();
   #registeredBinders = new Map<PropertyKey, LazyAttributeActionOrBinder<any>>();
@@ -147,29 +155,43 @@ export class ViewModelRuntime {
   }
 
   parse(view: View<any>, ...args: any[]): any {
-    currentContext = view._bindingCtx ? "binder" : "action";
-    const model = new this.#Ctor(...args);
-    for (const attrNode of view._node.attributes) {
-      let { name, positionals, named, binding } = attrNode;
-      const insideBindingCtx = !!view._bindingCtx;
-      let fn = (
-        insideBindingCtx ? this.#registeredBinders : this.#registeredActions
-      ).get(name);
-      if (!insideBindingCtx && !fn) {
-        const modelName = this.#Ctor.name;
-        throw new Error(
-          `No action registered for attribute "${String(name)}" on model "${modelName}"`,
-        );
-      }
-      fn ??= () => {};
-      named ??= { attributes: [] };
-      const value = fn(model, positionals, new View(named, view._bindingCtx));
-      if (binding && view._bindingCtx) {
-        view._bindingCtx.addBinding(value);
-      }
+    const parse = () =>
+      runWithCurrentView(view, () => {
+        const execution = getCurrentViewModelExecution();
+        const phase = execution?.phase ?? "action";
+        const model = new this.#Ctor(...args);
+        for (const attrNode of view._node.attributes) {
+          const { name, positionals, binding } = attrNode;
+          let fn = (
+            phase === "binder"
+              ? this.#registeredBinders
+              : this.#registeredActions
+          ).get(name);
+          if (phase === "action" && !fn) {
+            const modelName = this.#Ctor.name;
+            throw new Error(
+              `No action registered for attribute "${String(name)}" on model "${modelName}"`,
+            );
+          }
+          fn ??= () => {};
+          const value = fn(model, positionals, view._getChild(attrNode));
+          if (binding && execution?.bindingContext) {
+            execution.bindingContext.addBinding(value);
+          }
+        }
+        return model;
+      });
+
+    if (getCurrentViewModelExecution()) {
+      return parse();
     }
-    currentContext = null;
-    return model;
+    return runInViewModelExecution(
+      {
+        phase: view._bindingCtx ? "binder" : "action",
+        bindingContext: view._bindingCtx,
+      },
+      parse,
+    );
   }
 
   #clone(Ctor = this.#Ctor): ViewModelRuntime {
