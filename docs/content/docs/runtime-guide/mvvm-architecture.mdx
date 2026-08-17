@@ -114,7 +114,7 @@ parse(view: View): ModelT {
       const result = handler(
         model,
         attrNode.positionals(),
-        view["~getChild"](attrNode)
+        getViewForNode(attrNode, "named")
       );
 
       if (execution.bindingContext && attrNode.binding) {
@@ -127,7 +127,7 @@ parse(view: View): ModelT {
 }
 ```
 
-Runtime 为生成的每个根 node 缓存一个 View，并为嵌套属性缓存对应的子 View。binder 和 action 两趟解析复用这些 View；phase 与绑定收集器则保存在单趟执行上下文中。
+Runtime 使用一个全局 `WeakMap`，按 attribute node 缓存 root/named 两种 View。binder 和 action 两趟解析复用这些 View；phase 与绑定收集器则保存在单趟执行上下文中。
 
 ## 在 genius-invokation 中的实际结构
 

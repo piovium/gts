@@ -8,7 +8,7 @@ import {
   runInViewModelExecution,
   runWithCurrentView,
 } from "./execution_context.ts";
-import { View } from "./view.ts";
+import { getViewForNode, View } from "./view.ts";
 
 export {
   getCurrentContext,
@@ -174,7 +174,11 @@ export class ViewModelRuntime {
           );
         }
         fn ??= () => {};
-        const value = fn(model, positionals, view["~getChild"](attrNode));
+        const value = fn(
+          model,
+          positionals,
+          getViewForNode(attrNode, "named"),
+        );
         if (binding && execution?.bindingContext) {
           execution.bindingContext.addBinding(value);
         }

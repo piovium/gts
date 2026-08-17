@@ -37,7 +37,7 @@ function createBinding(
 ): unknown[] {
   const bindingCtx = new BindingContext();
   runInViewModelExecution({ phase: "binder", bindingContext: bindingCtx }, () => {
-    rootVM.parse(getRootView(node));
+    rootVM.parse(getViewForNode(node, "root"));
   });
   return bindingCtx.getBindings();
 }
@@ -47,7 +47,7 @@ function createBinding(
 
 1. **`BindingContext`** — 收集绑定值的容器
 2. **执行上下文** — 保存当前 phase 和 `BindingContext`，不修改 View
-3. **`getRootView(node)`** — 为同一个 node 返回稳定的 View 实例
+3. **全局 View registry** — 为同一个 node 的 root/named 角色返回稳定的 View 实例
 4. **`rootVM.parse(view)`** — 解析过程中，每个有 binding 标记的属性将其 binder 返回值写入 `bindingCtx`
 5. **`bindingCtx.getBindings()`** — 返回按顺序收集的所有绑定值
 

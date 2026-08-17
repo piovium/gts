@@ -18,20 +18,10 @@ export interface NamedAttributesNode {
 
 export class View<BlockDef extends AttributeBlockDefinition> {
   #phantom!: BlockDef;
-  #children = new WeakMap<SingleAttributeNode, View<any>>();
   _node: NamedAttributesNode;
 
   constructor(_node: NamedAttributesNode) {
     this._node = _node;
-  }
-
-  "~getChild"(attribute: SingleAttributeNode): View<any> {
-    let child = this.#children.get(attribute);
-    if (!child) {
-      child = new View(attribute.named ?? { attributes: [] });
-      this.#children.set(attribute, child);
-    }
-    return child;
   }
 }
 
@@ -45,13 +35,30 @@ export class BindingContext {
   }
 }
 
-const rootViews = new WeakMap<SingleAttributeNode, View<any>>();
+interface RegisteredViews {
+  root?: View<any>;
+  named?: View<any>;
+}
 
-function getRootView(node: SingleAttributeNode): View<any> {
-  let view = rootViews.get(node);
+const viewRegistry = new WeakMap<SingleAttributeNode, RegisteredViews>();
+
+export function getViewForNode(
+  node: SingleAttributeNode,
+  kind: "root" | "named",
+): View<any> {
+  let registered = viewRegistry.get(node);
+  if (!registered) {
+    registered = {};
+    viewRegistry.set(node, registered);
+  }
+  let view = registered[kind];
   if (!view) {
-    view = new View<any>({ attributes: [node] });
-    rootViews.set(node, view);
+    view = new View<any>(
+      kind === "root"
+        ? { attributes: [node] }
+        : (node.named ?? { attributes: [] }),
+    );
+    registered[kind] = view;
   }
   return view;
 }
@@ -61,7 +68,7 @@ export function createDefine(
   node: SingleAttributeNode,
 ): void {
   runInViewModelExecution({ phase: "action" }, () => {
-    rootVM.parse(getRootView(node));
+    rootVM.parse(getViewForNode(node, "root"));
   });
 }
 
@@ -73,7 +80,7 @@ export function createBinding(
   runInViewModelExecution(
     { phase: "binder", bindingContext: bindingCtx },
     () => {
-      rootVM.parse(getRootView(node));
+      rootVM.parse(getViewForNode(node, "root"));
     },
   );
   return bindingCtx.getBindings();

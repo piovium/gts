@@ -22,7 +22,7 @@ function createDefine(
   node: SingleAttributeNode,
 ): void {
   runInViewModelExecution({ phase: "action" }, () => {
-    rootVM.parse(getRootView(node));
+    rootVM.parse(getViewForNode(node, "root"));
   });
 }
 ```
@@ -36,13 +36,13 @@ function createBinding(
 ): unknown[] {
   const bindingCtx = new BindingContext();
   runInViewModelExecution({ phase: "binder", bindingContext: bindingCtx }, () => {
-    rootVM.parse(getRootView(node));
+    rootVM.parse(getViewForNode(node, "root"));
   });
   return bindingCtx.getBindings();
 }
 ```
 
-`getRootView(node)` uses a `WeakMap` to return the canonical View for a generated node. The binder and action passes therefore share View identity, while their phase and binding collection remain isolated in execution contexts.
+`getViewForNode(node, kind)` uses one global `WeakMap` registry. Each generated attribute node has a `root` View for RootVM parsing and a `named` View for its nested block. The binder and action passes therefore share View identity, while their phase and binding collection remain isolated in execution contexts.
 
 ## ViewModel (`src/view_model.ts`)
 
@@ -73,7 +73,7 @@ class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
 1. Instantiate the Model class (`new Ctor()`)
 2. Iterate over attribute nodes
 3. For each attribute, look up the registered action (or binder) by name
-4. Call the selected action or binder with `(model, positionals, view["~getChild"](attrNode))`
+4. Call the selected action or binder with `(model, positionals, getViewForNode(attrNode, "named"))`
 5. If the attribute has a `binding` flag and we're in a binding context, collect the return value
 6. Return the built Model
 
