@@ -21,8 +21,9 @@ function createDefine(
   rootVM: ViewModel<any, any>,
   node: SingleAttributeNode,
 ): void {
-  const view = new View<any>({ attributes: [node] });
-  rootVM.parse(view);
+  runInViewModelExecution({ phase: "action" }, () => {
+    rootVM.parse(getViewForNode(node, "root"));
+  });
 }
 ```
 
@@ -34,11 +35,14 @@ function createBinding(
   node: SingleAttributeNode,
 ): unknown[] {
   const bindingCtx = new BindingContext();
-  const view = new View<any>({ attributes: [node] }, bindingCtx);
-  rootVM.parse(view);
+  runInViewModelExecution({ phase: "binder", bindingContext: bindingCtx }, () => {
+    rootVM.parse(getViewForNode(node, "root"));
+  });
   return bindingCtx.getBindings();
 }
 ```
+
+`getViewForNode(node, kind)` uses one global `WeakMap` registry. Each generated attribute node has a `root` View for RootVM parsing and a `named` View for its nested block. The binder and action passes therefore share View identity, while their phase and binding collection remain isolated in execution contexts.
 
 ## ViewModel (`src/view_model.ts`)
 
@@ -51,13 +55,15 @@ class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
   constructor(private Ctor: new () => ModelT) {}
 
   parse(view: View<...>): ModelT {
-    const model = new this.Ctor();
-    for (const attrNode of view._node.attributes) {
-      // Look up registered action (or binder if inside binding context)
-      // Call the action with (model, positionals, namedView)
-      // If binding flag set, collect the return value
-    }
-    return model;
+    return runWithCurrentView(view, () => {
+      const model = new this.Ctor();
+      for (const attrNode of view["~node"].attributes) {
+        // Look up the action or binder selected by the execution phase
+        // Call it with a stable child View
+        // If binding is set, collect the result in the execution context
+      }
+      return model;
+    });
   }
 }
 ```
@@ -67,9 +73,13 @@ class ViewModel<ModelT, BlockDef extends AttributeBlockDefinition> {
 1. Instantiate the Model class (`new Ctor()`)
 2. Iterate over attribute nodes
 3. For each attribute, look up the registered action (or binder) by name
-4. Call the action with `(model, positionals, new View(named, bindingCtx))`
+4. Call the selected action or binder with `(model, positionals, getViewForNode(attrNode, "named"))`
 5. If the attribute has a `binding` flag and we're in a binding context, collect the return value
 6. Return the built Model
+
+### Model construction context
+
+`getCurrentView()` and `getCurrentModelContext()` expose the View being parsed while the Model constructor runs. Context frames are restored with `try/finally`, so nested ViewModel parsing and errors do not leak state into their caller. Existing constructors and `parse(view, ...args)` signatures are unchanged.
 
 **Action vs. Binder:**
 
@@ -200,9 +210,9 @@ createDefine(__gts_rootVm, __gts_node_0);
 
 At runtime:
 
-1. `createBinding` instantiates a `RootBuilder`, finds the `character` action, which creates a `CharacterVM` and parses the nested attributes
+1. `createBinding` instantiates a `RootBuilder`, finds the `character` binder, and parses the nested attributes in binder phase
 2. The `id` attribute's binder returns `1201 as CharacterHandle`, which becomes `Barbara`
-3. `createDefine` re-runs the same process (for side effects like registration)
+3. `createDefine` traverses the same View in action phase for side effects like registration
 
 ## Provider Pattern
 

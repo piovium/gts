@@ -1,4 +1,5 @@
 import type { AttributeBlockDefinition, IViewModel } from "./view_model.ts";
+import { runInViewModelExecution } from "./execution_context.ts";
 
 export type AttributeName = string | symbol;
 
@@ -17,15 +18,10 @@ export interface NamedAttributesNode {
 
 export class View<BlockDef extends AttributeBlockDefinition> {
   #phantom!: BlockDef;
-  _node: NamedAttributesNode;
-  _bindingCtx?: BindingContext;
+  "~node": NamedAttributesNode;
 
-  constructor(
-    _node: NamedAttributesNode,
-    _bindingCtx?: BindingContext | undefined,
-  ) {
-    this._node = _node;
-    this._bindingCtx = _bindingCtx;
+  constructor(node: NamedAttributesNode) {
+    this["~node"] = node;
   }
 }
 
@@ -39,12 +35,41 @@ export class BindingContext {
   }
 }
 
+interface RegisteredViews {
+  root?: View<any>;
+  named?: View<any>;
+}
+
+const viewRegistry = new WeakMap<SingleAttributeNode, RegisteredViews>();
+
+export function getViewForNode(
+  node: SingleAttributeNode,
+  kind: "root" | "named",
+): View<any> {
+  let registered = viewRegistry.get(node);
+  if (!registered) {
+    registered = {};
+    viewRegistry.set(node, registered);
+  }
+  let view = registered[kind];
+  if (!view) {
+    view = new View<any>(
+      kind === "root"
+        ? { attributes: [node] }
+        : (node.named ?? { attributes: [] }),
+    );
+    registered[kind] = view;
+  }
+  return view;
+}
+
 export function createDefine(
   rootVM: IViewModel<any, any, any>,
   node: SingleAttributeNode,
 ): void {
-  const view = new View<any>({ attributes: [node] });
-  rootVM.parse(view);
+  runInViewModelExecution({ phase: "action" }, () => {
+    rootVM.parse(getViewForNode(node, "root"));
+  });
 }
 
 export function createBinding(
@@ -52,7 +77,11 @@ export function createBinding(
   node: SingleAttributeNode,
 ): unknown[] {
   const bindingCtx = new BindingContext();
-  const view = new View<any>({ attributes: [node] }, bindingCtx);
-  rootVM.parse(view);
+  runInViewModelExecution(
+    { phase: "binder", bindingContext: bindingCtx },
+    () => {
+      rootVM.parse(getViewForNode(node, "root"));
+    },
+  );
   return bindingCtx.getBindings();
 }

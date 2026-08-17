@@ -51,6 +51,34 @@ function defineViewModel<
 - **`modelDefFn`** — 属性定义函数，接收一个 helper，返回属性定义对象
 - **`initMeta`** — 初始 Meta 类型（仅用于类型层面的状态追踪，不产生运行时行为）
 
+## 在 Model 构造器中访问 View
+
+Runtime 会在构造 Model 前设置当前解析上下文。需要读取原始 View 的 Model 可以使用 `getCurrentView()`，无需修改构造函数参数或 `parse()` 调用方式：
+
+```ts
+import {
+  getCurrentModelContext,
+  getCurrentView,
+} from "@gi-tcg/gts-runtime";
+
+class CharacterBuilder {
+  readonly view = getCurrentView();
+
+  constructor(characterId?: number) {
+    const context = getCurrentModelContext();
+    // context?.view  === this.view
+    // context?.phase === "binder" | "action"
+  }
+}
+```
+
+- `getCurrentView()` 返回当前 ViewModel 正在解析的 `View`；不在同步 `parse()` 调用中时返回 `null`
+- `getCurrentModelContext()` 同时返回 `view` 和当前的 `phase`
+- 同一个 `define` 的 binder、action 两趟解析会得到同一个 View 实例，只有 `phase` 不同
+- 嵌套 ViewModel 会得到对应的稳定子 View；嵌套解析结束后，当前 View 会恢复为父 View
+
+该上下文是同步调用栈的一部分。不要在延迟回调中调用 getter；如果之后仍需要 View，应当在构造期间保存返回的 View 实例。
+
 ## 完整示例：CharacterViewModel
 
 参考 `genius-invokation` 的 `core/gts/vm_impl/character.ts`：

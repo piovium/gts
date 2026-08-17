@@ -101,26 +101,33 @@ rootVM.parse(view)
 
 ```ts
 parse(view: View): ModelT {
-  const model = new this.Ctor();
+  return runWithCurrentView(view, () => {
+    const model = new this.Ctor();
 
-  for (const attrNode of view._node.attributes) {
-    const registered = this.registry.get(attrNode.name);
-    if (!registered) throw new Error(`Unknown attribute: ${attrNode.name}`);
+    for (const attrNode of view["~node"].attributes) {
+      const registered = this.registry.get(attrNode.name);
+      const handler = execution.phase === "binder"
+        ? registered.binder
+        : registered.action;
+      if (!handler) throw new Error(`Unknown attribute: ${attrNode.name}`);
 
-    const result = registered.action(
-      model,
-      attrNode.positionals(),
-      new View(attrNode.named)
-    );
+      const result = handler(
+        model,
+        attrNode.positionals(),
+        getViewForNode(attrNode, "named")
+      );
 
-    if (view._bindingCtx && attrNode.binding) {
-      view._bindingCtx.collect(result);
+      if (execution.bindingContext && attrNode.binding) {
+        execution.bindingContext.collect(result);
+      }
     }
-  }
 
-  return model;
+    return model;
+  });
 }
 ```
+
+Runtime 使用一个全局 `WeakMap`，按 attribute node 缓存 root/named 两种 View。binder 和 action 两趟解析复用这些 View；phase 与绑定收集器则保存在单趟执行上下文中。
 
 ## 在 genius-invokation 中的实际结构
 

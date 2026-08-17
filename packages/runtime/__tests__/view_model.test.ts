@@ -1,7 +1,14 @@
 import { expect, expectTypeOf, test } from "vitest";
 import type { AR } from "../src/attribute_return.ts";
-import { ActionModel, defineActionViewModel } from "../src/index.ts";
-import { createBinding, View } from "../src/view.ts";
+import {
+  ActionModel,
+  defineActionViewModel,
+  getCurrentContext,
+  getCurrentModelContext,
+  getCurrentView,
+  type ModelConstructionContext,
+} from "../src/index.ts";
+import { createBinding, createDefine, View } from "../src/view.ts";
 import type { NamedAttributesNode, SingleAttributeNode } from "../src/view.ts";
 import { defineViewModel } from "../src/view_model.ts";
 
@@ -136,4 +143,100 @@ test("defineActionViewModel defines a Meta-aware direct action", () => {
   );
   expect(result).toBeInstanceOf(ActionModel);
   expect(result.action("foo")).toBe("action:foo");
+});
+
+test("model constructors receive stable views across binder and action passes", () => {
+  const rootContexts: ModelConstructionContext[] = [];
+  const childContexts: ModelConstructionContext[] = [];
+  let actionNamedView: View<any> | undefined;
+  let binderNamedView: View<any> | undefined;
+  let actionViewBeforeNestedParse: View<any> | null = null;
+  let actionViewAfterNestedParse: View<any> | null = null;
+
+  class ChildModel {
+    constructor() {
+      const context = getCurrentModelContext();
+      expect(context).not.toBeNull();
+      childContexts.push(context!);
+      expect(getCurrentView()).toBe(context!.view);
+      expect(getCurrentContext()).toBe(context!.phase);
+    }
+  }
+
+  class ChildVM extends defineViewModel(ChildModel, () => ({})) {}
+
+  class RootModel {
+    constructor() {
+      const context = getCurrentModelContext();
+      expect(context).not.toBeNull();
+      rootContexts.push(context!);
+    }
+  }
+
+  class RootVM extends defineViewModel(RootModel, (helper) => ({
+    child: helper.attribute<{
+      (): AR.With<ChildVM>;
+      as(): ChildModel;
+    }>(
+      (_, __, namedView) => {
+        actionNamedView = namedView;
+        actionViewBeforeNestedParse = getCurrentView();
+        ChildVM.parse(namedView);
+        actionViewAfterNestedParse = getCurrentView();
+      },
+      (_, __, namedView) => {
+        binderNamedView = namedView;
+        return ChildVM.parse(namedView);
+      },
+    ),
+  })) {}
+
+  const node = {
+    ...attr("child", [], named([])),
+    binding: "public" as const,
+  };
+
+  const bindings = createBinding(RootVM, node);
+  expect(getCurrentModelContext()).toBeNull();
+  createDefine(RootVM, node);
+
+  expect(bindings[0]).toBeInstanceOf(ChildModel);
+  expect(rootContexts.map(({ phase }) => phase)).toEqual([
+    "binder",
+    "action",
+  ]);
+  expect(rootContexts[0].view).toBe(rootContexts[1].view);
+  expect(childContexts.map(({ phase }) => phase)).toEqual([
+    "binder",
+    "action",
+  ]);
+  expect(childContexts[0].view).toBe(childContexts[1].view);
+  expect(binderNamedView).toBe(actionNamedView);
+  expect(childContexts[0].view).toBe(binderNamedView);
+  expect(actionViewBeforeNestedParse).toBe(rootContexts[1].view);
+  expect(actionViewAfterNestedParse).toBe(rootContexts[1].view);
+  expect(getCurrentModelContext()).toBeNull();
+  expect(getCurrentView()).toBeNull();
+  expect(getCurrentContext()).toBeNull();
+});
+
+test("model construction context is restored after parse errors", () => {
+  class Model {
+    constructor() {
+      expect(getCurrentView()).not.toBeNull();
+    }
+  }
+
+  class VM extends defineViewModel(Model, (helper) => ({
+    fail: helper.simpleAttribute()(function () {
+      throw new Error("expected failure");
+    }),
+  })) {}
+
+  expect(() => createDefine(VM, attr("fail", []))).toThrow(
+    "expected failure",
+  );
+  expect(getCurrentModelContext()).toBeNull();
+  expect(getCurrentView()).toBeNull();
+  expect(getCurrentContext()).toBeNull();
 });

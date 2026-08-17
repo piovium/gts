@@ -3,7 +3,20 @@ import type {
   AttributeReturn,
   Computed,
 } from "./attribute_return.ts";
-import { View } from "./view.ts";
+import {
+  getCurrentViewModelExecution,
+  runInViewModelExecution,
+  runWithCurrentView,
+} from "./execution_context.ts";
+import { getViewForNode, View } from "./view.ts";
+
+export {
+  getCurrentContext,
+  getCurrentModelContext,
+  getCurrentView,
+  type ModelConstructionContext,
+  type RuntimePhase,
+} from "./execution_context.ts";
 
 export interface AttributeBlockDefinition {
   "~meta": any;
@@ -95,13 +108,16 @@ export interface IViewModel<
 
   /**
    * Rewrite the initial meta.
-   * @param newMeta 
+   * @param newMeta
    */
-  narrow<This extends IViewModel<any, any, any>, const NewMeta extends This["~namedDefinition"]["~meta"]>(
+  narrow<
+    This extends IViewModel<any, any, any>,
+    const NewMeta extends This["~namedDefinition"]["~meta"],
+  >(
     this: This,
     newMeta: NewMeta,
   ): INarrowedViewModel<This, NewMeta>;
-  
+
   extend<
     This extends IViewModel<any, any, any>,
     ChildT extends ModelT,
@@ -119,11 +135,6 @@ type LazyAttributeActionOrBinder<ModelT> = (
   positionals: () => unknown[],
   named: View<any>,
 ) => unknown;
-
-let currentContext: "action" | "binder" | null = null;
-export function getCurrentContext(): "action" | "binder" | null {
-  return currentContext;
-}
 
 export class ViewModelRuntime {
   #registeredActions = new Map<PropertyKey, LazyAttributeActionOrBinder<any>>();
@@ -147,29 +158,33 @@ export class ViewModelRuntime {
   }
 
   parse(view: View<any>, ...args: any[]): any {
-    currentContext = view._bindingCtx ? "binder" : "action";
-    const model = new this.#Ctor(...args);
-    for (const attrNode of view._node.attributes) {
-      let { name, positionals, named, binding } = attrNode;
-      const insideBindingCtx = !!view._bindingCtx;
-      let fn = (
-        insideBindingCtx ? this.#registeredBinders : this.#registeredActions
-      ).get(name);
-      if (!insideBindingCtx && !fn) {
-        const modelName = this.#Ctor.name;
-        throw new Error(
-          `No action registered for attribute "${String(name)}" on model "${modelName}"`,
+    return runWithCurrentView(view, () => {
+      const execution = getCurrentViewModelExecution();
+      const phase = execution?.phase ?? "action";
+      const model = new this.#Ctor(...args);
+      for (const attrNode of view["~node"].attributes) {
+        const { name, positionals, binding } = attrNode;
+        let fn = (
+          phase === "binder" ? this.#registeredBinders : this.#registeredActions
+        ).get(name);
+        if (phase === "action" && !fn) {
+          const modelName = this.#Ctor.name;
+          throw new Error(
+            `No action registered for attribute "${String(name)}" on model "${modelName}"`,
+          );
+        }
+        fn ??= () => {};
+        const value = fn(
+          model,
+          positionals,
+          getViewForNode(attrNode, "named"),
         );
+        if (binding && execution?.bindingContext) {
+          execution.bindingContext.addBinding(value);
+        }
       }
-      fn ??= () => {};
-      named ??= { attributes: [] };
-      const value = fn(model, positionals, new View(named, view._bindingCtx));
-      if (binding && view._bindingCtx) {
-        view._bindingCtx.addBinding(value);
-      }
-    }
-    currentContext = null;
-    return model;
+      return model;
+    });
   }
 
   #clone(Ctor = this.#Ctor): ViewModelRuntime {
@@ -426,24 +441,25 @@ export interface AttributeDefinition {
   mergeMeta?(meta: any, subMeta: any): any;
 }
 
-export type OverloadedParameters<T extends (...args: any[]) => any> = T extends {
-  (...args: infer A1): any;
-  (...args: infer A2): any;
-  (...args: infer A3): any;
-  (...args: infer A4): any;
-}
-  ? A1 | A2 | A3 | A4
-  : T extends {
-        (...args: infer A1): any;
-        (...args: infer A2): any;
-        (...args: infer A3): any;
-      }
-    ? A1 | A2 | A3
-    : T extends { (...args: infer A1): any; (...args: infer A2): any }
-      ? A1 | A2
-      : T extends (...args: infer A) => any
-        ? A
-        : never;
+export type OverloadedParameters<T extends (...args: any[]) => any> =
+  T extends {
+    (...args: infer A1): any;
+    (...args: infer A2): any;
+    (...args: infer A3): any;
+    (...args: infer A4): any;
+  }
+    ? A1 | A2 | A3 | A4
+    : T extends {
+          (...args: infer A1): any;
+          (...args: infer A2): any;
+          (...args: infer A3): any;
+        }
+      ? A1 | A2 | A3
+      : T extends { (...args: infer A1): any; (...args: infer A2): any }
+        ? A1 | A2
+        : T extends (...args: infer A) => any
+          ? A
+          : never;
 
 export type AttributeAction<Model, T extends AttributeDefinition> = (
   model: Model,
