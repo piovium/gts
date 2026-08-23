@@ -1,6 +1,6 @@
 {
   "name": "@gi-tcg/gts-transpiler",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,7 +23,7 @@
     "@sveltejs/acorn-typescript": "^1.0.8",
     "acorn": "^8.15.0",
     "dedent": "^1.7.2",
-    "espolar": "^0.6.5",
+    "espolar": "^0.6.7",
     "esrap": "2.2.1",
     "magic-string": "^0.30.21",
     "path-browserify-esm": "^1.0.6",

@@ -1,6 +1,6 @@
 {
   "name": "@gi-tcg/prettier-plugin-gts",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "repository": "https://github.com/piovium/gts.git",
   "license": "Apache-2.0",
   "type": "module",
