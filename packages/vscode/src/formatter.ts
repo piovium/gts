@@ -18,7 +18,7 @@ export async function configurePrettier() {
       vscode.ConfigurationTarget.Global,
     );
 
-    console.log("Prettier configuration updated for GamingTS files");
+    console.log("[GamingTS] Prettier configuration updated for GamingTS files");
   } catch (error) {
     console.error("Failed to configure Prettier:", error);
   }
