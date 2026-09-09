@@ -3,15 +3,15 @@
 import { test, expect } from "vitest";
 import { parse } from "../src/parse/index.ts";
 import { transform } from "../src/transform/index.ts";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
-import os from "node:os";
 
-test.skipIf(os.platform() === "win32")("basic transpile pipeline", async () => {
-  const SOURCE = await readFile(
+test("basic transpile pipeline", async () => {
+  // The snapshot embeds sourcesContent. Keep Git's checkout EOL setting out of it.
+  const SOURCE = (await readFile(
     path.resolve(import.meta.dirname, "../../../examples/local/test.gts"),
     "utf8",
-  );
+  )).replaceAll("\r\n", "\n");
   const parsed = parse(SOURCE);
   const output = transform(
     parsed,

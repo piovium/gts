@@ -30,6 +30,19 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
   const connection = createProtocolConnection(new StreamMessageReader(child.stdout), new StreamMessageWriter(child.stdin));
   child.on("close", () => connection.dispose());
   const logs: string[] = [];
+  const request = async <T>(method: string, params?: unknown): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout>;
+    try {
+      return await Promise.race([
+        connection.sendRequest<T>(method, params),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error(`${method} timed out\n${stderr}\n${logs.join("\n")}`)), 30000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer!);
+    }
+  };
   connection.onNotification("window/logMessage", (event: { message: string }) => logs.push(event.message));
   connection.onRequest("workspace/configuration", (params: { items: unknown[] }) => params.items.map(() => null));
   connection.onRequest("client/registerCapability", () => null);
@@ -38,14 +51,14 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
   connection.listen();
   const uri = fixture.uri("current.gts");
   const diagnostic = async (target = uri) => {
-    const report = await connection.sendRequest<DocumentDiagnosticReport>("textDocument/diagnostic", { textDocument: { uri: target } });
+    const report = await request<DocumentDiagnosticReport>("textDocument/diagnostic", { textDocument: { uri: target } });
     expect(report.kind).toBe("full");
     return report.kind === "full" ? report.items.filter((item) => item.severity === 1) : [];
   };
   let version = 1;
   const change = (text: string) => connection.sendNotification("textDocument/didChange", { textDocument: { uri, version: ++version }, contentChanges: [{ text }] });
   try {
-    const initialized = await connection.sendRequest<InitializeResult>("initialize", {
+    const initialized = await request<InitializeResult>("initialize", {
       processId: process.pid,
       rootUri: fixture.uri(),
       workspaceFolders: [{ uri: fixture.uri(), name: "GTS 中文 fixture" }],
@@ -59,12 +72,12 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
     await connection.sendNotification("initialized", {});
     await connection.sendNotification("textDocument/didOpen", { textDocument: { uri, languageId: "gaming-ts", version, text: character } });
     expect(await diagnostic()).toEqual([]);
-    const hover = await connection.sendRequest<Hover | null>("textDocument/hover", { textDocument: { uri }, position: { line: 2, character: 15 } });
+    const hover = await request<Hover | null>("textDocument/hover", { textDocument: { uri }, position: { line: 2, character: 15 } });
     expect(JSON.stringify(hover)).toContain("CharacterHandle");
     const legacyUri = fixture.uri("old_versions.gts");
     const legacyText = 'import { Barbara } from "./current.gts";\r\nexport const legacy: number = Barbara;\r\n';
     await connection.sendNotification("textDocument/didOpen", { textDocument: { uri: legacyUri, languageId: "gaming-ts", version: 1, text: legacyText } });
-    const definitions = await connection.sendRequest<(Location | LocationLink)[] | null>("textDocument/definition", { textDocument: { uri: legacyUri }, position: { line: 1, character: 31 } });
+    const definitions = await request<(Location | LocationLink)[] | null>("textDocument/definition", { textDocument: { uri: legacyUri }, position: { line: 1, character: 31 } });
     expect(definitions?.map((definition) => ({
       file: URI.parse("targetUri" in definition ? definition.targetUri : definition.uri).fsPath,
       range: "targetSelectionRange" in definition ? definition.targetSelectionRange : definition.range,
@@ -83,11 +96,11 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
     await connection.sendNotification("textDocument/didChange", { textDocument: { uri: legacyUri, version: 3 }, contentChanges: [{ text: legacyText }] });
     expect(await diagnostic(legacyUri)).toEqual([]);
     await change(character.replace("health 10", "hea"));
-    const completion = await connection.sendRequest<CompletionList>("textDocument/completion", { textDocument: { uri }, position: { line: 5, character: 5 } });
+    const completion = await request<CompletionList>("textDocument/completion", { textDocument: { uri }, position: { line: 5, character: 5 } });
     expect(completion.items.some((item) => item.label === "health")).toBe(true);
     await change(character);
     expect(await diagnostic()).toEqual([]);
-    await connection.sendRequest("shutdown");
+    await request("shutdown");
     await connection.sendNotification("exit");
     const [exitCode] = await closed;
     expect(exitCode).toBe(0);
