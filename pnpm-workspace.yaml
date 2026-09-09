@@ -20,6 +20,7 @@ catalog:
 
 patchedDependencies:
   '@volar/typescript': patches/@volar__typescript.patch
+  'nitro@3.0.260429-beta': patches/nitro@3.0.260429-beta.patch
 
 # patchedDependencies:
 #   ajv@8.20.0: patches/ajv@8.20.0.patch

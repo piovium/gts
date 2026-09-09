@@ -12,6 +12,7 @@ catalogs:
 
 patchedDependencies:
   '@volar/typescript': ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6
+  nitro@3.0.260429-beta: 730963cdb6ed21a716ea28c5e212b00fc1b64847c893c86b61b75b785bb60e15
 
 importers:
 
@@ -96,7 +97,7 @@ importers:
         version: 6.0.1(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0))
       nitro:
         specifier: 3.0.260429-beta
-        version: 3.0.260429-beta(chokidar@5.0.0)(jiti@2.7.0)(lru-cache@11.5.1)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0))
+        version: 3.0.260429-beta(patch_hash=730963cdb6ed21a716ea28c5e212b00fc1b64847c893c86b61b75b785bb60e15)(chokidar@5.0.0)(jiti@2.7.0)(lru-cache@11.5.1)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0))
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.0
@@ -8014,7 +8015,7 @@ snapshots:
 
   nf3@0.3.17: {}
 
-  nitro@3.0.260429-beta(chokidar@5.0.0)(jiti@2.7.0)(lru-cache@11.5.1)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)):
+  nitro@3.0.260429-beta(patch_hash=730963cdb6ed21a716ea28c5e212b00fc1b64847c893c86b61b75b785bb60e15)(chokidar@5.0.0)(jiti@2.7.0)(lru-cache@11.5.1)(vite@8.0.12(@types/node@25.7.0)(esbuild@0.28.0)(jiti@2.7.0)):
     dependencies:
       consola: 3.4.2
       crossws: 0.4.5(srvx@0.11.15)
