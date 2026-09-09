@@ -23,7 +23,8 @@
     "bin"
   ],
   "scripts": {
-    "build": "tsdown"
+    "build": "tsdown",
+    "test": "vitest run"
   },
   "dependencies": {
     "@gi-tcg/gts-language-plugin": "workspace:*",

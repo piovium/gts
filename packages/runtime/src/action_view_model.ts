@@ -10,7 +10,7 @@ import type { AR } from "./attribute_return.ts";
 type AnyAction = (fnArg: any) => void;
 
 export class ActionModel<Fn extends AnyAction> {
-  action!: Fn;
+  action: Fn = undefined!;
 }
 
 /**

@@ -12,7 +12,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown --no-dts --no-fixed-extension"
+    "build": "tsdown --no-dts --no-fixed-extension",
+    "test": "vitest run"
   },
   "dependencies": {
     "@gi-tcg/gts-language-plugin": "workspace:*",

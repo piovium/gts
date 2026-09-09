@@ -1,7 +1,3 @@
-import { MelodyLoop,  } from "./test.gts";
-
-declare global {
-    var console: any;
-}
+import { MelodyLoop } from "./test.gts";
 
 console.log(MelodyLoop);

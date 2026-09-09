@@ -16,7 +16,10 @@ minimumReleaseAgeExclude:
   - espolar
 
 catalog:
-  typescript: npm:@typescript/typescript6@^6.0.1
+  typescript: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
+
+overrides:
+  typescript: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
 
 patchedDependencies:
   '@volar/typescript': patches/@volar__typescript.patch
