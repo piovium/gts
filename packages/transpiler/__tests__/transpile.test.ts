@@ -8,10 +8,12 @@ import path from "node:path";
 
 test("basic transpile pipeline", async () => {
   // The snapshot embeds sourcesContent. Keep Git's checkout EOL setting out of it.
-  const SOURCE = (await readFile(
-    path.resolve(import.meta.dirname, "../../../examples/local/test.gts"),
-    "utf8",
-  )).replaceAll("\r\n", "\n");
+  const SOURCE = (
+    await readFile(
+      path.resolve(import.meta.dirname, "../../../examples/local/test.gts"),
+      "utf8",
+    )
+  ).replaceAll("\r\n", "\n");
   const parsed = parse(SOURCE);
   const output = transform(
     parsed,
