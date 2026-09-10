@@ -7,6 +7,7 @@ import { expect, test } from "vitest";
 import {
   character,
   createFixture,
+  fixtureSources,
 } from "../../language-server/__tests__/fixture.ts";
 
 test("native GTS text host avoids JS parsing and refreshes changed, deleted and recreated files", () => {
@@ -19,13 +20,9 @@ test("native GTS text host avoids JS parsing and refreshes changed, deleted and 
       fixture.directory,
     );
     const options = { ...config.options, configFilePath };
-    const rootNames = [
-      "current.gts",
-      "old_versions.gts",
-      "isolated.gts",
-      "consumer.ts",
-      "component.tsx",
-    ].map((file) => path.join(fixture.directory, file));
+    const rootNames = Object.keys(fixtureSources).map((file) =>
+      path.join(fixture.directory, file),
+    );
     const host = ts.createCompilerHost(options);
     let sourceFileCalls = 0;
     const originalGetSourceFile = host.getSourceFile;

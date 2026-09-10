@@ -1,19 +1,19 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { once } from "node:events";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import {
   createProtocolConnection,
   StreamMessageReader,
   StreamMessageWriter,
+  type CompletionList,
   type DocumentDiagnosticReport,
   type Hover,
+  type InitializeResult,
   type Location,
   type LocationLink,
-  type CompletionList,
-  type InitializeResult,
   type SignatureHelp,
 } from "@volar/language-server/node.js";
 import { expect, test } from "vitest";
@@ -63,7 +63,7 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
   child.on("close", () => connection.dispose());
   const logs: string[] = [];
   const request = async <T>(method: string, params?: unknown): Promise<T> => {
-    let timer: ReturnType<typeof setTimeout>;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       return await Promise.race([
         connection.sendRequest<T>(method, params),
@@ -78,7 +78,7 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
         }),
       ]);
     } finally {
-      clearTimeout(timer!);
+      if (timer) clearTimeout(timer);
     }
   };
   connection.onNotification("window/logMessage", (event: { message: string }) =>
@@ -144,7 +144,7 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
       textDocument: { uri },
       position: { line: 2, character: 15 },
     });
-    expect(JSON.stringify(hover)).toContain("CharacterHandle");
+    expect(JSON.stringify(hover)).toContain("CharacterHandle<never>");
     const legacyUri = fixture.uri("old_versions.gts");
     const legacyText = fixtureSources["old_versions.gts"];
     await connection.sendNotification("textDocument/didOpen", {
