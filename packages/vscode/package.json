@@ -31,10 +31,11 @@
   },
   "scripts": {
     "build": "tsdown",
-    "pack": "rimraf temp && pnpm pack --pack-destination temp/ && tar -xzf temp/*.tgz -C temp/ && cd temp/package && npm install --omit=dev && vsce package"
+    "pack": "node ./scripts/pack.mjs"
   },
   "dependencies": {
-    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*"
+    "@gi-tcg/gts-typescript-language-service-plugin": "workspace:*",
+    "typescript": "catalog:"
   },
   "devDependencies": {
     "@gi-tcg/gts-language-server": "workspace:*",
@@ -44,7 +45,6 @@
     "@volar/language-server": "~2.4.0",
     "@volar/vscode": "~2.4.0",
     "fast-plist": "^0.1.3",
-    "rimraf": "^6.1.3",
     "vsce": "latest"
   },
   "contributes": {
@@ -76,8 +76,7 @@
     "typescriptServerPlugins": [
       {
         "name": "@gi-tcg/gts-typescript-language-service-plugin",
-        "enableForWorkspaceTypeScriptVersions": true,
-        "languages": []
+        "enableForWorkspaceTypeScriptVersions": true
       }
     ],
     "jsonValidation": [

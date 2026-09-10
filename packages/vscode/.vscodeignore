@@ -1,5 +1,8 @@
 scripts
 src
+__tests__
 tsconfig.json
 tsconfig.tsbuildinfo
+pnpm-lock.yaml
+pnpm-workspace.yaml
 dist/*.map
