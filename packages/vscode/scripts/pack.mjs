@@ -184,31 +184,39 @@ try {
   // `@gi-tcg` packages are not dependencies of the extension, so each one is
   // compared through the package that does depend on it.
   const deployedArtifacts = [
-    // specifier, resolving package in the repository, in the deployment
-    ["typescript/lib/typescript.js", extensionDirectory, "."],
+    // specifier, the package that resolves it, in the repository and in the
+    // deployment
+    ["typescript/lib/typescript.js", extensionDirectory, stage],
     [
       "@volar/typescript/lib/node/proxyCreateProgram.js",
       extensionDirectory,
-      ".",
+      stage,
     ],
-    ["@gi-tcg/gts-typescript-language-service-plugin", extensionDirectory, "."],
+    [
+      "@gi-tcg/gts-typescript-language-service-plugin",
+      extensionDirectory,
+      stage,
+    ],
     [
       "@gi-tcg/gts-language-plugin",
-      "packages/typescript-language-service-plugin",
-      "node_modules/@gi-tcg/gts-typescript-language-service-plugin",
+      path.join(repository, "packages/typescript-language-service-plugin"),
+      path.join(
+        stage,
+        "node_modules/@gi-tcg/gts-typescript-language-service-plugin",
+      ),
     ],
     [
       "@gi-tcg/gts-transpiler",
-      "packages/language-plugin",
-      "node_modules/@gi-tcg/gts-language-plugin",
+      path.join(repository, "packages/language-plugin"),
+      path.join(stage, "node_modules/@gi-tcg/gts-language-plugin"),
     ],
   ];
-  for (const [specifier, repositoryFrom, stageFrom] of deployedArtifacts) {
+  for (const [specifier, fromRepository, fromDeployment] of deployedArtifacts) {
     const resolve = (directory) =>
       createRequire(path.join(directory, "package.json")).resolve(specifier);
     assert.equal(
-      sha256(resolve(path.join(stage, stageFrom))),
-      sha256(resolve(path.resolve(repository, repositoryFrom))),
+      sha256(resolve(fromDeployment)),
+      sha256(resolve(fromRepository)),
       `Deployment changed the tested artifact ${specifier}`,
     );
   }
