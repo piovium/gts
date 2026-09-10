@@ -25,8 +25,9 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath) ?? [],
     vscode.workspace.getConfiguration("typescript").get<string>("tsdk"),
   );
-  // Install the redirect before the built-in TypeScript extension can spawn
-  // tsserver, and release it together with the extension host.
+  // Redirect this window's tsserver entry points. Then restart a server the
+  // built-in TypeScript extension may already have started; its restart command
+  // is registered only while that extension is active.
   context.subscriptions.push(redirectTsserver(nativeTsdk));
   console.log(`[GamingTS] Using native TypeScript SDK: ${nativeTsdk}`);
   const tsExtension = vscode.extensions.getExtension(

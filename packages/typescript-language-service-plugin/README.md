@@ -1,11 +1,18 @@
 # GamingTS TypeScript Language Service Plugin
 
-## Technical information
+`@gi-tcg/gts-typescript-language-service-plugin` is a _TypeScript_ language service
+plugin: it is injected into `tsserver` and teaches it to read GamingTS files as
+TypeScript modules, so that a `.ts` or `.tsx` file can resolve and type what it
+imports from a `.gts` module. It provides no diagnostics of its own; `.gts`
+diagnostics and language features come from the extension's own language server
+in this repository.
 
-This Plugin is a *TypeScript* language service plugin -- that injected into TypeScript's language server `tsserver` for providing typings for GamingTS.
+The GamingTS VS Code extension ships this plugin and declares it under
+`typescriptServerPlugins`, which is what makes VS Code load it into the
+`tsserver` it starts. That `tsserver` is the native one: the extension redirects
+it to the same `typescript-native-bridge` SDK its own language server runs on, so
+both language services agree on program semantics. See
+`packages/vscode/src/native_tsserver.ts`.
 
-It provides the ability to `tsserver` for reading GamingTS file as TypeScript module. This plugin do NOT provide type checking, just an experience improvement.
-
-Our vscode extension, ???, automatically load this language service plugin into the `tsserver` used by vscode. But since vscode's TypeScript LSP *client* do not recognize `.gts` file and won't send it's document data to server, we manually patched the client code to treat `.gts` as native TypeScript code. This is a common technique used by Vue and Ripple, etc. See the vscode package for detail.
-
-A notice: the plugin loading of `tsserver` only allows CommonJS and only recognizes `main` as main field of a package -- and `exports` won't work.
+`tsserver` loads plugins as CommonJS and reads only a package's `main` field, so
+this package needs a CommonJS entry point and cannot rely on `exports`.

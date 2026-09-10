@@ -30,13 +30,14 @@ records collected so far.
 
 ## Which language services answer
 
-GTS diagnostics, hovers, definitions, completions and signature help come from
-the extension's own Volar language client, reached through
-`extensionApi.volarLabs.languageClients[0]` of the activated extension. TS and
-TSX queries go through VS Code's built-in TypeScript extension, using the
-`typescript.tsserverRequest` command and the `vscode.execute*Provider` commands.
-Both routes keep their completed raw responses, and the visible editor
-diagnostics must independently reach the expected state.
+GTS diagnostics are requested directly from the extension's own Volar language
+client, `extensionApi.volarLabs.languageClients[0]` of the activated extension.
+GTS hovers, definitions, completions and signature help go through the
+`vscode.execute*Provider` commands, which dispatch to that same client. TS and
+TSX queries go through VS Code's built-in TypeScript extension instead, using
+the `typescript.tsserverRequest` command and the same provider commands. Both
+routes keep their completed raw responses, and the visible editor diagnostics
+must independently reach the expected state.
 
 ## Target workspace
 

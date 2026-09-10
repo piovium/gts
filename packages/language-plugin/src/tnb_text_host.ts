@@ -28,19 +28,19 @@ export type TnbTextHost = ts.CompilerHost & {
 /**
  * Build a `tnbGetSourceText` that answers from Volar's virtual code.
  *
- * Without it the bridge falls back to `getSourceFile`, parsing every file in
- * JavaScript only to read its text back; serving the virtual code also hands the
- * bridge transpiled GTS instead of raw GTS source. `undefined` is
- * authoritative: this host has no such file.
+ * Without it the bridge reads through `getSourceFile`, which Volar answers by
+ * parsing a JavaScript `SourceFile` (for a `.gts`, raw then virtual) only to
+ * hand the text back. This hook returns that same virtual text and script kind
+ * without the parse. `undefined` is authoritative: this host has no such file.
  */
 export function createTnbGetSourceText(
   ts: Ts,
   host: ts.CompilerHost,
   language: Language<URI | string>,
 ): TnbGetSourceText {
-  // Volar refreshes a script's virtual code only when the host hands it a new
-  // `SourceFile`, which this hook never builds, so it keeps the snapshot object
-  // while the text is unchanged and rebuilds it when the text changes.
+  // Volar regenerates a script's virtual code whenever `scripts.set` receives a
+  // snapshot that is not identical to the stored one, so reuse the same snapshot
+  // while the text is unchanged instead of re-transpiling GTS on every read.
   const snapshots = new Map<
     string,
     { text: string; snapshot: ts.IScriptSnapshot }

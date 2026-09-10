@@ -6,8 +6,8 @@ import { GtsVirtualCode } from "@gi-tcg/gts-language-plugin";
 
 /**
  * Resolve the GTS virtual code for an embedded document URI, together with the
- * source document it belongs to. The virtual code is null when the URI does not
- * reference GTS code embedded in a known script.
+ * URI of the source document that owns it. The virtual code is null when the
+ * embedded URI carries no `GtsVirtualCode`.
  */
 export function getVirtualCode(
   document: TextDocument,
