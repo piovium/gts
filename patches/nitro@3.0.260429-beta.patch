@@ -1,12 +1,15 @@
 diff --git a/dist/vite.mjs b/dist/vite.mjs
 --- a/dist/vite.mjs
 +++ b/dist/vite.mjs
-@@ -469,7 +469,7 @@ function nitroPreviewPlugin(ctx) {
+@@ -469,7 +469,10 @@ function nitroPreviewPlugin(ctx) {
  		name: "nitro:preview",
  		apply: (_config, configEnv) => !!configEnv.isPreview,
  		config(config) {
 -			return { preview: { port: config.preview?.port || 3e3 } };
-+			return { preview: { port: config.preview?.port ?? 3e3 } };
++			return { preview: {
++				port: config.preview?.port ?? 3e3,
++				host: config.preview?.host ?? (process.platform === "win32" ? "127.0.0.1" : void 0)
++			} };
  		},
  		async configurePreviewServer(server) {
  			const preview = await startPreview({
