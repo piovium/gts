@@ -3,8 +3,6 @@ import {
   createConnection,
   createServer,
   createTypeScriptProject,
-  Diagnostic,
-  FileType,
   loadTsdkByUrl,
   type InitializeParams,
 } from "@volar/language-server/browser.js";
@@ -56,17 +54,13 @@ connection.onInitialize(
     }
     return server.initialize(
       params,
-      createTypeScriptProject(
-        tsdk.typescript,
-        tsdk.diagnosticMessages,
-        ({ env }) => {
-          return {
-            languagePlugins: [
-              createGtsLanguagePlugin(tsdk.typescript, inlineGtsConfig),
-            ],
-          };
-        },
-      ),
+      createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => {
+        return {
+          languagePlugins: [
+            createGtsLanguagePlugin(tsdk.typescript, inlineGtsConfig),
+          ],
+        };
+      }),
       createLanguageServicePlugins(tsdk.typescript),
     );
   },
@@ -74,7 +68,9 @@ connection.onInitialize(
 
 connection.onInitialized(async () => {
   server.initialized();
-  projectFileWatcher = await server.fileWatcher.watchFiles(PROJECT_FILE_WATCH_PATTERNS);
+  projectFileWatcher = await server.fileWatcher.watchFiles(
+    PROJECT_FILE_WATCH_PATTERNS,
+  );
 });
 
 connection.onShutdown(() => {
@@ -94,4 +90,3 @@ self.addEventListener("unhandledrejection", (event) => {
     event.reason,
   );
 });
-

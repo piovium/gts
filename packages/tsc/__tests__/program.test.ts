@@ -16,7 +16,7 @@ import {
 } from "../../language-server/__tests__/fixture.ts";
 import { createGtscProject } from "../src/project.ts";
 
-test("native GTS text host avoids JS parsing and refreshes changed, deleted and recreated files", () => {
+test("native GTS text host avoids a JavaScript parse and refreshes changed, deleted and recreated files", () => {
   const fixture = createFixture();
   try {
     const configFilePath = path.join(fixture.directory, "tsconfig.json");
@@ -38,9 +38,9 @@ test("native GTS text host avoids JS parsing and refreshes changed, deleted and 
       sourceFileCalls++;
       return Reflect.apply(originalGetSourceFile, host, args);
     };
-    // The project descriptor `gtsc` itself passes to Volar, so the entry
-    // point's own wiring is what this test covers: the host keeps no text hook
-    // unless that descriptor installs one.
+    // Build the program the way `gtsc` does, so this covers the entry point's
+    // own wiring too: the host created above carries no text hook until that
+    // descriptor installs one.
     const createProgram = proxyCreateProgram(
       ts,
       ts.createProgram,
@@ -56,14 +56,14 @@ test("native GTS text host avoids JS parsing and refreshes changed, deleted and 
             ? item.file.getLineAndCharacterOfPosition(item.start)
             : undefined,
       }));
-      // Whole-program inventory must also avoid materializing every JS AST.
+      // Enumerating the whole program must not materialize a JS AST either.
       expect(program.getSourceFiles().length).toBeGreaterThan(rootNames.length);
       expect(sourceFileCalls).toBe(0);
       return diagnostics;
     };
     // Exact (code, file) inventory, so an extra or missing diagnostic fails.
-    // Diagnostics without a source file (program-wide) are marked explicitly:
-    // "file not found" for a deleted root file carries no file identity.
+    // A diagnostic with no source file is marked `<program>`; the "file not
+    // found" error of a deleted root file reaches the list that way.
     const identity = () =>
       check()
         .map((item) => `${item.code} ${item.file ?? "<program>"}`)
@@ -129,7 +129,8 @@ test("the text-only host hook serves GTS virtual text without a JavaScript parse
     const root = language.scripts.get(sourceFile)!.generated!.root;
     const virtualText = root.snapshot.getText(0, root.snapshot.getLength());
     expect(getSourceText(sourceFile)).toEqual({
-      // One blank line per source line: the layout Volar's own host maps from.
+      // The hook prepends the source blanked to the same length, so the virtual
+      // text after it keeps the offsets Volar maps from.
       text:
         source
           .split("\n")
@@ -137,6 +138,7 @@ test("the text-only host hook serves GTS virtual text without a JavaScript parse
           .join("\n") + virtualText,
       scriptKind: ts.ScriptKind.TS,
     });
+    // The served text is transpiled: no GTS syntax survives.
     expect(getSourceText(sourceFile)?.text).not.toContain("define character {");
     const plainFile = path.join(fixture.directory, "consumer.ts");
     expect(getSourceText(plainFile)).toEqual({

@@ -297,10 +297,10 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
     const sha256 = (file: string) =>
       createHash("sha256").update(readFileSync(file)).digest("hex");
     expect(sha256(addonPath)).toBe(sha256(expectedAddon));
-    // BRIDGE_LOAD echoes the GODEBUG value this module sets just before it
-    // loads the addon, so the line cannot show that the Go runtime disabled
-    // preemption. Whether the Go side observes asyncpreemptoff=1 is not
-    // established by this test.
+    // BRIDGE_LOAD echoes the GODEBUG value this module sets just before loading
+    // the addon; it does not prove the Go runtime disabled preemption, and
+    // whether the Go side observes asyncpreemptoff=1 is not established by this
+    // test.
     const enteredIds = trace
       .filter((line) => line.includes(" ENTER ") && line.includes(serverPid))
       .map((line) => / ENTER (\d+) /.exec(line)?.[1] ?? "");

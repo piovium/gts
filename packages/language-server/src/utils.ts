@@ -5,26 +5,22 @@ import { URI } from "vscode-uri";
 import { GtsVirtualCode } from "@gi-tcg/gts-language-plugin";
 
 /**
- * Get virtual code from the encoded document URI
+ * Resolve the GTS virtual code for an embedded document URI, together with the
+ * source document it belongs to. The virtual code is null when the URI does not
+ * reference GTS code embedded in a known script.
  */
 export function getVirtualCode(
   document: TextDocument,
-  context: LanguageServiceContext
+  context: LanguageServiceContext,
 ): [GtsVirtualCode | null, URI] {
   const uri = URI.parse(document.uri);
-  const decoded = context.decodeEmbeddedDocumentUri(uri) as [
+  const [sourceUri, virtualCodeId] = context.decodeEmbeddedDocumentUri(uri) as [
     documentUri: URI,
-    embeddedCodeId: string
+    embeddedCodeId: string,
   ];
-  const [sourceUri, virtualCodeId] = decoded;
   const sourceScript = context.language.scripts.get(sourceUri);
-  const virtualCode = sourceScript?.generated?.embeddedCodes.get(
-    virtualCodeId
-  );
+  const virtualCode = sourceScript?.generated?.embeddedCodes.get(virtualCodeId);
 
-  if (!virtualCode) {
-    return [null, sourceUri];
-  }
   if (!(virtualCode instanceof GtsVirtualCode)) {
     return [null, sourceUri];
   }
@@ -34,11 +30,12 @@ export function getVirtualCode(
 const wordRegex = /\w/;
 
 /**
- * Get the word at a specific position in the text
+ * Return the longest run of word characters that includes or immediately
+ * precedes `start`, with its offsets in `text`.
  */
 export function getWordFromPosition(
   text: string,
-  start: number
+  start: number,
 ): { word: string; start: number; end: number } {
   let wordStart = start;
   let wordEnd = start;

@@ -2,11 +2,11 @@
 
 The workspace installs the published
 `typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2` as `typescript`, then applies
-the committed pnpm patch. Installation does not require a local tarball or a
-developer's absolute path.
+the committed pnpm patch. Installation therefore needs neither a locally packed
+tarball nor a developer-specific path.
 
-The TNB patch is generated from the companion TNB source checkout at
-`b25e3117975310b4e330e7745c8c2fe28b462556`. Its packed build has SHA-256
+The TNB patch is generated from the TNB checkout at commit
+`b25e3117975310b4e330e7745c8c2fe28b462556`, whose packed build has SHA-256
 `9774faf4f0797286e868a62e9c333eb46317afbe9d8cbd317fe9c2818e5ff063`.
 It fixes file freshness for a plain compiler host, virtual-text collection, lazy
 source-file inspection, deleted-overlay removal, and declaration transform
@@ -16,18 +16,22 @@ declaration bundlers rely on. The platform addon still comes from the pinned
 optional platform package.
 
 The Volar patch keeps GTS's existing removal of the 4 MiB module-size guard.
-The `tnbGetSourceText` host hook is not a patch: it lives in this repository as
-`packages/language-plugin/src/tnb_text_host.ts`, and `@gi-tcg/gtsc` installs it on
-the compiler host while `runTsc` builds the project. The hook supplies current
-virtual text and script kind without allocating a JavaScript AST, rebuilds its
-snapshot only when the file text changes so a plain compiler host still observes
-external edits, and stays optional: stock TypeScript ignores it. It cannot be
-delivered by a dependency patch, because `patchedDependencies` applies only inside
-the install that declares it, and every consumer of the published `@gi-tcg/gtsc`
-would have to repeat the patch.
-`packages/tsc/__tests__/program.test.ts` exercises the real GTS provider,
-cross-file changes, and deletion and recreation, while asserting that native text
-collection never invokes `CompilerHost.getSourceFile`.
+
+The `tnbGetSourceText` host hook is not a patch. It lives in this repository as
+`packages/language-plugin/src/tnb_text_host.ts` and is installed on the compiler
+host by `@gi-tcg/gtsc` when Volar creates the project. It answers with the GTS
+virtual code as transpiled text and script kind, so no JavaScript AST is built
+in between. It also reads through the host on every call, so external edits stay
+visible on a plain compiler host that watches no files. Stock TypeScript ignores
+the hook.
+
+No dependency patch can deliver it: `patchedDependencies` applies only inside the
+install that declares it, so every consumer of the published `@gi-tcg/gtsc` would
+have to repeat the patch.
+
+`packages/tsc/__tests__/program.test.ts` covers the hook against the real GTS
+virtual code: cross-file changes, file deletion and recreation, and the
+invariant that text collection never reaches `CompilerHost.getSourceFile`.
 
 The `rolldown-plugin-dts` patch passes the plugin's already-resolved `tsconfig`
 path to `ts.parseJsonConfigFileContent` as `configFileName`. Without that
@@ -39,9 +43,9 @@ GTS build ships would never be produced by the native emitter.
 
 The Nitro patch preserves an explicitly requested preview port of zero, which lets
 the documentation build choose an available ephemeral port. On Windows, preview
-defaults to the IPv4 loopback address, because local IPv6 connections can be
-denied even when listening on `::1` succeeds; an explicit preview host still takes
-precedence.
+defaults to the IPv4 loopback address, because an IPv6 loopback connection can
+be denied even when listening on `::1` succeeds; an explicit preview host still
+takes precedence.
 
 After changing a patch, update `pnpm-lock.yaml` with `pnpm install
 --lockfile-only`, then verify `pnpm install --frozen-lockfile`, `pnpm build` and

@@ -1,40 +1,50 @@
 import type { Language } from "@volar/language-core";
 import type ts from "typescript";
 import type { URI } from "vscode-uri";
+import { blankedSource } from "./virtual_code.ts";
 
 type Ts = typeof ts;
 
-/** Script text a native checker can consume without a JavaScript syntax tree. */
+/**
+ * Text and script kind of one file: how the native bridge consumes a script
+ * instead of a `SourceFile`.
+ */
 export interface TnbSourceText {
   readonly text: string;
   readonly scriptKind: ts.ScriptKind;
 }
 
-/** Text-only compiler host capability that `typescript-native-bridge` looks for. */
+/**
+ * Text-only read of one file that `typescript-native-bridge` prefers over
+ * `getSourceFile`. `undefined` means this host has no such file.
+ */
 export type TnbGetSourceText = (fileName: string) => TnbSourceText | undefined;
 
-/** Compiler host that carries the capability above. */
+/** A compiler host that may provide `tnbGetSourceText`. */
 export type TnbTextHost = ts.CompilerHost & {
   tnbGetSourceText?: TnbGetSourceText;
 };
 
 /**
- * Answer the native bridge's text-only request for one file.
+ * Build a `tnbGetSourceText` that answers from Volar's virtual code.
  *
- * The bridge forwards text to its native program and never reads the JavaScript
- * syntax tree that a `SourceFile` carries, so without this capability its host
- * adapter parses every file twice. `undefined` is authoritative: this host has
- * no such file.
+ * Without it the bridge falls back to `getSourceFile`, parsing every file in
+ * JavaScript only to read its text back; serving the virtual code also hands the
+ * bridge transpiled GTS instead of raw GTS source. `undefined` is
+ * authoritative: this host has no such file.
  */
 export function createTnbGetSourceText(
   ts: Ts,
   host: ts.CompilerHost,
   language: Language<URI | string>,
 ): TnbGetSourceText {
-  // Volar regenerates a file's virtual code from snapshot identity, and only a
-  // replaced `SourceFile` would have produced one; a text-only host owns that
-  // refresh instead, so re-read text is always answered from fresh code.
-  const snapshots = new Map<string, { text: string; snapshot: ts.IScriptSnapshot }>();
+  // Volar refreshes a script's virtual code only when the host hands it a new
+  // `SourceFile`, which this hook never builds, so it keeps the snapshot object
+  // while the text is unchanged and rebuilds it when the text changes.
+  const snapshots = new Map<
+    string,
+    { text: string; snapshot: ts.IScriptSnapshot }
+  >();
   const snapshotOf = (fileName: string, text: string): ts.IScriptSnapshot => {
     const previous = snapshots.get(fileName);
     if (previous?.text === text) {
@@ -58,10 +68,9 @@ export function createTnbGetSourceText(
       fileName,
       snapshotOf(fileName, text),
     );
+    const generated = sourceScript?.generated;
     const serviceScript =
-      sourceScript?.generated?.languagePlugin.typescript?.getServiceScript(
-        sourceScript.generated.root,
-      );
+      generated?.languagePlugin.typescript?.getServiceScript(generated.root);
     if (!serviceScript) {
       return { text, scriptKind: scriptKindOf(ts, fileName) };
     }
@@ -70,26 +79,18 @@ export function createTnbGetSourceText(
     return {
       text: serviceScript.preventLeadingOffset
         ? virtualText
-        : leadingOffset(text) + virtualText,
+        : blankedSource(text) + virtualText,
       scriptKind: serviceScript.scriptKind,
     };
   };
 }
 
 /**
- * `typescript` exposes this at runtime but omits it from its public types;
- * Volar's own host resolves script kinds through the same function.
+ * `typescript` provides `getScriptKindFromFileName` at runtime but leaves it out
+ * of its public types, so the SDK is widened here to reach it.
  */
 function scriptKindOf(ts: Ts, fileName: string): ts.ScriptKind {
   return (
     ts as Ts & { getScriptKindFromFileName(fileName: string): ts.ScriptKind }
   ).getScriptKindFromFileName(fileName);
-}
-
-/** Volar's own host keeps one blank line per source line so offsets map back. */
-function leadingOffset(source: string): string {
-  return source
-    .split("\n")
-    .map((line) => " ".repeat(line.length))
-    .join("\n");
 }

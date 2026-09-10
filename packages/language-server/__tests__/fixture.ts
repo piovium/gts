@@ -35,8 +35,8 @@ export const fixtureSources = {
 
 export function createFixture() {
   // The fixture lives inside the repository so that the GTS and TypeScript
-  // packages resolve from the workspace installation. Its name carries a
-  // non-ASCII prefix and a space, so it also covers such working directories.
+  // packages resolve from the workspace installation. The directory name has a
+  // non-ASCII prefix and a space so that such paths are exercised as well.
   const directory = mkdtempSync(
     path.join(repository, "packages/language-server/__tests__/临时 fixture-"),
   );

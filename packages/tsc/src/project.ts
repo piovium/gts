@@ -12,12 +12,10 @@ type Ts = typeof ts;
 /**
  * The Volar project descriptor behind `gtsc`.
  *
- * Besides the GTS language plugin it installs the text-only host capability
- * `typescript-native-bridge` reads. `gtsc` runs on a plain compiler host rather
- * than a language-service snapshot host, so without that capability the bridge
- * builds a JavaScript `SourceFile` for every file only to read text the virtual
- * code already has. Answering from the GTS virtual code keeps the native
- * program from parsing each file twice.
+ * `gtsc` compiles on a plain compiler host, which exposes neither Volar
+ * snapshots nor editor overlays, so this descriptor installs the
+ * `tnbGetSourceText` hook that the native bridge reads text and script kind
+ * through instead of parsing a JavaScript `SourceFile` per file.
  */
 export function createGtscProject(
   typescript: Ts,
