@@ -1,3 +1,4 @@
+import { registerDecorations } from "@gi-tcg/gts-language-client-code/decoration";
 import * as serverProtocol from "@volar/language-server/protocol.js";
 import {
   activateAutoInsertion,
@@ -13,10 +14,9 @@ import {
   TransportKind,
 } from "@volar/vscode/node";
 import * as vscode from "vscode";
-import { redirectTsserver } from "./native_tsserver";
-import { resolveNativeTsdk } from "./native_tsdk";
-import { registerDecorations } from "@gi-tcg/gts-language-client-code/decoration";
 import { configurePrettier } from "./formatter";
+import { resolveNativeTsdk } from "./native_tsdk";
+import { redirectTsserver } from "./native_tsserver";
 
 let client: BaseLanguageClient;
 

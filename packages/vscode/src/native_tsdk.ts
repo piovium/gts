@@ -7,44 +7,66 @@ export function resolveNativeTsdk(
   workspaceDirectories: readonly string[],
   configuredTsdk?: string,
 ): string {
+  const native = sdkCandidates(workspaceDirectories, configuredTsdk).find(
+    isNativeSdk,
+  );
+  if (!native) {
+    throw new Error(
+      "GamingTS requires a typescript-native-bridge SDK. Reinstall the extension or the workspace dependencies.",
+    );
+  }
+  return native;
+}
+
+/**
+ * SDK directories to try, in order: one the user configured explicitly, the SDK
+ * each workspace folder installed, and finally the one this extension ships.
+ */
+function sdkCandidates(
+  workspaceDirectories: readonly string[],
+  configuredTsdk?: string,
+): string[] {
   const candidates: string[] = [];
-  if (configuredTsdk) {
-    if (path.isAbsolute(configuredTsdk)) {
-      candidates.push(configuredTsdk);
-    } else {
-      for (const directory of workspaceDirectories) {
-        candidates.push(path.resolve(directory, configuredTsdk));
-      }
-    }
+  const configured = configuredTsdk;
+  if (configured) {
+    candidates.push(
+      ...(path.isAbsolute(configured)
+        ? [configured]
+        : workspaceDirectories.map((directory) =>
+            path.resolve(directory, configured),
+          )),
+    );
   }
   for (const directory of workspaceDirectories) {
-    try {
-      const workspaceRequire = createRequire(
-        path.join(directory, "package.json"),
-      );
-      candidates.push(
-        path.dirname(workspaceRequire.resolve("typescript/lib/typescript.js")),
-      );
-    } catch {
-      // A workspace may not have installed its dependencies yet.
-    }
+    const installed = installedSdk(directory);
+    if (installed) candidates.push(installed);
   }
-  candidates.push(
-    path.dirname(require.resolve("typescript/lib/typescript.js")),
-  );
-  for (const candidate of candidates) {
-    try {
-      const manifest = JSON.parse(
-        readFileSync(path.join(candidate, "../package.json"), "utf8"),
-      );
-      if (manifest.name === "typescript-native-bridge") {
-        return candidate;
-      }
-    } catch {
-      // Try the next SDK if this package cannot be read.
-    }
+  candidates.push(sdkOf(require));
+  return candidates;
+}
+
+/** The SDK a workspace folder installed, or `undefined` before it installs one. */
+function installedSdk(directory: string): string | undefined {
+  try {
+    return sdkOf(createRequire(path.join(directory, "package.json")));
+  } catch {
+    return undefined;
   }
-  throw new Error(
-    "GamingTS requires a typescript-native-bridge SDK. Reinstall the extension or the workspace dependencies.",
-  );
+}
+
+/** The SDK a module resolution context loads for `typescript`. */
+function sdkOf(context: ReturnType<typeof createRequire>): string {
+  return path.dirname(context.resolve("typescript/lib/typescript.js"));
+}
+
+/** Only the native bridge may serve the GTS language services. */
+function isNativeSdk(directory: string): boolean {
+  try {
+    const manifest = JSON.parse(
+      readFileSync(path.join(directory, "..", "package.json"), "utf8"),
+    ) as { name?: string };
+    return manifest.name === "typescript-native-bridge";
+  } catch {
+    return false;
+  }
 }

@@ -10,8 +10,14 @@ import type { Disposable } from "vscode";
  * the patch is installed is replaced, including one started from a
  * user-configured `typescript.tsdk`. GTS needs both language services to agree
  * on program semantics, so a stock tsserver is never acceptable here.
+ *
+ * VS Code offers no hook for replacing that process, and rewriting the user's
+ * `typescript.tsdk` setting is not something a language extension does on its
+ * own, so the `spawn` and `fork` entry points are wrapped instead.
  */
 export function redirectTsserver(tsdk: string): Disposable {
+  // The live CommonJS module object is patched, not an ESM namespace import:
+  // a bundler-created namespace is read-only, so its `spawn` cannot be replaced.
   const childProcess =
     require("node:child_process") as typeof import("node:child_process");
   const originalSpawn = childProcess.spawn;
@@ -35,13 +41,11 @@ export function redirectTsserver(tsdk: string): Disposable {
     );
     return nativeServerPath;
   };
+  const redirectAll = (args: unknown[]): unknown[] =>
+    args.map((arg) => (isTsserverPath(arg) ? redirect(arg) : arg));
   const patchedSpawn = new Proxy(originalSpawn, {
     apply(target, receiver, args) {
-      if (Array.isArray(args[1])) {
-        args[1] = args[1].map((arg: unknown) =>
-          isTsserverPath(arg) ? redirect(arg) : arg,
-        );
-      }
+      if (Array.isArray(args[1])) args[1] = redirectAll(args[1]);
       return Reflect.apply(target, receiver, args);
     },
   });
