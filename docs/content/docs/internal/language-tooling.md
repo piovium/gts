@@ -90,7 +90,7 @@ A CJS module that integrates GTS into TypeScript's built-in language service, so
 
 ### TypeScript Language Service Plugin Declaration
 
-The extension declares the plugin (`@gi-tcg/gts-typescript-language-service-plugin`) under `typescriptServerPlugins`, so the `tsserver` it runs loads it and resolves `.gts` imports. The extension redirects that `tsserver` to the same native SDK its own language server uses, so the two keep the same program semantics.
+The extension declares the plugin (`@gi-tcg/gts-typescript-language-service-plugin`) under `typescriptServerPlugins`, so the `tsserver` it runs loads it and resolves `.gts` imports. The same declaration lists `gaming-ts` in `languages`, which is what makes the built-in TypeScript extension synchronise `.gts` documents — including unsaved ones — to that `tsserver`; without it, a `.ts` consumer would only see the last saved version of the `.gts` module it imports. The extension redirects that `tsserver` to the same native SDK its own language server uses, so the two keep the same program semantics.
 
 ### Regex-based Syntax Highlighting (`syntaxes/GamingTS.tmLanguage.json`)
 
