@@ -4,7 +4,6 @@ import {
   CloseAction,
   createLabsInfo,
   ErrorAction,
-  getTsdk,
 } from "@volar/vscode";
 import {
   BaseLanguageClient,
@@ -14,39 +13,27 @@ import {
   TransportKind,
 } from "@volar/vscode/node";
 import * as vscode from "vscode";
-import { patchTypeScriptExtension } from "./patch";
+import { redirectTsserver } from "./native_tsserver";
+import { resolveNativeTsdk } from "./native_tsdk";
 import { registerDecorations } from "@gi-tcg/gts-language-client-code/decoration";
 import { configurePrettier } from "./formatter";
 
 let client: BaseLanguageClient;
 
-const shouldRestart = !patchTypeScriptExtension();
-
 export async function activate(context: vscode.ExtensionContext) {
-  if (shouldRestart) {
-    // Check if we've already prompted for reload in this session
-    const hasPromptedReload = context.globalState.get(
-      "GamingTS.hasPromptedReload",
-      false,
-    );
-    if (!hasPromptedReload) {
-      // Mark that we've prompted to avoid repeated prompts
-      await context.globalState.update("GamingTS.hasPromptedReload", true);
-      // Prompt user to restart extension host for full TypeScript integration
-      vscode.window
-        .showInformationMessage(
-          "GamingTS extension needs to restart extensions to enable full TypeScript integration.",
-          "Restart Extensions",
-          "Later",
-        )
-        .then((selection) => {
-          if (selection === "Restart Extensions") {
-            vscode.commands.executeCommand(
-              "workbench.action.restartExtensionHost",
-            );
-          }
-        });
-    }
+  const nativeTsdk = resolveNativeTsdk(
+    vscode.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath) ?? [],
+    vscode.workspace.getConfiguration("typescript").get<string>("tsdk"),
+  );
+  // Install the redirect before the built-in TypeScript extension can spawn
+  // tsserver, and release it together with the extension host.
+  context.subscriptions.push(redirectTsserver(nativeTsdk));
+  console.log(`[GamingTS] Using native TypeScript SDK: ${nativeTsdk}`);
+  const tsExtension = vscode.extensions.getExtension(
+    "vscode.typescript-language-features",
+  );
+  if (tsExtension?.isActive) {
+    await vscode.commands.executeCommand("typescript.restartTsServer");
   }
 
   const serverModule = vscode.Uri.joinPath(
@@ -72,7 +59,7 @@ export async function activate(context: vscode.ExtensionContext) {
     documentSelector: [{ language: "gaming-ts" }],
     initializationOptions: {
       typescript: {
-        tsdk: (await getTsdk(context))!.tsdk,
+        tsdk: nativeTsdk,
       },
     },
     errorHandler: {
