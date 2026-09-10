@@ -8,26 +8,26 @@ developer's absolute path.
 The TNB patch is generated from the companion TNB source checkout at
 `b25e3117975310b4e330e7745c8c2fe28b462556`. Its packed build has SHA-256
 `9774faf4f0797286e868a62e9c333eb46317afbe9d8cbd317fe9c2818e5ff063`.
-It fixes plain compiler-host file freshness, direct virtual-text collection,
-lazy source-file inspection, removal of deleted overlays, and declaration
-transform behavior. It also refreshes diagnostics when external disk changes
-follow saved editor overlays and preserves relative declaration emit paths
-used by declaration bundlers. The platform addon continues to come from the pinned
+It fixes file freshness for a plain compiler host, virtual-text collection, lazy
+source-file inspection, deleted-overlay removal, and declaration transform
+behavior. It also refreshes diagnostics when external disk changes follow saved
+editor overlays, and preserves the relative declaration emit paths that
+declaration bundlers rely on. The platform addon still comes from the pinned
 optional platform package.
 
-The Volar patch retains GTS's existing removal of the 4 MiB module-size guard
-and adds the `tnbGetSourceText` host hook. The hook supplies current virtual text
-and script kind without allocating a JavaScript AST. It preserves disk update
-semantics for a plain compiler host. Stock TypeScript ignores the additional
-hook. `packages/tsc/__tests__/program.test.ts` exercises the real GTS provider,
-cross-file changes, deletion and recreation while asserting that native text
+The Volar patch keeps GTS's existing removal of the 4 MiB module-size guard and
+adds the `tnbGetSourceText` host hook. The hook supplies current virtual text and
+script kind without allocating a JavaScript AST, and preserves the disk update
+semantics of a plain compiler host. Stock TypeScript ignores the additional hook.
+`packages/tsc/__tests__/program.test.ts` exercises the real GTS provider,
+cross-file changes, and deletion and recreation, while asserting that native text
 collection never invokes `CompilerHost.getSourceFile`.
 
-The Nitro patch preserves an explicitly requested preview port of zero, which
-lets the documentation build choose an available ephemeral port. On Windows,
-preview defaults to the IPv4 loopback address because local IPv6 connections
-can be denied even when listening on `::1` succeeds. An explicit preview host
-continues to take precedence.
+The Nitro patch preserves an explicitly requested preview port of zero, which lets
+the documentation build choose an available ephemeral port. On Windows, preview
+defaults to the IPv4 loopback address, because local IPv6 connections can be
+denied even when listening on `::1` succeeds; an explicit preview host still takes
+precedence.
 
 After changing a patch, update `pnpm-lock.yaml` with `pnpm install
 --lockfile-only`, then verify `pnpm install --frozen-lockfile`, `pnpm build` and
