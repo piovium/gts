@@ -87,6 +87,14 @@ const pnpmRun = (...args) => run(pnpm, args, repository);
 
 const workspaceSpecifier = /^(?:workspace|catalog):/;
 
+// How `pnpm publish` rewrites a workspace-only specifier: to the installed
+// copy's own version, or to an npm alias when its directory name is not its
+// package name.
+const resolvedSpecifier = (name, installed) =>
+  name === installed.name
+    ? installed.version
+    : `npm:${installed.name}@${installed.version}`;
+
 // Node's resolution walk, restricted to the deployment: the package's own
 // `node_modules` first, then every ancestor's.
 function installedManifest(manifestFile, name) {
@@ -146,10 +154,7 @@ function resolveDeployedSpecifiers() {
           );
           continue;
         }
-        deployedManifest[field][name] =
-          name === dependency.name
-            ? dependency.version
-            : `npm:${dependency.name}@${dependency.version}`;
+        deployedManifest[field][name] = resolvedSpecifier(name, dependency);
         rewritten = true;
       }
     }
@@ -258,12 +263,7 @@ try {
         const dependency = JSON.parse(
           fs.readFileSync(require.resolve(`${name}/package.json`), "utf8"),
         );
-        return [
-          name,
-          name === dependency.name
-            ? dependency.version
-            : `npm:${dependency.name}@${dependency.version}`,
-        ];
+        return [name, resolvedSpecifier(name, dependency)];
       }),
     );
   }

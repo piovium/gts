@@ -33,7 +33,6 @@ export class GtsVirtualCode implements VirtualCode {
     const source = snapshot.getText(0, snapshot.getLength());
     try {
       const { code, mappings } = transpileForVolar(source, filename, config);
-      this.errors = [];
       this.mappings = mappings;
       this.snapshot = {
         getText: (start, end) => code.slice(start, end),
@@ -41,11 +40,11 @@ export class GtsVirtualCode implements VirtualCode {
         getChangeRange: () => void 0,
       };
     } catch (e) {
-      if (e instanceof GtsTranspilerError) {
-        this.errors = [e];
-      } else {
-        this.errors = [new GtsTranspilerError((e as Error)?.message, null)];
-      }
+      this.errors = [
+        e instanceof GtsTranspilerError
+          ? e
+          : new GtsTranspilerError((e as Error)?.message, null),
+      ];
 
       const emptyGeneration = blankedSource(source);
       this.mappings = [

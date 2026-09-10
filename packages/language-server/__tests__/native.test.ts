@@ -109,6 +109,9 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
       textDocument: { uri, version: ++version },
       contentChanges: [{ text }],
     });
+  const targetFile = (definition: Location | LocationLink) =>
+    URI.parse("targetUri" in definition ? definition.targetUri : definition.uri)
+      .fsPath;
   try {
     const initialized = await request<InitializeResult>("initialize", {
       processId: process.pid,
@@ -164,9 +167,7 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
     );
     expect(
       definitions?.map((definition) => ({
-        file: URI.parse(
-          "targetUri" in definition ? definition.targetUri : definition.uri,
-        ).fsPath,
+        file: targetFile(definition),
         range:
           "targetSelectionRange" in definition
             ? definition.targetSelectionRange
@@ -247,14 +248,7 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
         position: { line: 3, character: 36 },
       },
     );
-    expect(
-      sharedDefinition?.map(
-        (definition) =>
-          URI.parse(
-            "targetUri" in definition ? definition.targetUri : definition.uri,
-          ).fsPath,
-      ),
-    ).toEqual([URI.parse(uri).fsPath]);
+    expect(sharedDefinition?.map(targetFile)).toEqual([URI.parse(uri).fsPath]);
     await request("shutdown");
     await connection.sendNotification("exit");
     const [exitCode] = await closed;

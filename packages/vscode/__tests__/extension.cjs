@@ -301,6 +301,10 @@ exports.run = async function () {
     }
     await waitFor("external disk repair", () => isClean(consumer.uri));
     record({ operation: "external disk repair", version: consumer.version });
+    // Appending a declaration whose initializer contradicts its type gives the
+    // fixture its own 2322, independent of the cross-file edits.
+    const independentTypeError =
+      "\r\nexport const independent: string = 1;\r\n";
     let requestId = 0;
     const descriptors = [
       {
@@ -317,8 +321,7 @@ exports.run = async function () {
         route: "tsserver",
         document: () => consumer,
         validText: consumerSource,
-        badText:
-          consumerSource + "\r\nexport const independent: string = 1;\r\n",
+        badText: consumerSource + independentTypeError,
         code: 2322,
         hoverType: "CharacterHandle",
       },
@@ -327,8 +330,7 @@ exports.run = async function () {
         route: "tsserver",
         document: () => component,
         validText: componentSource,
-        badText:
-          componentSource + "\r\nexport const independent: string = 1;\r\n",
+        badText: componentSource + independentTypeError,
         code: 2322,
         hoverType: "number",
       },
@@ -739,11 +741,7 @@ exports.run = async function () {
         (item) => item.name !== "GTS",
       )) {
         const document = descriptor.document();
-        await replace(
-          document,
-          descriptor.validText +
-            "\r\nexport const independent: string = 1;\r\n",
-        );
+        await replace(document, descriptor.validText + independentTypeError);
         const invalid = await waitFor(`${descriptor.name} own edit error`, () =>
           errors(document.uri).find((item) => Number(item.code) === 2322),
         );
@@ -803,8 +801,8 @@ exports.run = async function () {
         await vscode.commands.executeCommand(
           "workbench.action.closeAllEditors",
         );
-        // VS Code may cache the model after closing its tabs. A language change
-        // explicitly closes the GTS document in both language service clients.
+        // VS Code may keep the model alive after closing its tabs, so change
+        // the language mode to force a close before reopening it.
         const plainDocument = await vscode.languages.setTextDocumentLanguage(
           current,
           "plaintext",
@@ -849,7 +847,7 @@ exports.run = async function () {
     const definitions = await vscode.commands.executeCommand(
       "vscode.executeDefinitionProvider",
       consumer.uri,
-      new vscode.Position(0, 12),
+      consumerHoverPosition,
     );
     assert.ok(
       definitions.some(

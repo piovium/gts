@@ -1,4 +1,4 @@
-import type { FileSystem, FileType } from "@volar/language-service";
+import { FileType, type FileSystem } from "@volar/language-service";
 
 type FileSystemEntry = {
   isFile(): boolean;
@@ -8,13 +8,18 @@ type FileSystemEntry = {
 
 const toFileType = (entry: FileSystemEntry): FileType =>
   entry.isFile()
-    ? (1 satisfies FileType.File)
+    ? FileType.File
     : entry.isDirectory()
-      ? (2 satisfies FileType.Directory)
+      ? FileType.Directory
       : entry.isSymbolicLink()
-        ? (64 satisfies FileType.SymbolicLink)
-        : (0 satisfies FileType.Unknown);
+        ? FileType.SymbolicLink
+        : FileType.Unknown;
 
+/**
+ * Adapt ZenFS to Volar's file-system provider contract: a missing path must read
+ * as absent, so each syscall reports `undefined` (or no entries) instead of
+ * propagating the error.
+ */
 export default function zenFsProvider(
   fs: typeof import("@zenfs/core").fs,
 ): FileSystem {

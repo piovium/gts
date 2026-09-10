@@ -27,13 +27,12 @@ function sdkCandidates(
   configuredTsdk?: string,
 ): string[] {
   const candidates: string[] = [];
-  const configured = configuredTsdk;
-  if (configured) {
+  if (configuredTsdk) {
     candidates.push(
-      ...(path.isAbsolute(configured)
-        ? [configured]
+      ...(path.isAbsolute(configuredTsdk)
+        ? [configuredTsdk]
         : workspaceDirectories.map((directory) =>
-            path.resolve(directory, configured),
+            path.resolve(directory, configuredTsdk),
           )),
     );
   }

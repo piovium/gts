@@ -3,9 +3,8 @@ import { createRequire } from "node:module";
 import { createGtscProject } from "./project.ts";
 
 const require = createRequire(import.meta.url);
-// `runTsc` intercepts reading this file and rewrites it before loading, so it
-// needs the path rather than the module.
+// `runTsc` patches `fs.readFileSync` to rewrite tsc as it is loaded, so it needs
+// the file path, not the module.
 const tscPath = require.resolve("typescript/lib/tsc");
-const extraSupportedExtensions = [".gts"];
 
-runTsc(tscPath, extraSupportedExtensions, createGtscProject);
+runTsc(tscPath, [".gts"], createGtscProject);
