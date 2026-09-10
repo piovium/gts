@@ -1,7 +1,12 @@
 import { unlinkSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { createLanguage, FileMap } from "@volar/language-core";
 import { proxyCreateProgram } from "@volar/typescript/lib/node/proxyCreateProgram.js";
-import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
+import {
+  createGtsLanguagePlugin,
+  createTnbGetSourceText,
+  type TnbTextHost,
+} from "@gi-tcg/gts-language-plugin";
 import ts from "typescript";
 import { expect, test } from "vitest";
 import {
@@ -9,6 +14,7 @@ import {
   createFixture,
   fixtureSources,
 } from "../../language-server/__tests__/fixture.ts";
+import { createGtscProject } from "../src/project.ts";
 
 test("native GTS text host avoids JS parsing and refreshes changed, deleted and recreated files", () => {
   const fixture = createFixture();
@@ -23,7 +29,7 @@ test("native GTS text host avoids JS parsing and refreshes changed, deleted and 
     const rootNames = Object.keys(fixtureSources).map((file) =>
       path.join(fixture.directory, file),
     );
-    const host = ts.createCompilerHost(options);
+    const host = ts.createCompilerHost(options) as TnbTextHost;
     let sourceFileCalls = 0;
     const originalGetSourceFile = host.getSourceFile;
     host.getSourceFile = (
@@ -32,9 +38,14 @@ test("native GTS text host avoids JS parsing and refreshes changed, deleted and 
       sourceFileCalls++;
       return Reflect.apply(originalGetSourceFile, host, args);
     };
-    const createProgram = proxyCreateProgram(ts, ts.createProgram, () => ({
-      languagePlugins: [createGtsLanguagePlugin(ts, { pathModule: path })],
-    }));
+    // The project descriptor `gtsc` itself passes to Volar, so the entry
+    // point's own wiring is what this test covers: the host keeps no text hook
+    // unless that descriptor installs one.
+    const createProgram = proxyCreateProgram(
+      ts,
+      ts.createProgram,
+      createGtscProject,
+    );
     const check = () => {
       const program = createProgram({ rootNames, options, host });
       const diagnostics = ts.getPreEmitDiagnostics(program).map((item) => ({
@@ -94,3 +105,48 @@ test("native GTS text host avoids JS parsing and refreshes changed, deleted and 
     fixture.dispose();
   }
 }, 60000);
+
+test("the text-only host hook serves GTS virtual text without a JavaScript parse", () => {
+  const fixture = createFixture();
+  try {
+    const sourceFile = path.join(fixture.directory, "current.gts");
+    const source = readFileSync(sourceFile, "utf8");
+    const language = createLanguage(
+      [createGtsLanguagePlugin(ts, { pathModule: path })],
+      new FileMap(ts.sys.useCaseSensitiveFileNames),
+      () => {},
+    );
+    language.scripts.set(sourceFile, {
+      getText: (start, end) => source.slice(start, end),
+      getLength: () => source.length,
+      getChangeRange: () => undefined,
+    });
+    const getSourceText = createTnbGetSourceText(
+      ts,
+      ts.createCompilerHost({}),
+      language,
+    );
+    const root = language.scripts.get(sourceFile)!.generated!.root;
+    const virtualText = root.snapshot.getText(0, root.snapshot.getLength());
+    expect(getSourceText(sourceFile)).toEqual({
+      // One blank line per source line: the layout Volar's own host maps from.
+      text:
+        source
+          .split("\n")
+          .map((line) => " ".repeat(line.length))
+          .join("\n") + virtualText,
+      scriptKind: ts.ScriptKind.TS,
+    });
+    expect(getSourceText(sourceFile)?.text).not.toContain("define character {");
+    const plainFile = path.join(fixture.directory, "consumer.ts");
+    expect(getSourceText(plainFile)).toEqual({
+      text: readFileSync(plainFile, "utf8"),
+      scriptKind: ts.ScriptKind.TS,
+    });
+    expect(
+      getSourceText(path.join(fixture.directory, "missing.ts")),
+    ).toBeUndefined();
+  } finally {
+    fixture.dispose();
+  }
+});

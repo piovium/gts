@@ -15,13 +15,27 @@ editor overlays, and preserves the relative declaration emit paths that
 declaration bundlers rely on. The platform addon still comes from the pinned
 optional platform package.
 
-The Volar patch keeps GTS's existing removal of the 4 MiB module-size guard and
-adds the `tnbGetSourceText` host hook. The hook supplies current virtual text and
-script kind without allocating a JavaScript AST, and preserves the disk update
-semantics of a plain compiler host. Stock TypeScript ignores the additional hook.
+The Volar patch keeps GTS's existing removal of the 4 MiB module-size guard.
+The `tnbGetSourceText` host hook is not a patch: it lives in this repository as
+`packages/language-plugin/src/tnb_text_host.ts`, and `@gi-tcg/gtsc` installs it on
+the compiler host while `runTsc` builds the project. The hook supplies current
+virtual text and script kind without allocating a JavaScript AST, rebuilds its
+snapshot only when the file text changes so a plain compiler host still observes
+external edits, and stays optional: stock TypeScript ignores it. It cannot be
+delivered by a dependency patch, because `patchedDependencies` applies only inside
+the install that declares it, and every consumer of the published `@gi-tcg/gtsc`
+would have to repeat the patch.
 `packages/tsc/__tests__/program.test.ts` exercises the real GTS provider,
 cross-file changes, and deletion and recreation, while asserting that native text
 collection never invokes `CompilerHost.getSourceFile`.
+
+The `rolldown-plugin-dts` patch passes the plugin's already-resolved `tsconfig`
+path to `ts.parseJsonConfigFileContent` as `configFileName`. Without that
+argument the parsed options carry no `configFilePath`, so a declaration program
+is built as a plain non-project program: stock TypeScript emits declarations from
+it, but a compiler that routes project programs (the tsgo-backed `typescript`)
+silently falls back to its JavaScript path, and the `emitDtsOnly` declarations the
+GTS build ships would never be produced by the native emitter.
 
 The Nitro patch preserves an explicitly requested preview port of zero, which lets
 the documentation build choose an available ephemeral port. On Windows, preview

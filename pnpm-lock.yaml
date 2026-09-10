@@ -8,8 +8,9 @@ overrides:
   typescript: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
 
 patchedDependencies:
-  '@volar/typescript': 7a8cbe8be8d7d051499dab1dc35c3e317883d65daa563143692932b6a22371ce
+  '@volar/typescript': ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6
   nitro@3.0.260429-beta: d54a43f6c647c6cec0d4d4e312cc9aba5c50a2be1d6742186e4206fd1aa7679a
+  rolldown-plugin-dts@0.25.0: 47863c87747ce2a3e2a5730b0dc737dfa3c60bcd721b6c03804ca30e396ef81d
   typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2: 08d31035fad2c2bd7fda5a59cb925a9f5269d51d410c96e435a9c08fbbd97629
 
 importers:
@@ -204,7 +205,7 @@ importers:
         version: 2.4.27
       '@volar/typescript':
         specifier: ~2.4.0
-        version: 2.4.27(patch_hash=7a8cbe8be8d7d051499dab1dc35c3e317883d65daa563143692932b6a22371ce)
+        version: 2.4.27(patch_hash=ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6)
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
         version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=08d31035fad2c2bd7fda5a59cb925a9f5269d51d410c96e435a9c08fbbd97629)
@@ -310,7 +311,7 @@ importers:
         version: link:../language-plugin
       '@volar/typescript':
         specifier: ~2.4.0
-        version: 2.4.27(patch_hash=7a8cbe8be8d7d051499dab1dc35c3e317883d65daa563143692932b6a22371ce)
+        version: 2.4.27(patch_hash=ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6)
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
         version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=08d31035fad2c2bd7fda5a59cb925a9f5269d51d410c96e435a9c08fbbd97629)
@@ -326,7 +327,7 @@ importers:
         version: link:../language-plugin
       '@volar/typescript':
         specifier: ~2.4.0
-        version: 2.4.27(patch_hash=7a8cbe8be8d7d051499dab1dc35c3e317883d65daa563143692932b6a22371ce)
+        version: 2.4.27(patch_hash=ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6)
 
   packages/unplugin:
     dependencies:
@@ -6445,7 +6446,7 @@ snapshots:
     dependencies:
       '@volar/language-core': 2.4.27
       '@volar/language-service': 2.4.27
-      '@volar/typescript': 2.4.27(patch_hash=7a8cbe8be8d7d051499dab1dc35c3e317883d65daa563143692932b6a22371ce)
+      '@volar/typescript': 2.4.27(patch_hash=ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6)
       path-browserify: 1.0.1
       request-light: 0.7.0
       vscode-languageserver: 9.0.1
@@ -6462,7 +6463,7 @@ snapshots:
 
   '@volar/source-map@2.4.27': {}
 
-  '@volar/typescript@2.4.27(patch_hash=7a8cbe8be8d7d051499dab1dc35c3e317883d65daa563143692932b6a22371ce)':
+  '@volar/typescript@2.4.27(patch_hash=ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6)':
     dependencies:
       '@volar/language-core': 2.4.27
       path-browserify: 1.0.1
@@ -8435,7 +8436,7 @@ snapshots:
     transitivePeerDependencies:
       - oxc-resolver
 
-  rolldown-plugin-dts@0.25.0(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=08d31035fad2c2bd7fda5a59cb925a9f5269d51d410c96e435a9c08fbbd97629)):
+  rolldown-plugin-dts@0.25.0(patch_hash=47863c87747ce2a3e2a5730b0dc737dfa3c60bcd721b6c03804ca30e396ef81d)(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=08d31035fad2c2bd7fda5a59cb925a9f5269d51d410c96e435a9c08fbbd97629)):
     dependencies:
       '@babel/generator': 8.0.0-rc.4
       '@babel/helper-validator-identifier': 8.0.0-rc.4
@@ -8704,7 +8705,7 @@ snapshots:
       obug: 2.1.1
       picomatch: 4.0.4
       rolldown: 1.0.1
-      rolldown-plugin-dts: 0.25.0(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=08d31035fad2c2bd7fda5a59cb925a9f5269d51d410c96e435a9c08fbbd97629))
+      rolldown-plugin-dts: 0.25.0(patch_hash=47863c87747ce2a3e2a5730b0dc737dfa3c60bcd721b6c03804ca30e396ef81d)(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=08d31035fad2c2bd7fda5a59cb925a9f5269d51d410c96e435a9c08fbbd97629))
       semver: 7.8.0
       tinyexec: 1.1.2
       tinyglobby: 0.2.16

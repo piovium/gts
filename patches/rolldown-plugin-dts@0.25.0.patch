@@ -1,0 +1,14 @@
+diff --git a/dist/tsc-8hYVvCE4.mjs b/dist/tsc-8hYVvCE4.mjs
+index e66aacf423d204be7085ec318e0b6645d4468e02..bbc7066ba28691dda39fe252db1a552cd8955ed0 100644
+--- a/dist/tsc-8hYVvCE4.mjs
++++ b/dist/tsc-8hYVvCE4.mjs
+@@ -336,7 +336,8 @@ function createOrGetTsModule(options) {
+ function createTsProgram({ entries, id, tsconfig, tsconfigRaw, vue, tsMacro, cwd, context = globalContext }) {
+ 	const fsSystem = createFsSystem(context.files);
+ 	const baseDir = tsconfig ? path.dirname(tsconfig) : cwd;
+-	const parsedConfig = ts.parseJsonConfigFileContent(tsconfigRaw, fsSystem, baseDir, void 0, void 0, void 0, vue ? [{
++	// Pass the tsconfig path as configFileName: without it options.configFilePath stays unset, and a compiler that routes project programs (e.g. the tsgo-backed typescript) silently falls back to the non-project path.
++	const parsedConfig = ts.parseJsonConfigFileContent(tsconfigRaw, fsSystem, baseDir, void 0, tsconfig ?? void 0, void 0, vue ? [{
+ 		extension: "vue",
+ 		isMixedContent: true,
+ 		scriptKind: ts.ScriptKind.Deferred
