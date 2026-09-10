@@ -9,6 +9,8 @@ export const tsdk = path.dirname(
   require.resolve("typescript/lib/typescript.js"),
 );
 export const typescriptPackageJson = require.resolve("typescript/package.json");
+// Every fixture source is CRLF, so the checker tests must still map positions
+// back to a line and column.
 export const character = [
   "// 芭芭拉：跨文件类型与位置映射",
   "define character {",
@@ -22,15 +24,21 @@ export const character = [
   "",
 ].join("\r\n");
 
+export const legacySource = (type: "string" | "number") =>
+  `import { Barbara } from "./current.gts";\r\nexport const legacy: ${type} = Barbara;\r\n`;
+export const brokenHealth = (source: string) =>
+  source.replace("health 10", 'health "bad"');
+export const unreferenced = (source: string) =>
+  source.replaceAll("Barbara", "Unreferenced");
+
 export const fixtureSources = {
   "current.gts": character,
-  "old_versions.gts":
-    'import { Barbara } from "./current.gts";\r\nexport const legacy: number = Barbara;\r\n',
+  "old_versions.gts": legacySource("number"),
   "consumer.ts":
     'import { Barbara, shared } from "./current.gts";\r\nimport { legacy } from "./old_versions.gts";\r\nexport const value: number = Barbara + legacy;\r\nexport const sharedValue: number = shared;\r\nMath.max(1, 2);\r\n',
   "component.tsx":
     'import { shared } from "./current.gts";\r\ndeclare global {\r\n  namespace JSX {\r\n    interface IntrinsicElements { character: { id: number }; }\r\n  }\r\n}\r\nexport const node = <character id={shared} />;\r\nMath.max(1, 2);\r\n',
-  "isolated.gts": character.replaceAll("Barbara", "Unreferenced"),
+  "isolated.gts": unreferenced(character),
 } as const;
 
 export function createFixture() {

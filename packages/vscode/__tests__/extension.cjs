@@ -109,6 +109,11 @@ exports.run = async function () {
       `${label} timed out; hovers=${JSON.stringify(lastHovers)}; diagnostics=${JSON.stringify(vscode.languages.getDiagnostics())}`,
     );
   };
+  const waitForTypedHover = (label, uri, position, type) =>
+    waitFor(label, async () => {
+      const value = await requestHover(uri, position);
+      return isTypedHover(value, type) && value;
+    });
   const errors = (uri) =>
     vscode.languages
       .getDiagnostics(uri)
@@ -172,17 +177,18 @@ exports.run = async function () {
       fileUri("current.gts"),
     );
     const source = current.getText();
+    // The hover anchor of the GTS fixture and the declaration the cross-file
+    // edits rewrite.
+    const barbaraAnchor = "as Barbara";
+    const sharedAnchor = "shared: number = 1201";
     assert.ok(source.includes(healthStatement));
-    assert.ok(source.includes("as Barbara"));
-    assert.ok(source.includes("shared: number = 1201"));
+    assert.ok(source.includes(barbaraAnchor));
+    assert.ok(source.includes(sharedAnchor));
     assert.ok(source.endsWith("\n"));
-    const hoverPosition = current.positionAt(source.indexOf("as Barbara") + 5);
-    const argumentPosition = current.positionAt(
-      source.indexOf(healthStatement) + "health ".length,
-    );
-    const completionPosition = current.positionAt(
-      source.indexOf(healthStatement) + 3,
-    );
+    const healthIndex = source.indexOf(healthStatement);
+    const hoverPosition = current.positionAt(source.indexOf(barbaraAnchor) + 5);
+    const argumentPosition = current.positionAt(healthIndex + "health ".length);
+    const completionPosition = current.positionAt(healthIndex + 3);
     const appendedLine = current.lineCount - 1;
     await vscode.window.showTextDocument(current, { preview: false });
     const extension = vscode.extensions.getExtension(
@@ -195,10 +201,12 @@ exports.run = async function () {
       gtsClient,
       "Use the language client of the real GamingTS extension",
     );
-    const hovers = await waitFor("native GTS hover", async () => {
-      const value = await requestHover(current.uri, hoverPosition);
-      return isTypedHover(value, "CharacterHandle") && value;
-    });
+    const hovers = await waitForTypedHover(
+      "native GTS hover",
+      current.uri,
+      hoverPosition,
+      "CharacterHandle",
+    );
     record({ operation: "GTS hover", value: hovers });
     let consumer = await vscode.workspace.openTextDocument(
       fileUri("consumer.ts"),
@@ -209,26 +217,28 @@ exports.run = async function () {
     const consumerHoverPosition = new vscode.Position(0, 12);
     const componentHoverPosition = new vscode.Position(0, 11);
     await vscode.window.showTextDocument(consumer, { preview: false });
-    const tsHovers = await waitFor("native TS consumer hover", async () => {
-      const value = await requestHover(consumer.uri, consumerHoverPosition);
-      return isTypedHover(value, "CharacterHandle") && value;
-    });
+    const tsHovers = await waitForTypedHover(
+      "native TS consumer hover",
+      consumer.uri,
+      consumerHoverPosition,
+      "CharacterHandle",
+    );
     record({ operation: "TS consumer hover", value: tsHovers });
     let component = await vscode.workspace.openTextDocument(
       fileUri("component.tsx"),
     );
     const componentSource = component.getText();
     await vscode.window.showTextDocument(component, { preview: false });
-    const tsxHovers = await waitFor("native TSX consumer hover", async () => {
-      const value = await requestHover(component.uri, componentHoverPosition);
-      return isTypedHover(value, "number") && value;
-    });
-    record({ operation: "TSX consumer hover", value: tsxHovers });
-    await waitFor(
-      "positive diagnostics",
-      () =>
-        isClean(current.uri) && isClean(consumer.uri) && isClean(component.uri),
+    const tsxHovers = await waitForTypedHover(
+      "native TSX consumer hover",
+      component.uri,
+      componentHoverPosition,
+      "number",
     );
+    record({ operation: "TSX consumer hover", value: tsxHovers });
+    const fixturesClean = () =>
+      isClean(current.uri) && isClean(consumer.uri) && isClean(component.uri);
+    await waitFor("positive diagnostics", fixturesClean);
     const signature = await vscode.commands.executeCommand(
       "vscode.executeSignatureHelpProvider",
       current.uri,
@@ -255,11 +265,7 @@ exports.run = async function () {
       diagnostic: serializeDiagnostic(syntaxError),
     });
     await replace(current, source);
-    await waitFor(
-      "syntax repair",
-      () =>
-        isClean(current.uri) && isClean(consumer.uri) && isClean(component.uri),
-    );
+    await waitFor("syntax repair", fixturesClean);
     await replace(
       current,
       source + 'import { missing } from "./missing-dependency.gts";\r\n',
@@ -305,6 +311,7 @@ exports.run = async function () {
     // fixture its own 2322, independent of the cross-file edits.
     const independentTypeError =
       "\r\nexport const independent: string = 1;\r\n";
+    const invalidHealth = source.replace(healthStatement, 'health "bad"');
     let requestId = 0;
     const descriptors = [
       {
@@ -312,7 +319,7 @@ exports.run = async function () {
         route: "gts-lsp",
         document: () => current,
         validText: source,
-        badText: source.replace(healthStatement, 'health "bad"'),
+        badText: invalidHealth,
         code: 2345,
         hoverType: "CharacterHandle",
       },
@@ -418,6 +425,12 @@ exports.run = async function () {
         position: positionJson(position),
         response,
       });
+    };
+    const featureCommands = {
+      hover: "vscode.executeHoverProvider",
+      definition: "vscode.executeDefinitionProvider",
+      completion: "vscode.executeCompletionItemProvider",
+      signature: "vscode.executeSignatureHelpProvider",
     };
     // GTS features are queried at the fixture anchors. Both consumer fixtures end
     // with a `Math.max` call, so their feature positions follow that same anchor.
@@ -541,12 +554,11 @@ exports.run = async function () {
             requestId: id,
             value: raw,
           });
-          if (
-            !(phase === "bad"
+          const satisfied =
+            phase === "bad"
               ? items.some((item) => Number(item.code) === descriptor.code)
-              : items.length === 0)
-          )
-            return false;
+              : items.length === 0;
+          if (!satisfied) return false;
           diagnosticRequestId = id;
           return items;
         },
@@ -573,30 +585,8 @@ exports.run = async function () {
       });
       if (phase === "bad") return;
       const positions = featurePositions(descriptor, document);
-      await feature(
-        descriptor,
-        "hover",
-        positions.hover,
-        "vscode.executeHoverProvider",
-      );
-      await feature(
-        descriptor,
-        "definition",
-        positions.definition,
-        "vscode.executeDefinitionProvider",
-      );
-      await feature(
-        descriptor,
-        "completion",
-        positions.completion,
-        "vscode.executeCompletionItemProvider",
-      );
-      await feature(
-        descriptor,
-        "signature",
-        positions.signature,
-        "vscode.executeSignatureHelpProvider",
-      );
+      for (const [name, command] of Object.entries(featureCommands))
+        await feature(descriptor, name, positions[name], command);
     };
     for (const descriptor of descriptors) {
       record({
@@ -655,23 +645,16 @@ exports.run = async function () {
       component = await vscode.workspace.openTextDocument(
         fileUri("component.tsx"),
       );
-      await replace(current, source.replace(healthStatement, 'health "bad"'));
+      await replace(current, invalidHealth);
       const invalid = await waitFor("GTS argument error", () =>
         errors(current.uri).find((item) => Number(item.code) === 2345),
       );
       assert.deepEqual(
-        [
-          invalid.range.start.line,
-          invalid.range.start.character,
-          invalid.range.end.line,
-          invalid.range.end.character,
-        ],
-        [
-          argumentPosition.line,
-          argumentPosition.character,
-          argumentPosition.line,
-          argumentPosition.character + 5,
-        ],
+        rangeJson(invalid.range),
+        rangeJson({
+          start: argumentPosition,
+          end: argumentPosition.translate(0, 5),
+        }),
       );
       record({
         operation: "GTS invalid",
@@ -683,16 +666,12 @@ exports.run = async function () {
       await observePhase(descriptors[0], cycle + 1, "bad", "editor");
       await replace(current, source);
       await waitFor("GTS repair", () => isClean(current.uri));
-      const query = await waitFor("GTS repaired typed hover", async () => {
-        const value = serializeHovers(
-          await vscode.commands.executeCommand(
-            "vscode.executeHoverProvider",
-            current.uri,
-            hoverPosition,
-          ),
-        );
-        return isTypedHover(value, "CharacterHandle") && value;
-      });
+      const query = await waitForTypedHover(
+        "GTS repaired typed hover",
+        current.uri,
+        hoverPosition,
+        "CharacterHandle",
+      );
       record({
         operation: "GTS repair/query",
         cycle,
@@ -705,7 +684,7 @@ exports.run = async function () {
       {
         await replace(
           current,
-          source.replace("shared: number = 1201", 'shared: string = "changed"'),
+          source.replace(sharedAnchor, 'shared: string = "changed"'),
         );
         const crossTs = await waitFor("unsaved GTS change reaches TS", () =>
           errors(consumer.uri).find((item) => Number(item.code) === 2322),
@@ -724,13 +703,7 @@ exports.run = async function () {
           tsx: serializeDiagnostic(crossTsx),
         });
         await replace(current, source);
-        await waitFor(
-          "unsaved cross-file repair",
-          () =>
-            isClean(consumer.uri) &&
-            isClean(component.uri) &&
-            isClean(current.uri),
-        );
+        await waitFor("unsaved cross-file repair", fixturesClean);
         record({
           operation: "unsaved cross-file repair",
           cycle,
@@ -745,15 +718,11 @@ exports.run = async function () {
         const invalid = await waitFor(`${descriptor.name} own edit error`, () =>
           errors(document.uri).find((item) => Number(item.code) === 2322),
         );
-        const query = await waitFor(
+        const query = await waitForTypedHover(
           `${descriptor.name} own edit typed hover`,
-          async () => {
-            const value = await requestHover(
-              document.uri,
-              consumerHoverPosition,
-            );
-            return isTypedHover(value, descriptor.hoverType) && value;
-          },
+          document.uri,
+          consumerHoverPosition,
+          descriptor.hoverType,
         );
         record({
           operation: `${descriptor.name} invalid/query`,
@@ -924,11 +893,7 @@ exports.run = async function () {
       })),
     });
     await replace(current, source);
-    await waitFor(
-      "final positive diagnostics",
-      () =>
-        isClean(current.uri) && isClean(consumer.uri) && isClean(component.uri),
-    );
+    await waitFor("final positive diagnostics", fixturesClean);
     writeReport("PASS");
   } catch (error) {
     writeReport("FAIL", { error: String(error.stack) });

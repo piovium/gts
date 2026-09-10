@@ -10,9 +10,11 @@ import {
 import ts from "typescript";
 import { expect, test } from "vitest";
 import {
+  brokenHealth,
   character,
   createFixture,
   fixtureSources,
+  unreferenced,
 } from "../../language-server/__tests__/fixture.ts";
 import { createGtscProject } from "../src/project.ts";
 
@@ -69,10 +71,7 @@ test("native GTS text host avoids a JavaScript parse and refreshes changed, dele
         .map((item) => `${item.code} ${item.file ?? "<program>"}`)
         .sort();
     expect(check()).toEqual([]);
-    fixture.write(
-      "current.gts",
-      character.replace("health 10", 'health "bad"'),
-    );
+    fixture.write("current.gts", brokenHealth(character));
     expect(check()).toEqual([
       { code: 2345, file: "current.gts", position: { line: 5, character: 9 } },
     ]);
@@ -87,19 +86,12 @@ test("native GTS text host avoids a JavaScript parse and refreshes changed, dele
     expect(check()).toEqual([]);
     unlinkSync(path.join(fixture.directory, "isolated.gts"));
     expect(identity()).toEqual(["6053 <program>"]);
-    fixture.write(
-      "isolated.gts",
-      character
-        .replaceAll("Barbara", "Unreferenced")
-        .replace("health 10", 'health "bad"'),
-    );
+    const isolatedSource = unreferenced(character);
+    fixture.write("isolated.gts", brokenHealth(isolatedSource));
     expect(check()).toEqual([
       { code: 2345, file: "isolated.gts", position: { line: 5, character: 9 } },
     ]);
-    fixture.write(
-      "isolated.gts",
-      character.replaceAll("Barbara", "Unreferenced"),
-    );
+    fixture.write("isolated.gts", isolatedSource);
     expect(check()).toEqual([]);
   } finally {
     fixture.dispose();

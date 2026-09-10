@@ -12,7 +12,7 @@ test("browser libraries include the active SDK's complete declaration graph", as
     .mockImplementation(async (url) => {
       const file = path.join(
         tsdk,
-        new URL(String(url)).pathname.split("/").at(-1)!,
+        path.basename(new URL(String(url)).pathname),
       );
       return existsSync(file)
         ? new Response(readFileSync(file, "utf8"))

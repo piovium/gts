@@ -19,6 +19,7 @@ import {
 import { expect, test } from "vitest";
 import { URI } from "vscode-uri";
 import {
+  brokenHealth,
   character,
   createFixture,
   fixtureSources,
@@ -181,7 +182,7 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
       },
     });
     for (let cycle = 0; cycle < 3; cycle++) {
-      await change(character.replace("health 10", 'health "bad"'));
+      await change(brokenHealth(character));
       expect(await diagnostic()).toEqual([
         expect.objectContaining({
           code: 2345,

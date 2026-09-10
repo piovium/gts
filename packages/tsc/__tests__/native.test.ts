@@ -2,20 +2,16 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { expect, test } from "vitest";
 import {
+  brokenHealth,
   character,
   createFixture,
+  legacySource,
   repository,
+  unreferenced,
 } from "../../language-server/__tests__/fixture.ts";
 
 test("native gtsc checks included and imported GTS files and maps errors to source", () => {
   const fixture = createFixture();
-  // Positions in a CRLF file must still map back to their line and column.
-  const legacySource = (type: "string" | "number") =>
-    `import { Barbara } from "./current.gts";\r\nexport const legacy: ${type} = Barbara;\r\n`;
-  const brokenHealth = (source: string) =>
-    source.replace("health 10", 'health "bad"');
-  const unreferenced = (source: string) =>
-    source.replaceAll("Barbara", "Unreferenced");
   const runGtsc = (...args: string[]) => {
     const result = spawnSync(
       process.execPath,
