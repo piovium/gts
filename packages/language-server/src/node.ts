@@ -2,6 +2,7 @@ import {
   createConnection,
   createServer,
   createTypeScriptProject,
+  Diagnostic,
   Disposable,
   loadTsdkByPath,
 } from "@volar/language-server/node.js";
@@ -16,7 +17,7 @@ let projectFileWatcher: Disposable | undefined;
 
 connection.listen();
 
-connection.onInitialize((params) => {
+connection.onInitialize(async (params) => {
   const tsdk = loadTsdkByPath(
     params.initializationOptions.typescript.tsdk,
     params.locale,

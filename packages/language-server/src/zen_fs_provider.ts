@@ -1,25 +1,5 @@
-import { FileType, type FileSystem } from "@volar/language-service";
+import type { FileSystem, FileType } from "@volar/language-service";
 
-type FileSystemEntry = {
-  isFile(): boolean;
-  isDirectory(): boolean;
-  isSymbolicLink(): boolean;
-};
-
-const toFileType = (entry: FileSystemEntry): FileType =>
-  entry.isFile()
-    ? FileType.File
-    : entry.isDirectory()
-      ? FileType.Directory
-      : entry.isSymbolicLink()
-        ? FileType.SymbolicLink
-        : FileType.Unknown;
-
-/**
- * Adapt ZenFS to Volar's file-system provider contract: a missing path must read
- * as absent, so each syscall reports `undefined` (or no entries) instead of
- * propagating the error.
- */
 export default function zenFsProvider(
   fs: typeof import("@zenfs/core").fs,
 ): FileSystem {
@@ -27,8 +7,15 @@ export default function zenFsProvider(
     stat(uri) {
       try {
         const stats = fs.statSync(uri.fsPath);
+        // console.log("stat", uri.fsPath, stats);
         return {
-          type: toFileType(stats),
+          type: stats.isFile()
+            ? (1 satisfies FileType.File)
+            : stats.isDirectory()
+              ? (2 satisfies FileType.Directory)
+              : stats.isSymbolicLink()
+                ? (64 satisfies FileType.SymbolicLink)
+                : (0 satisfies FileType.Unknown),
           ctime: stats.ctimeMs,
           mtime: stats.mtimeMs,
           size: stats.size,
@@ -39,6 +26,7 @@ export default function zenFsProvider(
     },
     readFile(uri, encoding) {
       try {
+        // console.log("readFile", uri.fsPath);
         return fs.readFileSync(uri.fsPath, {
           encoding: (encoding as "utf-8") ?? "utf-8",
         });
@@ -49,10 +37,19 @@ export default function zenFsProvider(
     readDirectory(uri) {
       try {
         const files = fs.readdirSync(uri.fsPath, { withFileTypes: true });
-        return files.map<[string, FileType]>((file) => [
-          file.name,
-          toFileType(file),
-        ]);
+        // console.log("readDirectory", uri.fsPath, files.map((f) => f.name));
+        return files.map<[string, FileType]>((file) => {
+          return [
+            file.name,
+            file.isFile()
+              ? (1 satisfies FileType.File)
+              : file.isDirectory()
+                ? (2 satisfies FileType.Directory)
+                : file.isSymbolicLink()
+                  ? (64 satisfies FileType.SymbolicLink)
+                  : (0 satisfies FileType.Unknown),
+          ];
+        });
       } catch {
         return [];
       }

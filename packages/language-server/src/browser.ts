@@ -11,6 +11,7 @@ import { createGtsLanguagePlugin } from "@gi-tcg/gts-language-plugin";
 import path from "path-browserify-esm";
 import { type GtsConfig } from "@gi-tcg/gts-transpiler";
 import { fs as memfs } from "@zenfs/core";
+import type ts from "typescript";
 import zenFsProvider from "./zen_fs_provider.ts";
 import { createLanguageServicePlugins } from "./services/index.ts";
 import { PROJECT_FILE_WATCH_PATTERNS } from "./file_watcher.ts";
@@ -22,6 +23,8 @@ export interface GtsLanguageServerBrowserInitializationOptions {
   tsdkUrl?: string;
   /** Inline GTS config, merged over the defaults and any nearby `gamingTs` config. */
   inlineGtsConfig?: GtsConfig;
+  /** Compiler options merged into the in-memory project. */
+  inlineCompilerOptions?: ts.CompilerOptions;
   /** Files seeded into the in-memory file system, keyed by absolute path. */
   fs?: Record<string, string>;
 }
@@ -45,6 +48,7 @@ connection.onInitialize(
       tsdkUrl = "https://cdn.jsdelivr.net/npm/typescript@6.0.3/lib",
       fs = {},
       inlineGtsConfig = {},
+      inlineCompilerOptions = {},
     } = params.initializationOptions ?? {};
     const tsdk = await loadTsdkByUrl(tsdkUrl, params.locale);
     memfs.mkdirSync(TS_LIB_DIR, { recursive: true });
