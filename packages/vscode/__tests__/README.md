@@ -40,11 +40,14 @@ diagnostics must independently reach the expected state.
 
 ## Target workspace
 
-Without `GTS_VSCODE_TARGET` the test expects the window's workspace folder to
-contain the four fixture documents exactly as written by
+Without `GTS_VSCODE_TARGET`, the four documents are resolved next to the
+workspace folder root and the workspace is expected to hold the fixture texts of
 `packages/language-server/__tests__/fixture.ts` (`current.gts`,
-`old_versions.gts`, `consumer.ts`, `component.tsx`), and looks for
-`health 10` in `current.gts`.
+`old_versions.gts`, `consumer.ts`, `component.tsx`), with `healthStatement`
+defaulting to `health 10`. On `current.gts` the test verifies that the text ends
+with a newline and contains `as Barbara` and `shared: number = 1201`; the other
+three documents have to be valid GTS, TS and TSX consumers for the cross-file
+assertions to hold.
 
 A collector that needs different anchors sets `GTS_VSCODE_TARGET` to a JSON file:
 
@@ -63,8 +66,8 @@ A collector that needs different anchors sets `GTS_VSCODE_TARGET` to a JSON file
 
 `workspacePath` is asserted against the folder VS Code actually opened, so a
 mismatch fails instead of silently testing another checkout. The `files` entries
-may live outside the workspace folder; file contents are never assumed, only
-asserted where noted below.
+may live outside the workspace folder; their contents have to satisfy the
+assertions below.
 
 The collector owns both the probes and their restoration. The card must end with
 a newline and temporarily include `export const shared: number = 1201;`, and the
