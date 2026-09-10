@@ -28,4 +28,4 @@ npx gtsc --noEmit
 
 ## Build Plugin Configuration
 
-See [Configuration](/docs/configuration).
+See [Configuration](/docs/internal/configuration).

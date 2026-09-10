@@ -224,4 +224,4 @@ The Volar pipeline uses **`espolar`** (instead of `esrap`) for printing. `espola
 
 ## Configuration for Language Tooling
 
-Language tooling reads GTS configuration from the nearest `package.json` using `resolveGtsConfigSync()`. This determines which provider to use, which affects the ViewModel types available in completions. See [Configuration](/docs/configuration) for details.
+Language tooling reads GTS configuration from the nearest `package.json` using `resolveGtsConfigSync()`. This determines which provider to use, which affects the ViewModel types available in completions. See [Configuration](/docs/internal/configuration) for details.
