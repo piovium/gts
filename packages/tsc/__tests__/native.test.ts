@@ -20,7 +20,7 @@ test("native gtsc checks included and imported GTS files and maps errors to sour
     const valid = check("--listFiles");
     expect(valid.stdout).not.toContain("error TS");
     expect(valid.status).toBe(0);
-    for (const file of ["current.gts", "old_versions.gts", "consumer.ts", "isolated.gts"]) {
+    for (const file of ["current.gts", "old_versions.gts", "consumer.ts", "component.tsx", "isolated.gts"]) {
       expect(valid.stdout.replaceAll("\\", "/")).toContain(`/${file}`);
     }
     fixture.write("current.gts", character.replace("health 10", 'health "bad"'));
