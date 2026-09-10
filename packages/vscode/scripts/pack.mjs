@@ -153,8 +153,17 @@ function resolveDeployedSpecifiers() {
         rewritten = true;
       }
     }
-    if (rewritten)
-      fs.writeFileSync(file, JSON.stringify(deployedManifest, null, 2) + "\n");
+    if (!rewritten) continue;
+    // Write through a rename: `inject-workspace-packages` hard-links the
+    // deployed packages, and for a workspace package those links reach the
+    // workspace's own files, so rewriting in place would edit the repository
+    // instead of the deployment.
+    const resolved = `${file}.resolved`;
+    fs.writeFileSync(
+      resolved,
+      JSON.stringify(deployedManifest, null, 2) + "\n",
+    );
+    fs.renameSync(resolved, file);
   }
   assert.ok(
     unresolved.length === 0,
