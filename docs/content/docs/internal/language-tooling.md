@@ -8,14 +8,14 @@ GTS provides full IDE support through a Volar-based language server, a TypeScrip
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                      VS Code Extension                       │
-│  (gts-vscode)                                                │
-│  ┌───────────────────┐  ┌──────────────────────────────────┐ │
-│  │  Extension Client │  │  TS Extension Patch (patch.ts)   │ │
-│  │  (extension.ts)   │  │  Adds "gaming-ts" to TS modes    │ │
-│  └────────┬──────────┘  └──────────────┬───────────────────┘ │
-│           │                            │                     │
-│  ┌────────┴────────────────────────────┴──────────────────┐  │
+│                   VS Code Extension                          │
+│  (gamingts-vscode)                                           │
+│  ┌───────────────────┐                                       │
+│  │  Extension Client │  selects a native-SDK tsdk            │
+│  │  (extension.ts)   │  and starts the language client       │
+│  └────────┬──────────┘                                       │
+│           │                                                  │
+│  ┌────────┴───────────────────────────────────────────────┐  │
 │  │              Language Server (node.ts)                 │  │
 │  │  ┌────────────────────┐  ┌──────────────────────────┐  │  │
 │  │  │ TypeScript Service │  │  Diagnostics Plugin      │  │  │
@@ -51,8 +51,9 @@ class GtsVirtualCode implements VirtualCode {
 ```
 
 **Constructor:**
+
 1. Gets the source text from the snapshot
-2. Calls `transpileForVolar(source, filename, config)` 
+2. Calls `transpileForVolar(source, filename, config)`
 3. On success: stores the generated code and Volar mappings
 4. On error: stores the error, generates an empty (whitespace-only) snapshot with a single verification mapping so that the error can be reported as a diagnostic
 
@@ -60,22 +61,22 @@ class GtsVirtualCode implements VirtualCode {
 
 ## Language Server (`@gi-tcg/gts-language-server`)
 
-The language server implements the Language Server Protocol (LSP). It has two entry points **Node.js Server** (`node.ts`) and ****Browser Server** (`browser.ts`).
+The language server implements the Language Server Protocol (LSP). It has two entry points: the **Node.js server** (`node.ts`) and the **browser server** (`browser.ts`).
 
 ### Custom Services
 
-- **TypeScript Services** — wraps `volar-service-typescript` to:
-  - adds **space** as a signature help trigger character. This is because GTS syntax uses `name arg1, arg2` which transpiles to `name(arg1, arg2)`, so pressing space after an attribute name should trigger signature help.
-  - adds `gtsAttribute` as a supported semantic token modifier (used for *Semantic Token Service*).
+- **TypeScript Services** — wraps `volar-service-typescript`:
+  - Adds **space** as a signature help trigger character. GTS syntax uses `name arg1, arg2`, which transpiles to `name(arg1, arg2)`, so a space after an attribute name should trigger signature help.
+  - Adds `gtsAttribute` as a semantic token modifier (used by the _Semantic Token Service_).
+  - Drops the syntactic service's document formatting, which the extension leaves to Prettier.
 - **Diagnostics Service** — surfaces `GtsTranspilerError` instances from the virtual code as LSP diagnostics. Converts the transpiler's 1-based line/column positions to 0-based LSP positions.
-- **Completion Service** — triggered when user press `:`, and return result from TS semantic service by replacing trigger character from `:` to `.`. Hide suggestion result that starts with `__gts_`.
-- **Semantic Token Service** — override existing TS semantic service by add italic markup for mappings that are recognized as GTS attribute name.
-- **Code Lens Service** — add a Code Lens line above each direct function to split itself from previous attribute definitions clearer.
-
+- **Completion Service** — triggered by `:`. Returns the TS semantic service's results with the trigger character changed from `:` to `.`, and hides suggestions starting with `__gts_`.
+- **Semantic Token Service** — overrides the TS semantic service to add italic markup for mappings recognized as a GTS attribute name.
+- **Code Lens Service** — adds a Code Lens line above each direct function so its definition is visually separated from the preceding attributes.
 
 ## TypeScript Language Service Plugin (`@gi-tcg/gts-typescript-language-service-plugin`)
 
-A CJS module that integrates GTS into TypeScript's built-in language service, which enables GTS features into TSServer so that `import foo from "./foo.gts"` can works in TS as well. It's loaded as a TypeScript plugin through `tsconfig.json`:
+A CJS module that integrates GTS into TypeScript's built-in language service, so `tsserver` resolves `import foo from "./foo.gts"` from a `.ts` file. TypeScript loads it as a plugin through `tsconfig.json`:
 
 ```json
 {
@@ -85,15 +86,11 @@ A CJS module that integrates GTS into TypeScript's built-in language service, wh
 }
 ```
 
-**NOTE: it WONT support TS7 (Tsgo) for now.**
+## VS Code Extension (`gamingts-vscode`)
 
-## VS Code Extension (`gts-vscode`)
+### TypeScript Language Service Plugin Declaration
 
-### TypeScript Extension Patch (`patch.ts`)
-
-The VS Code extension patches the built-in TypeScript extension to recognize `.gts` files by intercepts `require("fs").readFileSync` for the TypeScript extension's main JS file.
-
-**NOTE: it WONT support TS7 (Tsgo) for now.**
+The extension declares the plugin (`@gi-tcg/gts-typescript-language-service-plugin`) under `typescriptServerPlugins`, so the `tsserver` it runs loads it and resolves `.gts` imports. The extension redirects that `tsserver` to the same native SDK its own language server uses, so the two keep the same program semantics.
 
 ### Regex-based Syntax Highlighting (`syntaxes/GamingTS.tmLanguage.json`)
 
@@ -121,19 +118,19 @@ Two sources of diagnostics:
 
 ### Signature Help
 
-When the user types a space after an attribute name (e.g., `id `), the language server triggers signature help because space is registered as a trigger character. The generated code contains a function call (`__gts_attr_obj_0.id(...)`), so TypeScript provides parameter information. The `lParenLoc` recording in the parser ensures correct mapping for function calls.
+When the user types a space after an attribute name (e.g., `id `), the language server triggers signature help because space is registered as a trigger character. The generated code contains a function call (`__gts_attr_obj_0.id(...)`), so TypeScript provides parameter information. The generated left parenthesis is mapped back to its source position so the request lands on the call.
 
 ### Go-to-Definition / Hover
 
-These work through the Volar mappings — source positions map to generated positions, and TypeScript resolves definitions/types in the generated code. The preservation of leading comments during transpilation keeps documentation of definition when Hover.
+These work through the Volar mappings — source positions map to generated positions, and TypeScript resolves definitions and types in the generated code.
 
-###  Auto-Import Insertion
+### Auto-Import Insertion
 
 This is done by resolving the location where TSServer inserts new imports. When auto-importing (code action or completion), TSServer determines the insertion point by looking at existing import declarations. The language server intercepts this through the Volar transform by:
 
 1. **Making generated imports unsorted** — an unrelated `ExpressionStatement` (`0;`) is inserted between system-generated import declarations and the last import group. This makes the generated imports appear "unsorted" to TSServer, so it always chooses the position after the final generated import as the insertion point.
 
-2. **Mapping to content start** — if the last import is a generated one, it will gets an extra range mapping that maps a newline after it to the content start offset in the source file. The "content start" is calculated by `getContentStartOffset()` (`volar/content_start.ts`), that skips hashbang lines (`#!/usr/bin/env node`) and leading block-level comments (until two consecutive blank lines or non-comment content is encountered), yielding the character offset where meaningful content begins. This is used as the source mapping target so auto-imports are placed after file headers but before the main code.
+2. **Mapping to content start** — if the last import is a generated one, it gets an extra range mapping from the newline after it to the content start offset in the source file. The "content start" is calculated by `getContentStartOffset()` (`volar/content_start.ts`), that skips hashbang lines (`#!/usr/bin/env node`) and leading block-level comments (until two consecutive blank lines or non-comment content is encountered), yielding the character offset where meaningful content begins. This is used as the source mapping target so auto-imports are placed after file headers but before the main code.
 
 ## Volar Transform (`src/transform/volar/`)
 
@@ -164,7 +161,7 @@ The `gtsToTypingsWalker` visitor generates type information by maintaining stack
 - `exitVM(state)` — validates that all required attributes have been provided. Emits a type check that produces an error if required attributes are missing.
 - `enterAttr(state, attrName)` — prepares to call an attribute. Creates a typed variable that combines the current meta with the VM definition.
 - `exitAttr(state, returningId)` — updates the meta type based on the attribute's return type (some attributes can rewrite the meta, e.g., adding variable names).
-- `insertHintStatement(state, whiteSpaceStart, whiteSpaceEnd)` — inserts a synthetic `GTSAttributeNameHintStatement` node that maps whitespace regions inside `define` blocks to virtual code. When printed, this becomes `__gts_attr_obj.  ;` where the whitespace is source-mapped. This enables Volar to provide attribute name completions when the user's cursor is in whitespace areas between attributes in a `define` block.
+- `insertHintStatement(state, whiteSpaceStart, whiteSpaceEnd)` — inserts a synthetic `GTSAttributeNameHintStatement` node that maps whitespace regions inside `define` blocks to virtual code. When printed, this becomes `__gts_attr_obj.<whitespace>// @ts-ignore` + `ωAttrNameHint;`, with the whitespace source-mapped. This enables Volar to provide attribute name completions when the user's cursor is in whitespace areas between attributes in a `define` block.
 - `genBindingTyping(state, info)` — generates a type for a binding export (the `as` clause).
 
 ### Replacement System (`volar/replacements.ts`)
@@ -206,10 +203,10 @@ define Foo {      // cursor here -> need attr name completions
 
 The typing walker inserts synthetic `GTSAttributeNameHintStatement` nodes in `GTSNamedAttributeBlock` at two positions:
 
-1. **After the block opening `{`:** Maps whitespace between `{` and the first attribute to `__gts_attr_obj.  ;`.
-2. **After each attribute's semicolon:** Maps whitespace between an attribute's end and the next token to `__gts_attr_obj.  ;`.
+1. **After the block opening `{`:** Maps whitespace between `{` and the first attribute to `__gts_attr_obj.<whitespace>// @ts-ignore` + `ωAttrNameHint;`.
+2. **After each attribute's semicolon:** Maps whitespace between an attribute's end and the next token to the same output.
 
-These hint statements reuse the `enterAttr`/`exitAttr` mechanism with a special attribute name `"~attrNameHint"`, but generate `hintOnly: true` replacements (producing `{}` instead of `{ Meta: ... }` in the type variable), avoiding unnecessary meta-type accumulation. The dedicated printer outputs `object.` followed by `context.writeSource()` for the whitespace range and a trailing `";"`, creating a source-to-generated mapping so Volar can trigger completions at those positions.
+These hint statements reuse the `enterAttr`/`exitAttr` mechanism with a special attribute name `"~attrNameHint"`, but generate `hintOnly: true` replacements (producing `{}` instead of `{ Meta: ... }` in the type variable) to avoid unnecessary meta-type accumulation. The dedicated printer writes the object, a `.`, the source-mapped whitespace range, and a trailing `// @ts-ignore` `ωAttrNameHint;`, so Volar can trigger completions at those positions.
 
 ### Printing & Mappings (`volar/printer.ts`, `volar/mappings.ts`)
 
