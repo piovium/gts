@@ -76,7 +76,8 @@
     "typescriptServerPlugins": [
       {
         "name": "@gi-tcg/gts-typescript-language-service-plugin",
-        "enableForWorkspaceTypeScriptVersions": true
+        "enableForWorkspaceTypeScriptVersions": true,
+        "languages": ["gaming-ts"]
       }
     ],
     "jsonValidation": [
