@@ -62,7 +62,7 @@ function sdkOf(context: ReturnType<typeof createRequire>): string {
 function isNativeSdk(directory: string): boolean {
   try {
     const manifest = JSON.parse(
-      readFileSync(path.join(directory, "..", "package.json"), "utf8"),
+      readFileSync(path.join(path.dirname(directory), "package.json"), "utf8"),
     ) as { name?: string };
     return manifest.name === "typescript-native-bridge";
   } catch {
