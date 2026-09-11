@@ -14,8 +14,8 @@ type Ts = typeof ts;
  *
  * `gtsc` compiles on a plain compiler host, which exposes neither Volar
  * snapshots nor editor overlays, so this descriptor installs the
- * `tnbGetSourceText` hook that the native bridge reads text and script kind
- * through instead of parsing a JavaScript `SourceFile` per file.
+ * `tnbGetSourceText` hook, through which the native bridge reads text and
+ * script kind instead of parsing a JavaScript `SourceFile` per file.
  */
 export function createGtscProject(
   typescript: Ts,

@@ -6,8 +6,8 @@ the committed pnpm patch. Installation therefore needs neither a locally packed
 tarball nor a developer-specific path.
 
 The TNB patch is generated from the TNB checkout at commit
-`2890f547aa52777f372a3c91facac76b093784bd`, whose patched package repacks with
-`npm pack --ignore-scripts` to SHA-256
+`2890f547aa52777f372a3c91facac76b093784bd`, whose patched package, repacked with
+`npm pack --ignore-scripts`, has SHA-256
 `701b8ff31aa0cdcda35c557b8a31e836687b29e317284523a202457b05c2bc21`.
 It fixes file freshness for a plain compiler host, virtual-text collection, lazy
 source-file inspection, deleted-overlay removal, and declaration transform
@@ -22,9 +22,10 @@ The Volar patch keeps GTS's existing removal of the 4 MiB module-size guard.
 The `tnbGetSourceText` host hook is not a patch. It lives in this repository as
 `packages/language-plugin/src/tnb_text_host.ts` and is installed on the compiler
 host by `@gi-tcg/gtsc` when Volar creates the project. It answers with the GTS
-virtual code as transpiled text and script kind, so no JavaScript AST is built
-in between. It also reads through the host on every call, so external edits stay
-visible on a plain compiler host that watches no files. Stock TypeScript ignores
+virtual code as transpiled text and script kind, so the native bridge never
+parses the file into a JavaScript `SourceFile`. It also re-reads the file from
+the host on every call, so external edits stay visible on a plain compiler host
+that watches no files. Stock TypeScript ignores
 the hook.
 
 No dependency patch can deliver it: `patchedDependencies` applies only inside the
