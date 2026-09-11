@@ -23,7 +23,10 @@ export interface GtsLanguageServerBrowserInitializationOptions {
   tsdkUrl?: string;
   /** Inline GTS config, merged over the defaults and any nearby `gamingTs` config. */
   inlineGtsConfig?: GtsConfig;
-  /** Compiler options merged into the in-memory project. */
+  /**
+   * Compiler options for the in-memory project. Part of the published
+   * `initializationOptions`; the browser worker does not apply them.
+   */
   inlineCompilerOptions?: ts.CompilerOptions;
   /** Files seeded into the in-memory file system, keyed by absolute path. */
   fs?: Record<string, string>;
