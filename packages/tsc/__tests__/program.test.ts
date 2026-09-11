@@ -120,7 +120,11 @@ test("the text-only host hook serves GTS virtual text without a JavaScript parse
     );
     const root = language.scripts.get(sourceFile)!.generated!.root;
     const virtualText = root.snapshot.getText(0, root.snapshot.getLength());
-    expect(getSourceText(sourceFile)).toEqual({
+    // The expected text is spelled out instead of reusing the blanking the
+    // plugin performs: an oracle that shares the implementation cannot catch a
+    // regression in it.
+    const served = getSourceText(sourceFile)!;
+    expect(served).toEqual({
       // The hook prepends the source blanked to the same length, so the virtual
       // text after it keeps the offsets Volar maps from.
       text:
@@ -131,7 +135,7 @@ test("the text-only host hook serves GTS virtual text without a JavaScript parse
       scriptKind: ts.ScriptKind.TS,
     });
     // The served text is transpiled: no GTS syntax survives.
-    expect(getSourceText(sourceFile)?.text).not.toContain("define character {");
+    expect(served.text).not.toContain("define character {");
     const plainFile = path.join(fixture.directory, "consumer.ts");
     expect(getSourceText(plainFile)).toEqual({
       text: readFileSync(plainFile, "utf8"),
