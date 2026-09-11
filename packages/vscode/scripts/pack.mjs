@@ -115,11 +115,11 @@ function installedManifest(manifestFile, name) {
   return null;
 }
 
-function deployedManifests(directory) {
+function deployedManifestFiles(directory) {
   const files = [];
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     const file = path.join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...deployedManifests(file));
+    if (entry.isDirectory()) files.push(...deployedManifestFiles(file));
     else if (entry.name === "package.json") files.push(file);
   }
   return files;
@@ -135,7 +135,7 @@ function deployedManifests(directory) {
 // deployment deliberately does not carry them.
 function resolveDeployedSpecifiers() {
   const unresolved = [];
-  for (const file of deployedManifests(path.join(stage, "node_modules"))) {
+  for (const file of deployedManifestFiles(path.join(stage, "node_modules"))) {
     const deployedManifest = JSON.parse(fs.readFileSync(file, "utf8"));
     let rewritten = false;
     for (const field of [
