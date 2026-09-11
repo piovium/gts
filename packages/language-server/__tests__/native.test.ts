@@ -90,9 +90,15 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
     "workspace/configuration",
     (params: { items: unknown[] }) => params.items.map(() => null),
   );
-  connection.onRequest("client/registerCapability", () => null);
-  connection.onRequest("workspace/diagnostic/refresh", () => null);
-  connection.onRequest("workspace/semanticTokens/refresh", () => null);
+  // Stub handlers for the server-initiated requests: each needs an answer, but
+  // no answer is meaningful in this test.
+  for (const method of [
+    "client/registerCapability",
+    "workspace/diagnostic/refresh",
+    "workspace/semanticTokens/refresh",
+  ]) {
+    connection.onRequest(method, () => null);
+  }
   connection.listen();
   const uri = fixture.uri("current.gts");
   const diagnostic = async (target = uri) => {
@@ -309,16 +315,15 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
     expect(enteredIds.length, `ENTER count for ${serverPid}`).toBeGreaterThan(
       20,
     );
-    expect(new Set(enteredIds).size, "request ids must be unique").toBe(
-      enteredIds.length,
-    );
+    const entered = new Set(enteredIds);
+    expect(entered.size, "request ids must be unique").toBe(enteredIds.length);
     // EXIT lines carry no pid, so pair them with the ENTER of the same request
     // id and drop the requests another process owns.
     const exitedIds = trace
       .filter((line) => line.includes(" EXIT "))
       .map((line) => / EXIT (\d+) /.exec(line)?.[1] ?? "");
     expect(
-      exitedIds.filter((id) => enteredIds.includes(id)).length,
+      exitedIds.filter((id) => entered.has(id)).length,
       `EXIT count for ${serverPid}`,
     ).toBe(enteredIds.length);
     for (const method of [
