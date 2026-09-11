@@ -6,9 +6,9 @@ the committed pnpm patch. Installation therefore needs neither a locally packed
 tarball nor a developer-specific path.
 
 The TNB patch is generated from the TNB checkout at commit
-`cd339d9f8d01c87b8ee0d28c3525f19967d11765`, whose patched package repacks with
+`2890f547aa52777f372a3c91facac76b093784bd`, whose patched package repacks with
 `npm pack --ignore-scripts` to SHA-256
-`9b746524304d0d718f6475cfe46874174f62a65f6a540e3bbe60bc4706a6d677`.
+`701b8ff31aa0cdcda35c557b8a31e836687b29e317284523a202457b05c2bc21`.
 It fixes file freshness for a plain compiler host, virtual-text collection, lazy
 source-file inspection, deleted-overlay removal, and declaration transform
 behavior. It also refreshes diagnostics when external disk changes follow saved

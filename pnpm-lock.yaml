@@ -11,7 +11,7 @@ patchedDependencies:
   '@volar/typescript': ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6
   nitro@3.0.260429-beta: d54a43f6c647c6cec0d4d4e312cc9aba5c50a2be1d6742186e4206fd1aa7679a
   rolldown-plugin-dts@0.25.0: 47863c87747ce2a3e2a5730b0dc737dfa3c60bcd721b6c03804ca30e396ef81d
-  typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2: f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf
+  typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2: c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61
 
 importers:
 
@@ -32,13 +32,13 @@ importers:
         version: link:packages/unplugin
       bunup:
         specifier: ^0.16.26
-        version: 0.16.26(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))
+        version: 0.16.26(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))
       tsdown:
         specifier: ^0.22.0
-        version: 0.22.0(oxc-resolver@11.17.0)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))
+        version: 0.22.0(oxc-resolver@11.17.0)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
-        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
 
   docs:
     dependencies:
@@ -102,7 +102,7 @@ importers:
         version: 4.3.0
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
-        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
 
   examples/local:
     dependencies:
@@ -137,10 +137,10 @@ importers:
         version: 1.0.1
       rolldown-plugin-dts:
         specifier: ^0.22.1
-        version: 0.22.5(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))
+        version: 0.22.5(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
-        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
 
   examples/web:
     dependencies:
@@ -177,7 +177,7 @@ importers:
         version: link:../../packages/vscode
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
-        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
       vite:
         specifier: ^8.0.0
         version: 8.0.0(@types/node@24.10.4)(esbuild@0.28.0)(jiti@2.7.0)
@@ -208,7 +208,7 @@ importers:
         version: 2.4.27(patch_hash=ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6)
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
-        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
       vscode-uri:
         specifier: ^3.0.8
         version: 3.1.0
@@ -314,7 +314,7 @@ importers:
         version: 2.4.27(patch_hash=ebf6de620da017527b7b072a42efac812e2444b5b008ef1cfa4525af8ef87bf6)
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
-        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
     devDependencies:
       '@types/node':
         specifier: ^24.3.0
@@ -352,7 +352,7 @@ importers:
         version: link:../typescript-language-service-plugin
       typescript:
         specifier: npm:typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2
-        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+        version: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
     devDependencies:
       '@gi-tcg/gts-language-client-code':
         specifier: workspace:*
@@ -4830,7 +4830,7 @@ snapshots:
       '@babel/helper-string-parser': 8.0.0-rc.5
       '@babel/helper-validator-identifier': 8.0.0-rc.5
 
-  '@bunup/dts@0.14.52(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))':
+  '@bunup/dts@0.14.52(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))':
     dependencies:
       '@babel/parser': 7.29.0
       coffi: 0.1.37
@@ -4839,13 +4839,13 @@ snapshots:
       oxc-transform: 0.93.0
       picocolors: 1.1.1
       std-env: 3.10.0
-      ts-import-resolver: 0.1.23(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))
+      ts-import-resolver: 0.1.23(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))
     optionalDependencies:
-      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
 
-  '@bunup/shared@0.16.23(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))':
+  '@bunup/shared@0.16.23(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))':
     optionalDependencies:
-      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
 
   '@codingame/monaco-vscode-api@25.1.2':
     dependencies:
@@ -6629,19 +6629,19 @@ snapshots:
     dependencies:
       '@types/node': 24.10.4
 
-  bunup@0.16.26(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)):
+  bunup@0.16.26(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)):
     dependencies:
-      '@bunup/dts': 0.14.52(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))
-      '@bunup/shared': 0.16.23(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))
+      '@bunup/dts': 0.14.52(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))
+      '@bunup/shared': 0.16.23(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))
       chokidar: 5.0.0
       coffi: 0.1.37
       lightningcss: 1.32.0
       picocolors: 1.1.1
       tinyexec: 1.0.2
       tree-kill: 1.2.2
-      zlye: 0.4.4(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))
+      zlye: 0.4.4(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))
     optionalDependencies:
-      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
 
   cac@7.0.0: {}
 
@@ -8419,7 +8419,7 @@ snapshots:
 
   resolve-pkg-maps@1.0.0: {}
 
-  rolldown-plugin-dts@0.22.5(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)):
+  rolldown-plugin-dts@0.22.5(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)):
     dependencies:
       '@babel/generator': 8.0.0-rc.2
       '@babel/helper-validator-identifier': 8.0.0-rc.2
@@ -8432,11 +8432,11 @@ snapshots:
       obug: 2.1.1
       rolldown: 1.0.1
     optionalDependencies:
-      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
     transitivePeerDependencies:
       - oxc-resolver
 
-  rolldown-plugin-dts@0.25.0(patch_hash=47863c87747ce2a3e2a5730b0dc737dfa3c60bcd721b6c03804ca30e396ef81d)(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)):
+  rolldown-plugin-dts@0.25.0(patch_hash=47863c87747ce2a3e2a5730b0dc737dfa3c60bcd721b6c03804ca30e396ef81d)(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)):
     dependencies:
       '@babel/generator': 8.0.0-rc.4
       '@babel/helper-validator-identifier': 8.0.0-rc.4
@@ -8448,7 +8448,7 @@ snapshots:
       obug: 2.1.1
       rolldown: 1.0.1
     optionalDependencies:
-      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
     transitivePeerDependencies:
       - oxc-resolver
 
@@ -8690,11 +8690,11 @@ snapshots:
 
   trough@2.2.0: {}
 
-  ts-import-resolver@0.1.23(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)):
+  ts-import-resolver@0.1.23(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)):
     optionalDependencies:
-      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
 
-  tsdown@0.22.0(oxc-resolver@11.17.0)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)):
+  tsdown@0.22.0(oxc-resolver@11.17.0)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)):
     dependencies:
       ansis: 4.3.0
       cac: 7.0.0
@@ -8705,14 +8705,14 @@ snapshots:
       obug: 2.1.1
       picomatch: 4.0.4
       rolldown: 1.0.1
-      rolldown-plugin-dts: 0.25.0(patch_hash=47863c87747ce2a3e2a5730b0dc737dfa3c60bcd721b6c03804ca30e396ef81d)(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf))
+      rolldown-plugin-dts: 0.25.0(patch_hash=47863c87747ce2a3e2a5730b0dc737dfa3c60bcd721b6c03804ca30e396ef81d)(oxc-resolver@11.17.0)(rolldown@1.0.1)(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61))
       semver: 7.8.0
       tinyexec: 1.1.2
       tinyglobby: 0.2.16
       tree-kill: 1.2.2
       unconfig-core: 7.5.0
     optionalDependencies:
-      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
     transitivePeerDependencies:
       - '@ts-macro/tsc'
       - '@typescript/native-preview'
@@ -8737,7 +8737,7 @@ snapshots:
     dependencies:
       semver: 7.7.3
 
-  typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf):
+  typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61):
     optionalDependencies:
       '@typescript-native-bridge/darwin-arm64': 6.0.3-bridge.16.tsgo.7.0.2
       '@typescript-native-bridge/darwin-x64': 6.0.3-bridge.16.tsgo.7.0.2
@@ -9096,11 +9096,11 @@ snapshots:
 
   zimmerframe@1.1.4: {}
 
-  zlye@0.4.4(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)):
+  zlye@0.4.4(typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)):
     dependencies:
       picocolors: 1.1.1
     optionalDependencies:
-      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=f10ef4ff1a8eddcbf01bc1f4e1c9ce716ce39f3adea7d3c8c7250d07d4387cdf)
+      typescript: typescript-native-bridge@6.0.3-bridge.16.tsgo.7.0.2(patch_hash=c77de3f541d92fad813c2a0cb70cb91bd29c7bdaf298512aac4fcd7f9453ca61)
 
   zod@3.25.76: {}
 
