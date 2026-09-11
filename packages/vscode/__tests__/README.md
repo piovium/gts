@@ -22,7 +22,7 @@ code \
 Use a separate profile and extension directory per run, so that the window only
 contains the extension under test.
 
-Set `GTS_VSCODE_CYCLES=100` for acceptance. The default of three rounds is only
+Set `GTS_VSCODE_CYCLES=100` for acceptance. The three-round default is only
 for developing the test. `GTS_VSCODE_REPORT` names the JSON output file; each
 round records document versions, source URIs, timestamps and the diagnostics and
 language features VS Code actually returned. A failure throws and retains the
@@ -41,7 +41,7 @@ must independently reach the expected state.
 
 ## Target workspace
 
-Without `GTS_VSCODE_TARGET`, the four documents are resolved next to the
+Without `GTS_VSCODE_TARGET`, the four documents are resolved directly under the
 workspace folder root and the workspace is expected to hold the fixture texts of
 `packages/language-server/__tests__/fixture.ts` (`current.gts`,
 `old_versions.gts`, `consumer.ts`, `component.tsx`), with `healthStatement`
@@ -71,9 +71,9 @@ may live outside the workspace folder; their contents have to satisfy the
 assertions below.
 
 The collector owns both the probes and their restoration. The card must end with
-a newline and temporarily include `export const shared: number = 1201;`, and the
-project it belongs to must keep its complete corpus and compiler options. The
-test performs unsaved edits, external same-file and dependency edits that it
+a newline and contain `export const shared: number = 1201;`, and the project it
+belongs to must keep its complete corpus and compiler options. The test performs
+unsaved edits and external edits (to the same file and to a dependency) that it
 restores in `finally` blocks, and saves already repaired documents during the
 close/reopen scenario.
 
