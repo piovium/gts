@@ -23,6 +23,7 @@ import {
   character,
   createFixture,
   fixtureSources,
+  healthStatement,
   repository,
   tsdk,
   typescriptPackageJson,
@@ -215,7 +216,7 @@ test("native Node LSP maps GTS semantics and refreshes diagnostics after unsaved
       contentChanges: [{ text: legacyText }],
     });
     expect(await diagnostic(legacyUri)).toEqual([]);
-    await change(character.replace("health 10", "hea"));
+    await change(character.replace(healthStatement, "hea"));
     const completion = await request<CompletionList>(
       "textDocument/completion",
       { textDocument: { uri }, position: { line: 5, character: 5 } },

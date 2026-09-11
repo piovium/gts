@@ -9,6 +9,10 @@ export const tsdk = path.dirname(
   require.resolve("typescript/lib/typescript.js"),
 );
 export const typescriptPackageJson = require.resolve("typescript/package.json");
+// The `health 10` attribute that `character` declares, shared with the tests
+// that rewrite it so the literal cannot drift between the two.
+export const healthStatement = "health 10";
+
 // Every fixture source is CRLF, so the checker tests must still map positions
 // back to a line and column.
 export const character = [
@@ -17,7 +21,7 @@ export const character = [
   "  id 1201 as Barbara;",
   '  since "v3.3.0";',
   "  tags hydro, catalyst, mondstadt;",
-  "  health 10;",
+  `  ${healthStatement};`,
   "  energy 3;",
   "};",
   "export const shared: number = 1201;",
@@ -27,7 +31,7 @@ export const character = [
 export const legacySource = (type: "string" | "number") =>
   `import { Barbara } from "./current.gts";\r\nexport const legacy: ${type} = Barbara;\r\n`;
 export const brokenHealth = (source: string) =>
-  source.replace("health 10", 'health "bad"');
+  source.replace(healthStatement, 'health "bad"');
 export const unreferenced = (source: string) =>
   source.replaceAll("Barbara", "Unreferenced");
 
