@@ -6,13 +6,15 @@ the committed pnpm patch. Installation therefore needs neither a locally packed
 tarball nor a developer-specific path.
 
 The TNB patch is generated from the TNB checkout at commit
-`b25e3117975310b4e330e7745c8c2fe28b462556`, whose packed build has SHA-256
-`9774faf4f0797286e868a62e9c333eb46317afbe9d8cbd317fe9c2818e5ff063`.
+`cd339d9f8d01c87b8ee0d28c3525f19967d11765`, whose patched package repacks with
+`npm pack --ignore-scripts` to SHA-256
+`9b746524304d0d718f6475cfe46874174f62a65f6a540e3bbe60bc4706a6d677`.
 It fixes file freshness for a plain compiler host, virtual-text collection, lazy
 source-file inspection, deleted-overlay removal, and declaration transform
 behavior. It also refreshes diagnostics when external disk changes follow saved
-editor overlays, and preserves the relative declaration emit paths that
-declaration bundlers rely on. The platform addon still comes from the pinned
+editor overlays, preserves the relative declaration emit paths that declaration
+bundlers rely on, and answers module-specifier resolution from the program cache
+instead of binding the imported declarations. The platform addon still comes from the pinned
 optional platform package.
 
 The Volar patch keeps GTS's existing removal of the 4 MiB module-size guard.
