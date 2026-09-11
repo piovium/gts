@@ -37,7 +37,7 @@ export class GtsVirtualCode implements VirtualCode {
       this.snapshot = {
         getText: (start, end) => code.slice(start, end),
         getLength: () => code.length,
-        getChangeRange: () => void 0,
+        getChangeRange: () => undefined,
       };
     } catch (e) {
       this.errors = [
@@ -61,7 +61,7 @@ export class GtsVirtualCode implements VirtualCode {
       this.snapshot = {
         getText: (start, end) => emptyGeneration.substring(start, end),
         getLength: () => emptyGeneration.length,
-        getChangeRange: () => void 0,
+        getChangeRange: () => undefined,
       };
     }
   }
