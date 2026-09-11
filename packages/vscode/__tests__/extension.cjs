@@ -460,6 +460,32 @@ exports.run = async function () {
         signature: after("Math.max("),
       };
     };
+    // `typescript.tsserverRequest` answers in tsserver's own shape, not in the
+    // LSP shape the records and the assertions below use.
+    const tsserverDiagnostic = (document, item) => {
+      const start =
+        item.startLocation ??
+        (typeof item.start === "object" ? item.start : null);
+      const end =
+        item.endLocation ?? (typeof item.end === "object" ? item.end : null);
+      return {
+        code: item.code,
+        message: item.text ?? item.message,
+        severity: 1,
+        range:
+          start && end
+            ? {
+                start: { line: start.line - 1, character: start.offset - 1 },
+                end: { line: end.line - 1, character: end.offset - 1 },
+              }
+            : {
+                start: positionJson(document.positionAt(item.start)),
+                end: positionJson(
+                  document.positionAt(item.start + item.length),
+                ),
+              },
+      };
+    };
     const observePhase = async (descriptor, cycle, phase, origin) => {
       const document = descriptor.document();
       const expectedText =
@@ -513,37 +539,11 @@ exports.run = async function () {
               assert.equal(response?.success, true);
               assert.ok(Array.isArray(response.body));
               raw.push({ command, response });
-              for (const item of response.body.filter(
-                (item) => item.category === "error",
-              )) {
-                const start =
-                  item.startLocation ??
-                  (typeof item.start === "object" ? item.start : null);
-                const end =
-                  item.endLocation ??
-                  (typeof item.end === "object" ? item.end : null);
-                const range =
-                  start && end
-                    ? {
-                        start: {
-                          line: start.line - 1,
-                          character: start.offset - 1,
-                        },
-                        end: { line: end.line - 1, character: end.offset - 1 },
-                      }
-                    : {
-                        start: positionJson(document.positionAt(item.start)),
-                        end: positionJson(
-                          document.positionAt(item.start + item.length),
-                        ),
-                      };
-                items.push({
-                  code: item.code,
-                  message: item.text ?? item.message,
-                  severity: 1,
-                  range,
-                });
-              }
+              items.push(
+                ...response.body
+                  .filter((item) => item.category === "error")
+                  .map((item) => tsserverDiagnostic(document, item)),
+              );
             }
           }
           assert.equal(document.version, version);
