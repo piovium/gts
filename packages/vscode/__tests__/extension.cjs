@@ -54,7 +54,7 @@ exports.run = async function () {
   const healthStatement = target.healthStatement ?? "health 10";
   const records = [];
   const record = (value) => records.push({ at: Date.now(), ...value });
-  const hash = (value) =>
+  const sha256 = (value) =>
     crypto.createHash("sha256").update(value).digest("hex");
   if (target.workspacePath)
     assert.equal(root.fsPath, vscode.Uri.file(target.workspacePath).fsPath);
@@ -65,6 +65,7 @@ exports.run = async function () {
   });
   const cycles = Number(process.env.GTS_VSCODE_CYCLES ?? 3);
   assert.ok(Number.isInteger(cycles) && cycles > 0);
+  // Kept so a timed-out hover wait can report what it last saw.
   let lastHovers;
   const positionJson = (position) => ({
     line: position.line,
@@ -93,7 +94,6 @@ exports.run = async function () {
     typeof item.label === "string" ? item.label : item.label.label;
   const definitionUri = (location) => location.targetUri ?? location.uri;
   const isTypedHover = (hovers, type) => {
-    lastHovers = hovers;
     const text = JSON.stringify(hovers);
     return text.includes(type) && !/\bany\b|loading\.\.\.|__gts_/.test(text);
   };
@@ -111,8 +111,8 @@ exports.run = async function () {
   };
   const waitForTypedHover = (label, uri, position, type) =>
     waitFor(label, async () => {
-      const value = await requestHover(uri, position);
-      return isTypedHover(value, type) && value;
+      lastHovers = await requestHover(uri, position);
+      return isTypedHover(lastHovers, type) && lastHovers;
     });
   const errors = (uri) =>
     vscode.languages
@@ -135,6 +135,7 @@ exports.run = async function () {
     code: item.code,
     source: item.source,
     message: item.message,
+    // VS Code severities are 0-based; the records keep LSP's 1-based values.
     severity: item.severity + 1,
     range: rangeJson(item.range),
   });
@@ -369,6 +370,7 @@ exports.run = async function () {
       let response;
       if (name === "hover") {
         const hovers = serializeHovers(result);
+        lastHovers = hovers;
         assert.ok(isTypedHover(hovers, descriptor.hoverType));
         response = { contents: hovers.flatMap((hover) => hover.contents) };
       } else if (name === "definition") {
@@ -612,7 +614,7 @@ exports.run = async function () {
           name: descriptor.name,
           uri: document.uri.toString(),
           phase: "bad",
-          sha256: hash(fs.readFileSync(document.uri.fsPath)),
+          sha256: sha256(fs.readFileSync(document.uri.fsPath)),
         });
         await waitFor(
           `${descriptor.name} external source reload`,
@@ -626,7 +628,7 @@ exports.run = async function () {
           name: descriptor.name,
           uri: document.uri.toString(),
           phase: "restored",
-          sha256: hash(fs.readFileSync(document.uri.fsPath)),
+          sha256: sha256(fs.readFileSync(document.uri.fsPath)),
         });
       }
       await waitFor(
