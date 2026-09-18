@@ -20,6 +20,14 @@ declare module "estree" {
     start: number;
     end: number;
   }
+  export interface BaseNode {
+    comments?: AST.Comment[];
+  }
+  interface Comment {
+    leading?: boolean;
+    trailing?: boolean;
+    printed?: boolean;
+  }
   interface NodeMap {
     TSParenthesizedType: TSParenthesizedType;
     TSAsExpression: TSAsExpression;
@@ -197,7 +205,8 @@ function printGtsAttributeBody(
   if (
     node.namedAttributes &&
     (node.namedAttributes.attributes.length > 0 ||
-      node.namedAttributes.directAction)
+      node.namedAttributes.directAction ||
+      node.namedAttributes.comments?.length)
   ) {
     parts.push(" ", print("namedAttributes"));
   }
@@ -245,7 +254,24 @@ function printGtsNamedAttributeBlock(
   }
 
   if (docs.length === 0) {
-    return "{}";
+    // Comments inside an empty block are dangling: Prettier does not print
+    // them automatically as leading or trailing comments.
+    const comments = path
+      .map((commentPath) => {
+        const comment = commentPath.node;
+        if (comment.leading || comment.trailing) {
+          return null;
+        }
+        comment.printed = true;
+        return estreePrinter.printComment!(
+          commentPath as AstPath<AST.BaseNode>,
+          options,
+        );
+      }, "comments")
+      .filter((comment) => comment !== null);
+    return comments.length === 0
+      ? "{}"
+      : ["{", indent([hardline, join(hardline, comments)]), hardline, "}"];
   }
 
   if (node.attributes.length === 1 && !node.directAction) {

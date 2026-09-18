@@ -51,6 +51,40 @@ test("removes empty named attribute blocks", async () => {
   );
 });
 
+test.each([
+  "// comment",
+  "/* comment */",
+  "// first\n// second",
+  "/* first */\n// second",
+])("preserves comment-only named blocks: %s", async (comment) => {
+  for (const prefix of ["define foo", "define foo bar"]) {
+    const source = `${prefix} {\n${comment}\n};`;
+    const expected = `${prefix} {\n${comment
+      .split("\n")
+      .map((line) => `  ${line}`)
+      .join("\n")}\n};\n`;
+    const once = await format(source);
+
+    expect(once).toBe(expected);
+    expect(() => parse(once)).not.toThrow();
+    await expect(format(once)).resolves.toBe(once);
+  }
+});
+
+test("preserves comments in nested otherwise empty named blocks", async () => {
+  const source = "define foo { bar {\n// comment\n}; };";
+  const once = await format(source);
+
+  expect(once).toBe(`define foo {
+  bar {
+    // comment
+  };
+};
+`);
+  expect(() => parse(once)).not.toThrow();
+  await expect(format(once)).resolves.toBe(once);
+});
+
 test("respects objectWrap for a single named attribute", async () => {
   await expect(format("define foo { bar 1; };")).resolves.toBe(
     "define foo { bar 1; };\n",
