@@ -32,6 +32,7 @@ interface ExternalizedTypedBinding extends ExternalizedBinding {
 }
 
 export interface TypingTranspileState extends TranspileState {
+  typeCheckingOnly: boolean;
   externalizedBindings: ExternalizedTypedBinding[];
   idCounter: number;
   rootVmId: Identifier;
@@ -87,6 +88,8 @@ export interface TypingTranspileState extends TranspileState {
     sourceOffset: number;
     length: number;
     generatedNeedle: string;
+    /** Map diagnostic endpoints without padding the generated expression. */
+    mapRangeEnds?: boolean;
   }[];
   /** Character offset after hashbang and file-scope leading comments */
   contentStartOffset: number;
@@ -284,6 +287,11 @@ const insertHintStatement = (
   whiteSpaceEnd: number,
 ) => {
   const { lhsId } = enterAttr(state, ATTR_HINT_ATTR_NAME);
+  // Retain the probe and collected name: providers can define the hint key,
+  // so removing it altogether could change uniqueness/required checks.
+  if (state.typeCheckingOnly) {
+    return;
+  }
   state.typingPendingStatements.push({
     type: "GTSAttributeNameHintStatement",
     object: lhsId,

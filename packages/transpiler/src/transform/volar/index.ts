@@ -17,9 +17,14 @@ import {
 import { getPrintOptions } from "./printer.ts";
 import { getContentStartOffset } from "./content_start.ts";
 
+export interface VolarTranspileOption extends TranspileOption {
+  /** Omit editor-only expressions, retaining all type validation. */
+  typeCheckingOnly?: boolean;
+}
+
 export function transformForVolar(
   ast: Program,
-  option: TranspileOption,
+  option: VolarTranspileOption,
   sourceInfo: Required<SourceInfo>,
 ): VolarMappingResult {
   const state: TypingTranspileState = {
@@ -39,6 +44,7 @@ export function transformForVolar(
     metaTypeIdStack: [],
     finalMetaTypeIdStack: [],
     attrsOfCurrentVm: [],
+    typeCheckingOnly: option.typeCheckingOnly ?? false,
 
     sourceNodes: new WeakSet(),
     attributeNameNodes: new WeakSet(),
@@ -91,6 +97,21 @@ export function transformForVolar(
   code = applyReplacements(state, code, mappings);
   for (const extraMapping of state.extraMappings) {
     const genOffset = code.indexOf(extraMapping.generatedNeedle);
+    if (extraMapping.mapRangeEnds) {
+      mappings.push({
+        sourceOffsets: [
+          extraMapping.sourceOffset,
+          extraMapping.sourceOffset + extraMapping.length,
+        ],
+        lengths: [0, 0],
+        generatedOffsets: [
+          genOffset,
+          genOffset + extraMapping.generatedNeedle.length,
+        ],
+        data: VERIFICATION_ONLY_MAPPING_DATA,
+      });
+      continue;
+    }
     mappings.push({
       sourceOffsets: [extraMapping.sourceOffset],
       lengths: [extraMapping.length],

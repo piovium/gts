@@ -17,10 +17,14 @@ export class GtsVirtualCode implements VirtualCode {
     filename: string,
     snapshot: ts.IScriptSnapshot,
     config: Required<GtsConfig>,
+    typeCheckingOnly = false,
   ) {
     const source = snapshot.getText(0, snapshot.getLength());
     try {
-      const { code, mappings } = transpileForVolar(source, filename, config);
+      const { code, mappings } = transpileForVolar(source, filename, {
+        ...config,
+        typeCheckingOnly,
+      });
       this.errors = [];
       this.mappings = mappings;
       this.snapshot = {

@@ -10,7 +10,10 @@ import {
   type TranspileResult,
 } from "./transform/index.ts";
 import type { TranspileOption } from "./transform/gts.ts";
-import type { VolarMappingResult } from "./transform/volar/index.ts";
+import type {
+  VolarMappingResult,
+  VolarTranspileOption,
+} from "./transform/volar/index.ts";
 export { GtsTranspilerError } from "./error.ts";
 export type { AST } from "./types.ts";
 
@@ -29,7 +32,7 @@ export function transpile(
 export function transpileForVolar(
   source: string,
   filename: string,
-  option: TranspileOption,
+  option: VolarTranspileOption,
 ): VolarMappingResult {
   const ast = parseLoose(source, {
     recordCallLParens: true,
@@ -47,6 +50,7 @@ export type {
   TranspileOption,
   TranspileResult,
   VolarMappingResult,
+  VolarTranspileOption,
 };
 export {
   resolveGtsConfig,
