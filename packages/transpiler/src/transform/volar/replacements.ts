@@ -210,11 +210,11 @@ export function applyReplacements(
     },
   );
 
+  // 调整替换后 mapping 的 generatedOffset
+  // 由于替换信息 matchInfos 的 sourceEnd 是有序的，可以二分查找到对应的 lengthOffset
   for (const mapping of mappings) {
     for (let i = 0; i < mapping.generatedOffsets.length; i++) {
       const orig = mapping.generatedOffsets[i];
-      // Replacements are ordered, but source mappings need not be. Find the
-      // last preceding replacement instead of rescanning every replacement.
       let low = 0;
       let high = matchInfos.length;
       while (low < high) {
