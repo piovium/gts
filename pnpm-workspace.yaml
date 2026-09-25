@@ -20,6 +20,3 @@ catalog:
 
 patchedDependencies:
   '@volar/typescript': patches/@volar__typescript.patch
-
-# patchedDependencies:
-#   ajv@8.20.0: patches/ajv@8.20.0.patch
