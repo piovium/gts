@@ -19,7 +19,7 @@ import { getContentStartOffset } from "./content_start.ts";
 
 export interface VolarTranspileOption extends TranspileOption {
   /** Omit editor-only expressions, retaining all type validation. */
-  typeCheckingOnly?: boolean;
+  typeCheckingOnly: boolean;
 }
 
 export function transformForVolar(
@@ -44,7 +44,7 @@ export function transformForVolar(
     metaTypeIdStack: [],
     finalMetaTypeIdStack: [],
     attrsOfCurrentVm: [],
-    typeCheckingOnly: option.typeCheckingOnly ?? false,
+    typeCheckingOnly: option.typeCheckingOnly,
 
     sourceNodes: new WeakSet(),
     attributeNameNodes: new WeakSet(),

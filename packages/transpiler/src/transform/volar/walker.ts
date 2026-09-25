@@ -287,9 +287,8 @@ const insertHintStatement = (
   whiteSpaceEnd: number,
 ) => {
   const { lhsId } = enterAttr(state, ATTR_HINT_ATTR_NAME);
-  // Retain the probe and collected name: providers can define the hint key,
-  // so removing it altogether could change uniqueness/required checks.
   if (state.typeCheckingOnly) {
+    // type-checking do not need insert hint statement
     return;
   }
   state.typingPendingStatements.push({

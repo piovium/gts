@@ -36,12 +36,10 @@ export function createGtsLanguagePlugin(
           readFileFn: (path, encoding) =>
             ts.sys?.readFile?.(path, encoding) || "",
         });
-        return new GtsVirtualCode(
-          filename,
-          snapshot,
-          resolvedConfig,
-          inlineConfig.typeCheckingOnly,
-        );
+        return new GtsVirtualCode(filename, snapshot, {
+          ...resolvedConfig,
+          typeCheckingOnly: !!inlineConfig.typeCheckingOnly,
+        });
       }
     },
     typescript: {

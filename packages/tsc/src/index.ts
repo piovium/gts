@@ -4,11 +4,10 @@ import { createRequire } from "node:module";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
-// Resolve from the compiler API so aliases that wrap another TypeScript
-// package (such as @typescript/typescript6) reach the actual compiler.
-const tscPath = createRequire(require.resolve("typescript")).resolve(
-  "typescript/lib/tsc",
-);
+const tsdk = require.resolve("typescript");
+const tscPath = require.resolve("typescript/lib/tsc", {
+  paths: [tsdk],
+});
 runTsc(tscPath, [".gts"], (ts, options) => {
   const gtsLanguagePlugin = createGtsLanguagePlugin(ts, {
     pathModule: path,
