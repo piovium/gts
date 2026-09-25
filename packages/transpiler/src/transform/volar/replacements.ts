@@ -149,17 +149,9 @@ export function applyReplacements(
         interface ${uniqueKeyHelperIntf} {
           [${uniqueKeyForThis}]: 1;
         }
-      `;
-        // The probe above can affect other attributes. Only the completion
-        // receiver itself is unused by command-line type checking.
-        if (!payload.hintOnly || !state.typeCheckingOnly) {
-          // This guard must stay outside a generic helper: evaluating keyof
-          // the merged probe interface before the zero-key check is recursive.
-          replacement += dedent`
         type ${omittedKeys} = ${Meta} | (${uniqueKey} extends 0 ? never : string extends keyof ${uniqueKeyHelperIntf} ? keyof ${payload.defType} : ${state.utilNsId.name}.UnionToIntersection<keyof ${uniqueKeyHelperIntf} & \`\${${uniqueKey}}\${${state.utilNsId.name}.UniqueKeyProbSegment}\${string}\`> extends never ? ${payload.attrName} : never);
         let ${payload.lhs}!: ${payload.hintOnly ? `{}` : `{ ${Meta}: ${payload.metaType} }`} & Omit<${payload.defType}, ${omittedKeys}>;
       `;
-        }
       } else if (payload.type === "createBindingTyping") {
         const typingIdLhs = `${payload.typingId}_lhs`;
         // As with uniqueKey, an as() without a Meta-aware this parameter must
