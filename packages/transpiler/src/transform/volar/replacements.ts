@@ -10,9 +10,6 @@ interface MatchInfo {
 
 type ReplacementPayload =
   | {
-      type: "preface";
-    }
-  | {
       type: "enterVMFromRoot";
       vm: string;
       defType: string;
@@ -104,22 +101,7 @@ export function applyReplacements(
         rawPayload.replace(/\\`/g, "`"),
       );
       let replacement: string;
-      if (payload.type === "preface") {
-        // Tuple checks preserve the non-distributive conditionals that were
-        // previously emitted separately for each concrete definition.
-        replacement = dedent`
-        declare namespace ${state.utilNsId.name} {
-          export type UniqueKeyProbSegment = "__gts_unique_prob_seg__";
-          export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
-          export type WithMeta<D, M> = { ${Meta}: M } & Omit<D, ${Meta}>;
-          export type Member<D, K extends PropertyKey, P extends PropertyKey, F> = [D] extends [Record<K, Record<P, infer V>>] ? V : F;
-          export type RequiredAttrs<D, L extends { [K in keyof D]: unknown }> = { [K in keyof D]: L[K] extends { required(this: L): true } ? K : never }[keyof D];
-          export type RequiredMessage<E extends PropertyKey, C> = { [K in E]: K extends C ? never : \`'\${K & (string | number)}' is a required attribute but not provided\` }[E];
-          export function checkRequired<E, C>(value: [E] extends [C] ? string : E): void;
-          export type MergeMeta<D, K extends PropertyKey> = Member<D, K, "mergeMeta", <const T>(x: T, y: unknown) => T>;
-        }
-      `;
-      } else if (payload.type === "enterVMFromRoot") {
+      if (payload.type === "enterVMFromRoot") {
         replacement = dedent`
         type ${payload.defType} = (typeof ${payload.vm})[${NamedDefinition}];
         type ${payload.metaType} = ${payload.defType}[${Meta}];
@@ -148,7 +130,7 @@ export function applyReplacements(
         }
         replacement = dedent`
         type ${payload.finalMetaType} = ${payload.metaType};
-        type ${requiredAttrsNs} = ${state.utilNsId.name}.RequiredAttrs<${payload.defType}, ${state.utilNsId.name}.WithMeta<${payload.defType}, ${payload.metaType}>>;
+        type ${requiredAttrsNs} = ${state.utilNsId.name}.RequiredAttrs<${state.utilNsId.name}.WithMeta<${payload.defType}, ${payload.metaType}>>;
         ${state.utilNsId.name}.checkRequired<${requiredAttrsNs}, ${collectedAttrsExpr}>(${needleString});
       `;
       } else if (payload.type === "enterAttr") {

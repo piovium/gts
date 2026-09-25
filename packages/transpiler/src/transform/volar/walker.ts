@@ -382,6 +382,11 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
             imported: { type: "Identifier", name: "createBinding" },
             local: state.createBindingFnId,
           },
+          {
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name: "TypingUtils" },
+            local: state.utilNsId,
+          },
         ],
         source: { type: "Literal", value: state.runtimeImportSource },
         attributes: [],
@@ -415,9 +420,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         },
       },
       lastImportDecl,
-      createReplacementHolder(state, {
-        type: "preface",
-      }),
     );
     return {
       ...node,
