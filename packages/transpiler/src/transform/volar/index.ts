@@ -97,26 +97,16 @@ export function transformForVolar(
   code = applyReplacements(state, code, mappings);
   for (const extraMapping of state.extraMappings) {
     const genOffset = code.indexOf(extraMapping.generatedNeedle);
-    if (extraMapping.mapRangeEnds) {
-      mappings.push({
-        sourceOffsets: [
-          extraMapping.sourceOffset,
-          extraMapping.sourceOffset + extraMapping.length,
-        ],
-        lengths: [0, 0],
-        generatedOffsets: [
-          genOffset,
-          genOffset + extraMapping.generatedNeedle.length,
-        ],
-        data: VERIFICATION_ONLY_MAPPING_DATA,
-      });
-      continue;
-    }
     mappings.push({
-      sourceOffsets: [extraMapping.sourceOffset],
-      lengths: [extraMapping.length],
-      generatedOffsets: [genOffset],
-      generatedLengths: [extraMapping.generatedNeedle.length],
+      sourceOffsets: [
+        extraMapping.sourceOffset,
+        extraMapping.sourceOffset + extraMapping.length,
+      ],
+      lengths: [0, 0],
+      generatedOffsets: [
+        genOffset,
+        genOffset + extraMapping.generatedNeedle.length,
+      ],
       data: VERIFICATION_ONLY_MAPPING_DATA,
     });
   }

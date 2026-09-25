@@ -88,8 +88,6 @@ export interface TypingTranspileState extends TranspileState {
     sourceOffset: number;
     length: number;
     generatedNeedle: string;
-    /** Map diagnostic endpoints without padding the generated expression. */
-    mapRangeEnds?: boolean;
   }[];
   /** Character offset after hashbang and file-scope leading comments */
   contentStartOffset: number;
@@ -286,11 +284,11 @@ const insertHintStatement = (
   whiteSpaceStart: number,
   whiteSpaceEnd: number,
 ) => {
-  const { lhsId } = enterAttr(state, ATTR_HINT_ATTR_NAME);
   if (state.typeCheckingOnly) {
     // type-checking do not need insert hint statement
     return;
   }
+  const { lhsId } = enterAttr(state, ATTR_HINT_ATTR_NAME);
   state.typingPendingStatements.push({
     type: "GTSAttributeNameHintStatement",
     object: lhsId,

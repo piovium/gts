@@ -144,7 +144,6 @@ export function applyReplacements(
             sourceOffset: payload.errorRange[0],
             length,
             generatedNeedle: needleString,
-            mapRangeEnds: true,
           });
         }
         replacement = dedent`
