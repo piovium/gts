@@ -58,6 +58,10 @@ class GtsVirtualCode implements VirtualCode {
 
 **Error recovery:** When transpilation fails, the virtual code returns a snapshot filled with spaces (matching the source line lengths). This prevents the language server from crashing while still providing the source location for error diagnostics.
 
+### Type-checking code generation
+
+`gtsc` passes `typeCheckingOnly: true` to the language plugin. This omits attribute-name completion receivers and expressions to improve performance.
+
 ## Language Server (`@gi-tcg/gts-language-server`)
 
 The language server implements the Language Server Protocol (LSP). It has two entry points **Node.js Server** (`node.ts`) and ****Browser Server** (`browser.ts`).

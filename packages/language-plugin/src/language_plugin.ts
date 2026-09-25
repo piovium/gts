@@ -13,6 +13,7 @@ type Ts = typeof ts;
 
 export interface GtsLanguagePluginInlineConfig extends GtsConfig {
   pathModule?: PathModule;
+  typeCheckingOnly?: boolean;
 }
 
 export function createGtsLanguagePlugin(
@@ -35,7 +36,10 @@ export function createGtsLanguagePlugin(
           readFileFn: (path, encoding) =>
             ts.sys?.readFile?.(path, encoding) || "",
         });
-        return new GtsVirtualCode(filename, snapshot, resolvedConfig);
+        return new GtsVirtualCode(filename, snapshot, {
+          ...resolvedConfig,
+          typeCheckingOnly: !!inlineConfig.typeCheckingOnly,
+        });
       }
     },
     typescript: {

@@ -32,6 +32,7 @@ interface ExternalizedTypedBinding extends ExternalizedBinding {
 }
 
 export interface TypingTranspileState extends TranspileState {
+  typeCheckingOnly: boolean;
   externalizedBindings: ExternalizedTypedBinding[];
   idCounter: number;
   rootVmId: Identifier;
@@ -283,6 +284,10 @@ const insertHintStatement = (
   whiteSpaceStart: number,
   whiteSpaceEnd: number,
 ) => {
+  if (state.typeCheckingOnly) {
+    // type-checking do not need insert hint statement
+    return;
+  }
   const { lhsId } = enterAttr(state, ATTR_HINT_ATTR_NAME);
   state.typingPendingStatements.push({
     type: "GTSAttributeNameHintStatement",
@@ -377,6 +382,11 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
             imported: { type: "Identifier", name: "createBinding" },
             local: state.createBindingFnId,
           },
+          {
+            type: "ImportSpecifier",
+            imported: { type: "Identifier", name: "TypingUtils" },
+            local: state.utilNsId,
+          },
         ],
         source: { type: "Literal", value: state.runtimeImportSource },
         attributes: [],
@@ -410,9 +420,6 @@ export const gtsToTypingsWalker: Visitors<Node, TypingTranspileState> = {
         },
       },
       lastImportDecl,
-      createReplacementHolder(state, {
-        type: "preface",
-      }),
     );
     return {
       ...node,

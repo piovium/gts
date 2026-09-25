@@ -10,9 +10,6 @@ interface MatchInfo {
 
 type ReplacementPayload =
   | {
-      type: "preface";
-    }
-  | {
       type: "enterVMFromRoot";
       vm: string;
       defType: string;
@@ -95,6 +92,7 @@ export function applyReplacements(
   const NamedDefinition = JSON.stringify(NamedDefinitionLit.value);
   const Meta = JSON.stringify(MetaLit.value);
   const matchInfos: MatchInfo[] = [];
+  let cumulativeOffset = 0;
 
   const result = code.replace(
     replacementRegex,
@@ -103,14 +101,7 @@ export function applyReplacements(
         rawPayload.replace(/\\`/g, "`"),
       );
       let replacement: string;
-      if (payload.type === "preface") {
-        replacement = dedent`
-        namespace ${state.utilNsId.name} {
-          export type UniqueKeyProbSegment = "__gts_unique_prob_seg__";
-          export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
-        }
-      `;
-      } else if (payload.type === "enterVMFromRoot") {
+      if (payload.type === "enterVMFromRoot") {
         replacement = dedent`
         type ${payload.defType} = (typeof ${payload.vm})[${NamedDefinition}];
         type ${payload.metaType} = ${payload.defType}[${Meta}];
@@ -121,14 +112,15 @@ export function applyReplacements(
         type ${payload.metaType} = ${payload.defType}[${Meta}];
       `;
       } else if (payload.type === "exitVM") {
-        const lhs = `${payload.finalMetaType}_lhs`;
         const requiredAttrsNs = `${payload.finalMetaType}_rans`;
-        const collectedAttrsExpr = `${payload.collectedAttrs.join(" | ") || "never"}`;
+        const collectedAttrsExpr =
+          [...new Set(payload.collectedAttrs)].join(" | ") || "never";
         const length = payload.errorRange
           ? payload.errorRange[1] - payload.errorRange[0]
           : 0;
-        // Ensure that generated needle string is longer than error range so that error squiggle can cover all
-        const needleString = `"${requiredAttrsNs}_NeedleString${"0".repeat(length)}" as string as ${requiredAttrsNs}.DiagMsg`;
+        // Map both ends explicitly; nested blocks no longer need a copy of
+        // their entire source length as padding in every diagnostic string.
+        const needleString = `"${requiredAttrsNs}" as string as ${state.utilNsId.name}.RequiredMessage<${requiredAttrsNs}, ${collectedAttrsExpr}>`;
         if (payload.errorRange) {
           state.extraMappings.push({
             sourceOffset: payload.errorRange[0],
@@ -138,19 +130,8 @@ export function applyReplacements(
         }
         replacement = dedent`
         type ${payload.finalMetaType} = ${payload.metaType};
-        let ${lhs}!: { ${Meta}: ${payload.metaType} } & Omit<${payload.defType}, ${Meta}>;
-        type ${lhs} = typeof ${lhs};
-        namespace ${requiredAttrsNs} {
-          export type Collected = ${collectedAttrsExpr};
-          export type Expected = {
-            [K in keyof ${payload.defType}]: ${lhs}[K] extends { required(this: ${lhs}): true } ? K : never;
-          }[keyof ${payload.defType}];
-          type DiagObj = {
-            [K in Expected]: K extends Collected ? never : \`'\${K}' is a required attribute but not provided\`;
-          }
-          export type DiagMsg = DiagObj[Expected];
-        };
-        ((_: ${requiredAttrsNs}.Expected extends ${requiredAttrsNs}.Collected ? string : ${requiredAttrsNs}.Expected) => 0)(${needleString});
+        type ${requiredAttrsNs} = ${state.utilNsId.name}.RequiredAttrs<${state.utilNsId.name}.WithMeta<${payload.defType}, ${payload.metaType}>>;
+        ${state.utilNsId.name}.checkRequired<${requiredAttrsNs}, ${collectedAttrsExpr}>(${needleString});
       `;
       } else if (payload.type === "enterAttr") {
         const uniqueKeyLhs = `${payload.lhs}_uniqueKey_lhs`;
@@ -158,40 +139,25 @@ export function applyReplacements(
         const uniqueKeyForThis = `${payload.lhs}_uniqueKeyFor_${payload.lhs}`;
         const uniqueKeyHelperIntf = `${payload.defType}_uniqueKeyProbeHelper`;
         const omittedKeys = `${payload.lhs}_omittedKeys`;
+        // Keep Meta inside the receiver's property. Passing it to a generic
+        // receiver alias eagerly resolves later probes and can form a cycle.
         replacement = dedent`
-        type ${uniqueKeyLhs} = {
-          ${Meta}: ${payload.metaType}; 
-          uniqueKey: ${payload.defType} extends { [${payload.attrName}]: { uniqueKey: infer UniqueKey } } ? UniqueKey : () => 0;
-        };
-        
-        let ${uniqueKeyLhs}!: ${uniqueKeyLhs};
+        declare const ${uniqueKeyLhs}: { ${Meta}: ${payload.metaType}; uniqueKey: ${state.utilNsId.name}.Member<${payload.defType}, ${payload.attrName}, "uniqueKey", () => 0> };
         let ${uniqueKey} = ${uniqueKeyLhs}.uniqueKey();
         type ${uniqueKey} = typeof ${uniqueKey};
         let ${uniqueKeyForThis}!: \`\${${uniqueKey}}\${${state.utilNsId.name}.UniqueKeyProbSegment}${payload.lhs}\`;
         interface ${uniqueKeyHelperIntf} {
           [${uniqueKeyForThis}]: 1;
         }
-        type ${omittedKeys} = ${Meta} | (
-          ${uniqueKey} extends 0
-          ? never                                                 /* no unique requirement */
-            : string extends keyof ${uniqueKeyHelperIntf}
-              ? keyof ${payload.defType}                          /* too loose, disable all */
-              : ${state.utilNsId.name}.UnionToIntersection<
-                keyof ${uniqueKeyHelperIntf} & \`\${${uniqueKey}}\${${state.utilNsId.name}.UniqueKeyProbSegment}\${string}\`
-              > extends never
-                ? ${payload.attrName}                             /* have duplicate, disable this */
-                : never
-        );
+        type ${omittedKeys} = ${Meta} | (${uniqueKey} extends 0 ? never : string extends keyof ${uniqueKeyHelperIntf} ? keyof ${payload.defType} : ${state.utilNsId.name}.UnionToIntersection<keyof ${uniqueKeyHelperIntf} & \`\${${uniqueKey}}\${${state.utilNsId.name}.UniqueKeyProbSegment}\${string}\`> extends never ? ${payload.attrName} : never);
         let ${payload.lhs}!: ${payload.hintOnly ? `{}` : `{ ${Meta}: ${payload.metaType} }`} & Omit<${payload.defType}, ${omittedKeys}>;
       `;
       } else if (payload.type === "createBindingTyping") {
         const typingIdLhs = `${payload.typingId}_lhs`;
+        // As with uniqueKey, an as() without a Meta-aware this parameter must
+        // not force final Meta (which may itself depend on this binding).
         replacement = dedent`
-        type ${typingIdLhs} = {
-          ${Meta}: ${payload.finalMetaType};
-          as: ${payload.defType} extends { [${payload.attrName}]: { as: infer As } } ? As : unknown;
-        };
-        let ${typingIdLhs}!: ${typingIdLhs};
+        declare const ${typingIdLhs}: { ${Meta}: ${payload.finalMetaType}; as: ${state.utilNsId.name}.Member<${payload.defType}, ${payload.attrName}, "as", unknown> };
         let ${payload.typingId} = ${typingIdLhs}.as();
         type ${payload.typingId} = typeof ${payload.typingId};
       `;
@@ -202,33 +168,39 @@ export function applyReplacements(
         replacement = dedent`
         type ${payload.returnType} = typeof ${payload.returnType};
         type ${rewrittenMeta} = ${payload.returnType} extends { rewriteMeta: infer NewMeta extends {} } ? NewMeta : ${payload.oldMetaType};
-        let ${mergeFn}!: ${payload.defType} extends {
-          [${payload.attrName}]: { mergeMeta: infer M }
-       } ? M : <const T>(x: T, y: unknown) => T;
+        declare const ${mergeFn}: ${state.utilNsId.name}.MergeMeta<${payload.defType}, ${payload.attrName}>;
         let ${mergeFnRet} = ${mergeFn}(null! as ${rewrittenMeta}, null! as ${payload.innerMetaType});
         type ${payload.newMetaType} = [typeof ${mergeFn}] extends [null] ? ${rewrittenMeta} : typeof ${mergeFnRet};
       `;
       } else {
         replacement = "";
       }
+      cumulativeOffset += replacement.length - match.length;
       matchInfos.push({
         sourceEnd: offset + match.length,
-        lengthOffset: replacement.length - match.length,
+        lengthOffset: cumulativeOffset,
       });
       return replacement;
     },
   );
 
+  // 调整替换后 mapping 的 generatedOffset
+  // 由于替换信息 matchInfos 的 sourceEnd 是有序的，可以二分查找到对应的 lengthOffset
   for (const mapping of mappings) {
     for (let i = 0; i < mapping.generatedOffsets.length; i++) {
       const orig = mapping.generatedOffsets[i];
-      let shift = 0;
-      for (const info of matchInfos) {
-        if (orig >= info.sourceEnd) {
-          shift += info.lengthOffset;
+      let low = 0;
+      let high = matchInfos.length;
+      while (low < high) {
+        const mid = (low + high) >>> 1;
+        if (matchInfos[mid].sourceEnd <= orig) {
+          low = mid + 1;
+        } else {
+          high = mid;
         }
       }
-      mapping.generatedOffsets[i] = orig + shift;
+      mapping.generatedOffsets[i] =
+        orig + (matchInfos[low - 1]?.lengthOffset ?? 0);
     }
   }
 
